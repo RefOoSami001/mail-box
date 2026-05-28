@@ -122,7 +122,7 @@
     .logo-name {
       font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em;
       background: linear-gradient(90deg, var(--accent), var(--accent2));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      --webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
 
     h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -.02em; margin-bottom: .4rem; }
@@ -222,16 +222,10 @@
       <div class="logo-mark">
         <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
       </div>
-      <span class="logo-name">MailBox</span>
     </div>
 
     <h1>مرحباً بك</h1>
-    <p class="subtitle">سجّل دخولك باستخدام بريدك الإلكتروني وكلمة المرور</p>
-
-    <div class="server-pill">
-      <div class="live-dot"></div>
-      pop3.kuku.lu &nbsp;·&nbsp; منفذ 995 (SSL)
-    </div>
+    <p class="subtitle">سجّل دخولك باستخدام بريدك الإلكتروني.</p>
 
     {% if error %}
     <div class="error-box">⚠️ <span>{{ error }}</span></div>
@@ -249,16 +243,6 @@
                  placeholder="user@domain.com"
                  value="{{ request.form.username or '' }}"
                  autocomplete="username" required />
-        </div>
-      </div>
-
-      <div class="field">
-        <label>كلمة المرور</label>
-        <div class="inp-wrap">
-          <div class="inp-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
-          <input name="password" type="password"
-                 placeholder="••••••••••••"
-                 autocomplete="current-password" required />
         </div>
       </div>
 

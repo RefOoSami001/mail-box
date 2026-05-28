@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MailBox — لوحة التحكم</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --accent:#4f8ef7; --accent2:#7c5ef5; --green:#22c55e; --teal:#00c9a7;
+      --amber:#f59e0b; --danger:#f25f7a; --radius:14px; --radius-sm:9px;
+      --ease:cubic-bezier(.4,0,.2,1);
+    }
+    [data-theme="dark"] {
+      --bg:#06090f; --surf:#0d1525; --surf2:#121e30; --surf3:#1a2840;
+      --border:rgba(255,255,255,.07); --bord2:rgba(255,255,255,.12);
+      --text:#e2e8f4; --text2:#7d8fa8; --text3:#3d4f66;
+      --glow:rgba(79,142,247,.18); --shadow:0 24px 60px rgba(0,0,0,.6);
+    }
+    [data-theme="light"] {
+      --bg:#f1f5fb; --surf:#ffffff; --surf2:#f7f9fd; --surf3:#edf1f8;
+      --border:rgba(0,0,0,.07); --bord2:rgba(0,0,0,.12);
+      --text:#0f172a; --text2:#475569; --text3:#94a3b8;
+      --glow:rgba(79,142,247,.1); --shadow:0 24px 60px rgba(0,0,0,.12);
+    }
+    html, body { height: 100%; }
+    body { font-family:'Alexandria',sans-serif; background:var(--bg); color:var(--text); display:flex; flex-direction:column; transition:background .3s,color .3s; }
+
+    /* ── Topbar ── */
+    .topbar {
+      height:60px; flex-shrink:0; z-index:40;
+      background:var(--surf); border-bottom:1px solid var(--border);
+      display:flex; align-items:center; padding:0 1.25rem; gap:.75rem; position:relative;
+    }
+    .topbar::after {
+      content:''; position:absolute; bottom:0; left:0; right:0; height:1px;
+      background:linear-gradient(90deg,transparent,var(--accent),var(--accent2),transparent); opacity:.35;
+    }
+    .logo { display:flex; align-items:center; gap:.55rem; text-decoration:none; }
+    .logo-mark {
+      width:32px; height:32px; border-radius:9px; flex-shrink:0;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      display:flex; align-items:center; justify-content:center;
+      box-shadow:0 3px 12px rgba(79,142,247,.4);
+    }
+    .logo-mark svg { width:15px;height:15px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round; }
+    .logo-name { font-size:1.05rem; font-weight:800; background:linear-gradient(90deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .admin-chip {
+      background:rgba(242,95,122,.1); border:1px solid rgba(242,95,122,.25);
+      color:var(--danger); border-radius:20px; padding:.2rem .65rem;
+      font-size:.7rem; font-weight:700;
+    }
+    .topbar-sep { width:1px; height:22px; background:var(--bord2); flex-shrink:0; }
+    .topbar-r { margin-right:auto; display:flex; align-items:center; gap:.5rem; }
+    .ibtn {
+      width:34px; height:34px; border-radius:var(--radius-sm);
+      background:var(--surf2); border:1px solid var(--border);
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; color:var(--text2); flex-shrink:0; text-decoration:none;
+      transition:background .18s,color .18s,transform .12s;
+    }
+    .ibtn:hover { background:var(--surf3); color:var(--text); }
+    .ibtn:active { transform:scale(.93); }
+    .ibtn svg { width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round; }
+    .ibtn-danger:hover { background:rgba(242,95,122,.1); color:var(--danger); border-color:rgba(242,95,122,.25); }
+
+    /* ── Layout ── */
+    .layout { display:flex; flex:1; overflow:hidden; min-height:0; }
+
+    /* ── Sidebar ── */
+    .nav-sidebar {
+      width:220px; flex-shrink:0; background:var(--surf);
+      border-left:1px solid var(--border); display:flex; flex-direction:column;
+      padding:.75rem .6rem; gap:.2rem; transition:background .3s;
+    }
+    .nav-label { font-size:.6rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--text3); padding:.3rem .55rem .5rem; }
+    .nav-btn {
+      display:flex; align-items:center; gap:.6rem; padding:.65rem .7rem;
+      border-radius:var(--radius-sm); cursor:pointer; color:var(--text2);
+      font-family:'Alexandria',sans-serif; font-size:.84rem; font-weight:600;
+      background:none; border:none; width:100%; text-align:right;
+      transition:background .15s,color .15s;
+    }
+    .nav-btn:hover { background:var(--surf2); color:var(--text); }
+    .nav-btn.active { background:rgba(79,142,247,.1); color:var(--accent); }
+    .nav-btn svg { width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round; flex-shrink:0; }
+    .nav-count { margin-right:auto; background:var(--surf3); border-radius:20px; padding:.1rem .45rem; font-size:.68rem; color:var(--text3); }
+
+    /* ── Main content ── */
+    .main { flex:1; overflow-y:auto; padding:1.6rem; display:flex; flex-direction:column; gap:1.25rem; min-width:0; }
+    .main::-webkit-scrollbar { width:4px; }
+    .main::-webkit-scrollbar-thumb { background:var(--bord2); border-radius:4px; }
+
+    .page { display:none; flex-direction:column; gap:1.25rem; }
+    .page.active { display:flex; }
+
+    /* ── Section card ── */
+    .card {
+      background:var(--surf); border:1px solid var(--border);
+      border-radius:var(--radius); padding:1.25rem 1.4rem;
+      transition:background .3s;
+    }
+    .card-title { font-size:.95rem; font-weight:700; margin-bottom:1rem; display:flex; align-items:center; gap:.5rem; }
+    .card-title svg { width:16px;height:16px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round; }
+
+    /* ── Stats ── */
+    .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:.75rem; }
+    .stat-card {
+      background:var(--surf2); border:1px solid var(--border);
+      border-radius:var(--radius-sm); padding:1rem 1.1rem;
+    }
+    .stat-val { font-size:1.7rem; font-weight:800; letter-spacing:-.03em; }
+    .stat-lbl { font-size:.73rem; color:var(--text3); margin-top:.2rem; }
+    .stat-card.blue .stat-val { color:var(--accent); }
+    .stat-card.purple .stat-val { color:var(--accent2); }
+    .stat-card.green .stat-val { color:var(--green); }
+
+    /* ── Form row ── */
+    .form-row { display:flex; gap:.6rem; flex-wrap:wrap; }
+    .inp {
+      flex:1; min-width:140px; background:var(--surf2); border:1px solid var(--border);
+      border-radius:var(--radius-sm); padding:.62rem .85rem;
+      color:var(--text); font-family:'Alexandria',sans-serif; font-size:.86rem;
+      outline:none; transition:border-color .2s,background .2s;
+    }
+    .inp:focus { border-color:rgba(79,142,247,.45); background:var(--surf3); }
+    .inp::placeholder { color:var(--text3); }
+    textarea.inp {min-height:130px; resize: vertical; width: 100%; }
+
+    .btn {
+      display:inline-flex; align-items:center; gap:.4rem; padding:.62rem 1.1rem;
+      border-radius:var(--radius-sm); border:none; cursor:pointer; font-weight:700;
+      font-family:'Alexandria',sans-serif; font-size:.84rem; white-space:nowrap;
+      transition:opacity .18s,transform .12s;
+    }
+    .btn:active { transform:scale(.96); }
+    .btn-primary { background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; }
+    .btn-primary:hover { opacity:.88; }
+    .btn-danger { background:rgba(242,95,122,.12); border:1px solid rgba(242,95,122,.25); color:var(--danger); }
+    .btn-danger:hover { background:rgba(242,95,122,.22); }
+    .btn-ghost { background:var(--surf2); border:1px solid var(--border); color:var(--text2); }
+    .btn-ghost:hover { background:var(--surf3); color:var(--text); }
+    .btn svg { width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round; }
+
+    /* ── Table ── */
+    .tbl-wrap { overflow-x:auto; margin-top:.75rem; }
+    table { width:100%; border-collapse:collapse; font-size:.84rem; }
+    th { text-align:right; padding:.5rem .75rem; font-size:.65rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text3); border-bottom:1px solid var(--border); white-space:nowrap; }
+    td { padding:.6rem .75rem; border-bottom:1px solid var(--border); color:var(--text2); vertical-align:middle; }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:var(--surf2); }
+    .td-email { color:var(--text); font-weight:600; }
+    .td-pw { font-family:monospace; font-size:.8rem; color:var(--text3); letter-spacing:.04em; cursor:pointer; user-select:none; }
+    .td-pw:hover { color:var(--text2); }
+    .td-actions { display:flex; gap:.35rem; justify-content:flex-end; }
+    .row-btn {
+      width:28px; height:28px; border-radius:7px; border:1px solid var(--border);
+      background:var(--surf2); cursor:pointer; display:flex; align-items:center; justify-content:center;
+      color:var(--text3); transition:background .15s,color .15s;
+    }
+    .row-btn:hover { background:var(--surf3); color:var(--text2); }
+    .row-btn.del:hover { background:rgba(242,95,122,.1); color:var(--danger); border-color:rgba(242,95,122,.25); }
+    .row-btn svg { width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round; }
+
+    /* ── Filter pill ── */
+    .filter-list { display:flex; flex-direction:column; gap:.5rem; margin-top:.75rem; }
+    .filter-item {
+      display:flex; align-items:center; gap:.75rem;
+      background:var(--surf2); border:1px solid var(--border);
+      border-radius:var(--radius-sm); padding:.65rem 1rem;
+      transition:background .15s;
+    }
+    .filter-item.disabled { opacity:.45; }
+    .filter-pattern { flex:1; font-size:.86rem; font-weight:600; color:var(--text); word-break:break-all; }
+    .filter-badge {
+      font-size:.68rem; font-weight:700; padding:.2rem .5rem; border-radius:20px;
+      background:rgba(34,197,94,.1); border:1px solid rgba(34,197,94,.25); color:var(--green); white-space:nowrap;
+    }
+    .filter-badge.off { background:rgba(61,79,102,.2); border-color:var(--border); color:var(--text3); }
+    .toggle-sw {
+      width:36px; height:20px; background:var(--surf3); border:1px solid var(--border);
+      border-radius:20px; cursor:pointer; position:relative; flex-shrink:0;
+      transition:background .2s,border-color .2s;
+    }
+    .toggle-sw.on { background:rgba(34,197,94,.3); border-color:rgba(34,197,94,.4); }
+    .toggle-sw::after {
+      content:''; position:absolute; top:2px; right:2px; width:14px; height:14px;
+      background:#fff; border-radius:50%; transition:transform .2s;
+      box-shadow:0 1px 3px rgba(0,0,0,.3);
+    }
+    .toggle-sw.on::after { transform:translateX(-16px); background:var(--green); }
+
+    /* ── Bulk mode select ── */
+    select.inp { cursor:pointer; }
+
+    /* ── Modal ── */
+    .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:100; backdrop-filter:blur(4px); align-items:center; justify-content:center; }
+    .overlay.show { display:flex; }
+    .modal {
+      background:var(--surf); border:1px solid var(--bord2); border-radius:var(--radius);
+      padding:1.5rem 1.6rem; width:100%; max-width:440px; margin:1rem;
+      animation:cardIn .25s var(--ease) both;
+    }
+    @keyframes cardIn { from{opacity:0;transform:translateY(12px) scale(.98)} to{opacity:1;transform:none} }
+    .modal-title { font-size:1rem; font-weight:700; margin-bottom:1.1rem; }
+    .modal-row { margin-bottom:.85rem; }
+    .modal-label { display:block; font-size:.68rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text3); margin-bottom:.35rem; }
+    .modal-actions { display:flex; gap:.5rem; justify-content:flex-end; margin-top:1.1rem; }
+
+    /* ── Toast ── */
+    .toast-rack { position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%); z-index:999; display:flex; flex-direction:column-reverse; gap:.4rem; pointer-events:none; }
+    .toast { display:flex; align-items:center; gap:.55rem; background:var(--text); color:var(--bg); border-radius:30px; padding:.55rem 1rem; font-size:.82rem; font-weight:700; font-family:'Alexandria',sans-serif; white-space:nowrap; pointer-events:none; box-shadow:0 8px 24px rgba(0,0,0,.3); animation:toastIn .3s var(--ease) both; }
+    .toast.err { background:#f25f7a; color:#fff; }
+    .toast.out { animation:toastOut .3s var(--ease) both; }
+    @keyframes toastIn { from{opacity:0;transform:translateY(12px) scale(.9)} to{opacity:1;transform:none} }
+    @keyframes toastOut { from{opacity:1} to{opacity:0;transform:translateY(8px) scale(.92)} }
+
+    /* ── Bulk result ── */
+    .bulk-result {
+      display:none; background:var(--surf2); border:1px solid var(--border);
+      border-radius:var(--radius-sm); padding:.85rem 1rem; font-size:.83rem; line-height:1.7; margin-top:.75rem;
+    }
+    .bulk-result.show { display:block; }
+    .bulk-result .ok { color:var(--green); font-weight:700; }
+    .bulk-result .warn { color:var(--amber); font-weight:700; }
+    .bulk-result .er { color:var(--danger); font-size:.78rem; margin-top:.4rem; }
+
+    /* ── Empty state ── */
+    .empty-state { text-align:center; padding:2rem; color:var(--text3); font-size:.86rem; }
+
+    /* ── Search bar ── */
+    .search-bar { position:relative; }
+    .search-bar .inp { padding-right:2.2rem; }
+    .search-ico { position:absolute; left:.7rem; top:50%; transform:translateY(-50%); color:var(--text3); pointer-events:none; display:flex; }
+    .search-ico svg { width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round; }
+
+    @media(max-width:640px) {
+      .nav-sidebar { width:52px; }
+      .nav-btn span, .nav-label, .nav-count { display:none; }
+      .main { padding:1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Topbar -->
+<header class="topbar">
+  <a class="logo" href="#">
+    <div class="logo-mark"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg></div>
+    <span class="logo-name">MailBox</span>
+  </a>
+  <div class="topbar-sep"></div>
+  <span class="admin-chip">🔐 لوحة التحكم</span>
+  <div class="topbar-r">
+    <button class="ibtn" id="themeBtn" title="تبديل المظهر">
+      <svg id="iMoon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg id="iSun"  viewBox="0 0 24 24" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg>
+    </button>
+    <a class="ibtn ibtn-danger" href="/admin/logout" title="تسجيل الخروج">
+      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </a>
+  </div>
+</header>
+
+<!-- Layout -->
+<div class="layout">
+
+  <!-- Sidebar nav -->
+  <nav class="nav-sidebar">
+    <div class="nav-label">القائمة</div>
+    <button class="nav-btn active" data-page="overview">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span>نظرة عامة</span>
+    </button>
+    <button class="nav-btn" data-page="users">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span>المستخدمون</span>
+      <span class="nav-count" id="navUserCount">0</span>
+    </button>
+    <button class="nav-btn" data-page="bulk">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <span>إضافة جماعية</span>
+    </button>
+    <button class="nav-btn" data-page="filters">
+      <svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+      <span>فلاتر الموضوع</span>
+      <span class="nav-count" id="navFilterCount">0</span>
+    </button>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- ── Overview ── -->
+    <div class="page active" id="page-overview">
+      <div class="stats-row">
+        <div class="stat-card blue">
+          <div class="stat-val" id="statUsers">—</div>
+          <div class="stat-lbl">إجمالي المستخدمين</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-val" id="statFilters">—</div>
+          <div class="stat-lbl">فلاتر الموضوع</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-val" id="statActiveFilters">—</div>
+          <div class="stat-lbl">فلاتر مفعّلة</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          كيفية الاستخدام
+        </div>
+        <div style="font-size:.86rem;color:var(--text2);line-height:2;display:flex;flex-direction:column;gap:.5rem;">
+          <div>📋 <strong>المستخدمون</strong> — أضف وعدّل واحذف حسابات البريد الإلكتروني المخزّنة في MongoDB</div>
+          <div>⚡ <strong>الإضافة الجماعية</strong> — أدخل مئات الحسابات دفعة واحدة بتنسيق <code style="background:var(--surf2);padding:.1rem .35rem;border-radius:5px;font-family:monospace">email:password</code></div>
+          <div>🔍 <strong>فلاتر الموضوع</strong> — حدّد كلمات مفتاحية يجب أن يحتوي عليها موضوع الرسالة حتى تظهر في صندوق الوارد. إذا لم يوجد أي فلتر مفعّل، تُعرض جميع الرسائل.</div>
+          <div>🌐 عنوان POP3 المستخدم: <code style="background:var(--surf2);padding:.1rem .35rem;border-radius:5px;font-family:monospace">pop3.kuku.lu:995</code></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Users ── -->
+    <div class="page" id="page-users">
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          إضافة مستخدم جديد
+        </div>
+        <div class="form-row">
+          <input class="inp" id="newEmail" type="email" placeholder="البريد الإلكتروني" />
+          <input class="inp" id="newPass"  type="text"  placeholder="كلمة المرور" />
+          <button class="btn btn-primary" id="addUserBtn">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            إضافة
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          المستخدمون
+          <span style="margin-right:auto;font-size:.72rem;color:var(--text3)" id="userCountLbl"></span>
+        </div>
+        <div class="search-bar">
+          <div class="search-ico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+          <input class="inp" id="userSearch" placeholder="بحث بالبريد الإلكتروني…" style="padding-right:2.2rem" />
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>البريد الإلكتروني</th>
+                <th>كلمة المرور</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="usersTbody">
+              <tr><td colspan="3" class="empty-state">جارٍ التحميل…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Bulk ── -->
+    <div class="page" id="page-bulk">
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          إضافة جماعية
+        </div>
+        <div style="font-size:.82rem;color:var(--text2);margin-bottom:.9rem;line-height:1.7;">
+          أدخل كل حساب في سطر منفصل بالتنسيق: <code style="background:var(--surf2);padding:.1rem .4rem;border-radius:5px;font-family:monospace">email:password</code>
+        </div>
+        <textarea class="inp" id="bulkText" placeholder="user1@example.com:password1&#10;user2@example.com:password2&#10;user3@example.com:password3"></textarea>
+        <div class="form-row" style="margin-top:.75rem;">
+          <select class="inp" id="bulkMode" style="flex:0 0 auto;width:auto;">
+            <option value="skip">تجاهل المكررات</option>
+            <option value="overwrite">استبدال المكررات</option>
+          </select>
+          <button class="btn btn-primary" id="bulkBtn">
+            <svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+            رفع الجميع
+          </button>
+        </div>
+        <div class="bulk-result" id="bulkResult"></div>
+      </div>
+    </div>
+
+    <!-- ── Filters ── -->
+    <div class="page" id="page-filters">
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          إضافة فلتر جديد
+        </div>
+        <div style="font-size:.82rem;color:var(--text2);margin-bottom:.9rem;line-height:1.7;">
+          أدخل نصاً يجب أن يحتوي عليه موضوع الرسالة. مثال: <code style="background:var(--surf2);padding:.1rem .4rem;border-radius:5px;font-family:monospace">Netflix: Your sign-in code</code>
+        </div>
+        <div class="form-row">
+          <input class="inp" id="newFilter" type="text" placeholder="موضوع أو جزء من الموضوع…" />
+          <button class="btn btn-primary" id="addFilterBtn">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            إضافة
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          الفلاتر الحالية
+          <span style="margin-right:auto;font-size:.72rem;color:var(--text3)">إذا لم يوجد فلتر مفعّل تظهر جميع الرسائل</span>
+        </div>
+        <div class="filter-list" id="filterList">
+          <div class="empty-state">جارٍ التحميل…</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Edit User Modal -->
+<div class="overlay" id="editOverlay">
+  <div class="modal">
+    <div class="modal-title">✏️ تعديل المستخدم</div>
+    <input type="hidden" id="editOrigEmail" />
+    <div class="modal-row">
+      <label class="modal-label">البريد الإلكتروني</label>
+      <input class="inp" id="editEmail" type="email" placeholder="user@example.com" style="width:100%" />
+    </div>
+    <div class="modal-row">
+      <label class="modal-label">كلمة المرور</label>
+      <input class="inp" id="editPass" type="text" placeholder="كلمة المرور" style="width:100%" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="editCancelBtn">إلغاء</button>
+      <button class="btn btn-primary" id="editSaveBtn">حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toasts -->
+<div class="toast-rack" id="toastRack"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ── Theme ── */
+const html = document.documentElement;
+const moon = document.getElementById('iMoon');
+const sun  = document.getElementById('iSun');
+function applyTheme(t){ html.setAttribute('data-theme',t); localStorage.setItem('mb-theme',t); moon.style.display=t==='dark'?'block':'none'; sun.style.display=t==='light'?'block':'none'; }
+applyTheme(localStorage.getItem('mb-theme')||'dark');
+document.getElementById('themeBtn').onclick=()=>applyTheme(html.getAttribute('data-theme')==='dark'?'light':'dark');
+
+/* ── Toast ── */
+function toast(msg, isErr=false){
+  const rack=document.getElementById('toastRack');
+  const el=document.createElement('div');
+  el.className='toast'+(isErr?' err':'');
+  el.textContent=msg;
+  rack.appendChild(el);
+  setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>el.remove(),300); },2400);
+}
+
+/* ── Nav ── */
+document.querySelectorAll('.nav-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('page-'+btn.dataset.page).classList.add('active');
+    if(btn.dataset.page==='users') loadUsers();
+    if(btn.dataset.page==='filters') loadFilters();
+  });
+});
+
+/* ── State ── */
+let allUsers = [];
+let allFilters = [];
+
+/* ── API helpers ── */
+async function api(url, method='GET', body=null){
+  const opts={ method, headers:{'Content-Type':'application/json'} };
+  if(body) opts.body=JSON.stringify(body);
+  const r=await fetch(url,opts);
+  return r.json();
+}
+
+/* ── Load overview stats ── */
+async function loadStats(){
+  const [ud, fd] = await Promise.all([api('/admin/api/users'), api('/admin/api/filters')]);
+  const uc = ud.users?.length||0;
+  const fc = fd.filters?.length||0;
+  const ac = fd.filters?.filter(f=>f.enabled).length||0;
+  document.getElementById('statUsers').textContent=uc;
+  document.getElementById('statFilters').textContent=fc;
+  document.getElementById('statActiveFilters').textContent=ac;
+  document.getElementById('navUserCount').textContent=uc;
+  document.getElementById('navFilterCount').textContent=fc;
+}
+loadStats();
+
+/* ── Users ── */
+async function loadUsers(){
+  const data=await api('/admin/api/users');
+  allUsers=data.users||[];
+  renderUsers(allUsers);
+}
+
+function renderUsers(users){
+  const tb=document.getElementById('usersTbody');
+  document.getElementById('userCountLbl').textContent=users.length+' مستخدم';
+  if(!users.length){
+    tb.innerHTML='<tr><td colspan="3" class="empty-state">لا يوجد مستخدمون</td></tr>';
+    return;
+  }
+  tb.innerHTML=users.map(u=>`
+    <tr data-email="${esc(u.email)}">
+      <td class="td-email">${esc(u.email)}</td>
+      <td class="td-pw" title="اضغط لرؤية كلمة المرور" data-pw="${esc(u.password)}">••••••••</td>
+      <td><div class="td-actions">
+        <button class="row-btn edit-btn" title="تعديل"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        <button class="row-btn del del-btn" title="حذف"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
+      </div></td>
+    </tr>
+  `).join('');
+
+  tb.querySelectorAll('.td-pw').forEach(td=>{
+    td.addEventListener('click',()=>{
+      if(td.textContent==='••••••••') td.textContent=td.dataset.pw;
+      else td.textContent='••••••••';
+    });
+  });
+  tb.querySelectorAll('.edit-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const row=btn.closest('tr');
+      const email=row.dataset.email;
+      const user=allUsers.find(u=>u.email===email);
+      openEdit(user);
+    });
+  });
+  tb.querySelectorAll('.del-btn').forEach(btn=>{
+    btn.addEventListener('click',async()=>{
+      const email=btn.closest('tr').dataset.email;
+      if(!confirm('حذف '+email+'؟')) return;
+      const d=await api('/admin/api/users/'+encodeURIComponent(email),'DELETE');
+      if(d.ok){ toast('تم الحذف'); loadUsers(); loadStats(); }
+      else toast(d.error||'خطأ',true);
+    });
+  });
+}
+
+document.getElementById('userSearch').addEventListener('input',function(){
+  const q=this.value.toLowerCase();
+  renderUsers(q?allUsers.filter(u=>u.email.toLowerCase().includes(q)):allUsers);
+});
+
+document.getElementById('addUserBtn').addEventListener('click',async()=>{
+  const em=document.getElementById('newEmail').value.trim();
+  const pw=document.getElementById('newPass').value.trim();
+  if(!em||!pw){ toast('أدخل البريد وكلمة المرور',true); return; }
+  const d=await api('/admin/api/users','POST',{email:em,password:pw});
+  if(d.ok){
+    toast('تمت الإضافة ✓');
+    document.getElementById('newEmail').value='';
+    document.getElementById('newPass').value='';
+    loadUsers(); loadStats();
+  } else toast(d.error||'خطأ',true);
+});
+
+/* ── Edit modal ── */
+function openEdit(user){
+  document.getElementById('editOrigEmail').value=user.email;
+  document.getElementById('editEmail').value=user.email;
+  document.getElementById('editPass').value=user.password;
+  document.getElementById('editOverlay').classList.add('show');
+}
+document.getElementById('editCancelBtn').onclick=()=>document.getElementById('editOverlay').classList.remove('show');
+document.getElementById('editOverlay').addEventListener('click',e=>{ if(e.target===e.currentTarget) e.currentTarget.classList.remove('show'); });
+document.getElementById('editSaveBtn').addEventListener('click',async()=>{
+  const orig=document.getElementById('editOrigEmail').value;
+  const em=document.getElementById('editEmail').value.trim();
+  const pw=document.getElementById('editPass').value.trim();
+  if(!em||!pw){ toast('أدخل البريد وكلمة المرور',true); return; }
+  const d=await api('/admin/api/users/'+encodeURIComponent(orig),'PUT',{email:em,password:pw});
+  if(d.ok){
+    toast('تم التعديل ✓');
+    document.getElementById('editOverlay').classList.remove('show');
+    loadUsers(); loadStats();
+  } else toast(d.error||'خطأ',true);
+});
+
+/* ── Bulk ── */
+document.getElementById('bulkBtn').addEventListener('click',async()=>{
+  const text=document.getElementById('bulkText').value;
+  const mode=document.getElementById('bulkMode').value;
+  if(!text.trim()){ toast('أدخل نصاً أولاً',true); return; }
+  const btn=document.getElementById('bulkBtn');
+  btn.disabled=true; btn.textContent='جارٍ الرفع…';
+  const d=await api('/admin/api/users/bulk','POST',{text,mode});
+  btn.disabled=false; btn.innerHTML='<svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg> رفع الجميع';
+  const res=document.getElementById('bulkResult');
+  res.classList.add('show');
+  res.innerHTML=`
+    <span class="ok">✓ تمت إضافة: ${d.added}</span> &nbsp;|&nbsp;
+    <span class="warn">تكرار/تجاوز: ${d.skipped}</span> &nbsp;|&nbsp;
+    <span style="color:var(--danger)">أخطاء: ${d.errors}</span>
+    ${d.error_details&&d.error_details.length?'<div class="er">'+d.error_details.map(e=>'• '+esc(e)).join('<br/>')+'</div>':''}
+  `;
+  loadStats();
+});
+
+/* ── Filters ── */
+async function loadFilters(){
+  const data=await api('/admin/api/filters');
+  allFilters=data.filters||[];
+  renderFilters(allFilters);
+  document.getElementById('navFilterCount').textContent=allFilters.length;
+}
+
+function renderFilters(filters){
+  const list=document.getElementById('filterList');
+  if(!filters.length){
+    list.innerHTML='<div class="empty-state">لا توجد فلاتر — تُعرض جميع الرسائل</div>';
+    return;
+  }
+  list.innerHTML=filters.map(f=>`
+    <div class="filter-item${f.enabled?'':' disabled'}" data-id="${esc(f.id)}">
+      <div class="toggle-sw${f.enabled?' on':''}" data-id="${esc(f.id)}" data-enabled="${f.enabled}"></div>
+      <div class="filter-pattern">${esc(f.pattern)}</div>
+      <span class="filter-badge${f.enabled?'':' off'}">${f.enabled?'مفعّل':'معطّل'}</span>
+      <button class="row-btn del" data-id="${esc(f.id)}" title="حذف">
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      </button>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('.toggle-sw').forEach(sw=>{
+    sw.addEventListener('click',async()=>{
+      const id=sw.dataset.id;
+      const enabled=sw.dataset.enabled==='true';
+      const d=await api('/admin/api/filters/'+id,'PUT',{enabled:!enabled});
+      if(d.ok){ loadFilters(); loadStats(); }
+      else toast(d.error||'خطأ',true);
+    });
+  });
+  list.querySelectorAll('.del').forEach(btn=>{
+    btn.addEventListener('click',async()=>{
+      const id=btn.dataset.id;
+      if(!confirm('حذف هذا الفلتر؟')) return;
+      const d=await api('/admin/api/filters/'+id,'DELETE');
+      if(d.ok){ toast('تم حذف الفلتر'); loadFilters(); loadStats(); }
+      else toast(d.error||'خطأ',true);
+    });
+  });
+}
+
+document.getElementById('addFilterBtn').addEventListener('click',async()=>{
+  const pattern=document.getElementById('newFilter').value.trim();
+  if(!pattern){ toast('أدخل نصاً للفلتر',true); return; }
+  const d=await api('/admin/api/filters','POST',{pattern});
+  if(d.ok||d.id){
+    toast('تمت إضافة الفلتر ✓');
+    document.getElementById('newFilter').value='';
+    loadFilters(); loadStats();
+  } else toast(d.error||'خطأ',true);
+});
+
+/* ── Escape ── */
+function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+})();
+</script>
+</body>
+</html>
