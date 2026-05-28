@@ -5,64 +5,282 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Farouk Account — لوحة التحكم</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.383.0/dist/umd/lucide.min.js"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-    :root{--accent:#4f8ef7;--accent2:#7c5ef5;--green:#22c55e;--teal:#00c9a7;--amber:#f59e0b;--danger:#f25f7a;--radius:14px;--radius-sm:9px;--ease:cubic-bezier(.4,0,.2,1);}
-    [data-theme="dark"]{--bg:#06090f;--surf:#0d1525;--surf2:#121e30;--surf3:#1a2840;--border:rgba(255,255,255,.07);--bord2:rgba(255,255,255,.12);--text:#e2e8f4;--text2:#7d8fa8;--text3:#3d4f66;--shadow:0 24px 60px rgba(0,0,0,.6);}
-    [data-theme="light"]{--bg:#f1f5fb;--surf:#ffffff;--surf2:#f7f9fd;--surf3:#edf1f8;--border:rgba(0,0,0,.07);--bord2:rgba(0,0,0,.12);--text:#0f172a;--text2:#475569;--text3:#94a3b8;--shadow:0 24px 60px rgba(0,0,0,.12);}
+
+    :root{
+      --accent:#4f8ef7;--accent2:#7c5ef5;--green:#22c55e;--teal:#00c9a7;
+      --amber:#f59e0b;--danger:#f25f7a;--radius:16px;--radius-sm:10px;
+      --ease:cubic-bezier(.4,0,.2,1);--ease-spring:cubic-bezier(.34,1.56,.64,1);
+    }
+    [data-theme="dark"]{
+      --bg:#05080f;--surf:#0c1422;--surf2:#111c2e;--surf3:#18273d;--surf4:#1f304a;
+      --border:rgba(255,255,255,.06);--bord2:rgba(255,255,255,.11);
+      --text:#dde8f5;--text2:#6d82a0;--text3:#354b66;
+      --shadow:0 32px 80px rgba(0,0,0,.7);
+      --glow-blue:rgba(79,142,247,.2);--glow-purple:rgba(124,94,245,.2);
+    }
+    [data-theme="light"]{
+      --bg:#eef2f9;--surf:#ffffff;--surf2:#f5f8fd;--surf3:#ebf0f8;--surf4:#dce5f3;
+      --border:rgba(0,0,0,.07);--bord2:rgba(0,0,0,.12);
+      --text:#0c1a2e;--text2:#4a5f7a;--text3:#8ea0bc;
+      --shadow:0 24px 60px rgba(0,0,0,.1);
+      --glow-blue:rgba(79,142,247,.1);--glow-purple:rgba(124,94,245,.1);
+    }
+
     html,body{height:100%;}
-    body{font-family:'Alexandria',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;transition:background .3s,color .3s;}
-    .topbar{height:60px;flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 1.25rem;gap:.75rem;position:relative;}
-    .topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--danger),var(--accent2),transparent);opacity:.4;}
-    .logo{display:flex;align-items:center;gap:.55rem;text-decoration:none;}
-    .logo-mark{width:32px;height:32px;border-radius:9px;flex-shrink:0;background:linear-gradient(135deg,var(--danger),var(--accent2));display:flex;align-items:center;justify-content:center;box-shadow:0 3px 12px rgba(242,95,122,.4);}
-    .logo-mark svg{width:15px;height:15px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
-    .logo-name{font-size:1.05rem;font-weight:800;background:linear-gradient(90deg,var(--danger),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-    .admin-chip{background:rgba(242,95,122,.1);border:1px solid rgba(242,95,122,.25);color:var(--danger);border-radius:20px;padding:.2rem .65rem;font-size:.7rem;font-weight:700;}
-    .topbar-r{margin-right:auto;display:flex;align-items:center;gap:.5rem;}
-    .admin-user{font-size:.78rem;color:var(--text2);}
-    .ibtn{width:34px;height:34px;border-radius:var(--radius-sm);background:var(--surf2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);flex-shrink:0;text-decoration:none;transition:background .18s,color .18s;}
-    .ibtn:hover{background:var(--surf3);color:var(--text);}
-    .ibtn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+    body{
+      font-family:'Alexandria',sans-serif;background:var(--bg);color:var(--text);
+      display:flex;flex-direction:column;transition:background .35s,color .35s;
+    }
+
+    /* ═══ TOPBAR ═══ */
+    .topbar{
+      height:62px;flex-shrink:0;background:var(--surf);
+      border-bottom:1px solid var(--border);
+      display:flex;align-items:center;padding:0 1.4rem;gap:.9rem;
+      position:relative;z-index:40;
+    }
+    .topbar::after{
+      content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+      background:linear-gradient(90deg,transparent 0%,var(--danger) 30%,var(--accent2) 60%,transparent 100%);
+      opacity:.5;
+    }
+    .logo{display:flex;align-items:center;gap:.6rem;text-decoration:none;}
+    .logo-mark{
+      width:34px;height:34px;border-radius:10px;flex-shrink:0;
+      background:linear-gradient(135deg,var(--danger),var(--accent2));
+      display:flex;align-items:center;justify-content:center;
+      box-shadow:0 4px 16px rgba(242,95,122,.4);
+      transition:transform .25s var(--ease-spring),box-shadow .25s;
+    }
+    .logo-mark:hover{transform:scale(1.08) rotate(-3deg);box-shadow:0 6px 24px rgba(242,95,122,.55);}
+    .logo-mark svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+    .logo-name{
+      font-size:1.05rem;font-weight:800;
+      background:linear-gradient(90deg,var(--danger),var(--accent2));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.01em;
+    }
+    .admin-chip{
+      display:inline-flex;align-items:center;gap:.35rem;
+      background:rgba(242,95,122,.08);border:1px solid rgba(242,95,122,.2);
+      color:var(--danger);border-radius:20px;padding:.22rem .75rem;
+      font-size:.68rem;font-weight:700;letter-spacing:.04em;
+    }
+    .topbar-r{margin-right:auto;display:flex;align-items:center;gap:.55rem;}
+    .admin-user{
+      font-size:.78rem;color:var(--text2);padding:.22rem .65rem;
+      background:var(--surf2);border:1px solid var(--border);border-radius:20px;
+    }
+    .ibtn{
+      width:36px;height:36px;border-radius:var(--radius-sm);
+      background:var(--surf2);border:1px solid var(--border);
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;color:var(--text2);flex-shrink:0;text-decoration:none;
+      transition:background .18s,color .18s,transform .15s,border-color .18s;
+    }
+    .ibtn:hover{background:var(--surf3);color:var(--text);transform:scale(1.05);}
+    .ibtn:active{transform:scale(.93);}
+    .ibtn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
     .ibtn-danger:hover{background:rgba(242,95,122,.1);color:var(--danger);border-color:rgba(242,95,122,.25);}
+
+    /* ═══ LAYOUT ═══ */
     .layout{display:flex;flex:1;overflow:hidden;min-height:0;}
-    .nav-sidebar{width:220px;flex-shrink:0;background:var(--surf);border-left:1px solid var(--border);display:flex;flex-direction:column;padding:.75rem .6rem;gap:.1rem;}
-    .nav-label{font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);padding:.3rem .55rem .5rem;}
-    .nav-btn{display:flex;align-items:center;gap:.6rem;padding:.65rem .7rem;border-radius:var(--radius-sm);cursor:pointer;color:var(--text2);font-family:'Alexandria',sans-serif;font-size:.84rem;font-weight:600;background:none;border:none;width:100%;text-align:right;transition:background .15s,color .15s;}
-    .nav-btn:hover{background:var(--surf2);color:var(--text);}
-    .nav-btn.active{background:rgba(79,142,247,.1);color:var(--accent);}
-    .nav-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
-    .nav-count{margin-right:auto;background:var(--surf3);border-radius:20px;padding:.1rem .45rem;font-size:.68rem;color:var(--text3);}
-    .main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;gap:1.1rem;min-width:0;}
+
+    /* ═══ SIDEBAR ═══ */
+    .nav-sidebar{
+      width:228px;flex-shrink:0;background:var(--surf);
+      border-left:1px solid var(--border);
+      display:flex;flex-direction:column;padding:.85rem .65rem;gap:.08rem;
+      transition:background .3s;position:relative;
+    }
+    .nav-sidebar::before{
+      content:'';position:absolute;top:0;right:0;bottom:0;width:1px;
+      background:linear-gradient(180deg,transparent,var(--accent2),var(--accent),transparent);
+      opacity:.15;pointer-events:none;
+    }
+    .nav-label{
+      font-size:.58rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+      color:var(--text3);padding:.5rem .6rem .4rem;
+    }
+    .nav-btn{
+      display:flex;align-items:center;gap:.65rem;padding:.68rem .75rem;
+      border-radius:var(--radius-sm);cursor:pointer;color:var(--text2);
+      font-family:'Alexandria',sans-serif;font-size:.83rem;font-weight:600;
+      background:none;border:none;width:100%;text-align:right;
+      transition:background .15s,color .15s,transform .12s;position:relative;
+    }
+    .nav-btn:hover{background:var(--surf2);color:var(--text);transform:translateX(-2px);}
+    .nav-btn.active{
+      background:linear-gradient(135deg,rgba(79,142,247,.12),rgba(124,94,245,.08));
+      color:var(--accent);
+      box-shadow:inset 0 0 0 1px rgba(79,142,247,.15);
+    }
+    .nav-btn.active::before{
+      content:'';position:absolute;right:0;top:20%;bottom:20%;width:2.5px;
+      background:linear-gradient(180deg,var(--accent),var(--accent2));
+      border-radius:4px;
+    }
+    .nav-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+    .nav-count{
+      margin-right:auto;
+      background:linear-gradient(135deg,rgba(79,142,247,.15),rgba(124,94,245,.1));
+      border:1px solid rgba(79,142,247,.15);
+      border-radius:20px;padding:.1rem .5rem;font-size:.65rem;color:var(--accent);font-weight:700;
+      transition:transform .2s var(--ease-spring);
+    }
+    .nav-btn:hover .nav-count{transform:scale(1.1);}
+
+    /* ═══ MAIN ═══ */
+    .main{flex:1;overflow-y:auto;padding:1.75rem;display:flex;flex-direction:column;gap:1.25rem;min-width:0;}
     .main::-webkit-scrollbar{width:4px;}
     .main::-webkit-scrollbar-thumb{background:var(--bord2);border-radius:4px;}
-    .page{display:none;flex-direction:column;gap:1.1rem;}
+    .page{display:none;flex-direction:column;gap:1.25rem;animation:pageIn .3s var(--ease) both;}
     .page.active{display:flex;}
-    .card{background:var(--surf);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem 1.3rem;}
-    .card-title{font-size:.9rem;font-weight:700;margin-bottom:.9rem;display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;}
-    .card-title svg{width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
-    .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.65rem;}
-    .stat{background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.9rem 1rem;}
-    .stat-val{font-size:1.65rem;font-weight:800;letter-spacing:-.03em;}
-    .stat-lbl{font-size:.72rem;color:var(--text3);margin-top:.15rem;}
+    @keyframes pageIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+    /* ═══ CARDS ═══ */
+    .card{
+      background:var(--surf);border:1px solid var(--border);
+      border-radius:var(--radius);padding:1.3rem 1.5rem;
+      transition:background .3s,border-color .2s;
+      position:relative;overflow:hidden;
+    }
+    .card::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:1px;
+      background:linear-gradient(90deg,transparent,rgba(79,142,247,.2),transparent);
+      pointer-events:none;
+    }
+    .card-title{
+      font-size:.9rem;font-weight:700;margin-bottom:1rem;
+      display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;
+    }
+    .card-title svg{width:15px;height:15px;stroke:var(--accent);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+    .card-title-icon{
+      width:28px;height:28px;border-radius:8px;
+      background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.15);
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    }
+
+    /* ═══ STAT CARDS ═══ */
+    .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:.75rem;}
+    .stat{
+      background:var(--surf2);border:1px solid var(--border);
+      border-radius:var(--radius-sm);padding:1.05rem 1.15rem;
+      position:relative;overflow:hidden;
+      transition:transform .2s var(--ease-spring),box-shadow .2s,border-color .2s;
+    }
+    .stat:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.2);}
+    .stat::after{
+      content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+      border-radius:0 0 var(--radius-sm) var(--radius-sm);
+    }
+    .stat.blue::after{background:linear-gradient(90deg,var(--accent),transparent);}
+    .stat.green::after{background:linear-gradient(90deg,var(--green),transparent);}
+    .stat.red::after{background:linear-gradient(90deg,var(--danger),transparent);}
+    .stat.purple::after{background:linear-gradient(90deg,var(--accent2),transparent);}
+    .stat.amber::after{background:linear-gradient(90deg,var(--amber),transparent);}
+    .stat.teal::after{background:linear-gradient(90deg,var(--teal),transparent);}
+
+    .stat-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.5rem;}
+    .stat-icon{
+      width:32px;height:32px;border-radius:8px;
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    }
+    .stat.blue .stat-icon{background:rgba(79,142,247,.12);}
+    .stat.green .stat-icon{background:rgba(34,197,94,.12);}
+    .stat.red .stat-icon{background:rgba(242,95,122,.12);}
+    .stat.purple .stat-icon{background:rgba(124,94,245,.12);}
+    .stat.amber .stat-icon{background:rgba(245,158,11,.12);}
+    .stat.teal .stat-icon{background:rgba(0,201,167,.12);}
+    .stat-icon svg{width:15px;height:15px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+    .stat.blue .stat-icon svg{stroke:var(--accent);}
+    .stat.green .stat-icon svg{stroke:var(--green);}
+    .stat.red .stat-icon svg{stroke:var(--danger);}
+    .stat.purple .stat-icon svg{stroke:var(--accent2);}
+    .stat.amber .stat-icon svg{stroke:var(--amber);}
+    .stat.teal .stat-icon svg{stroke:var(--teal);}
+
+    .stat-val{font-size:1.75rem;font-weight:800;letter-spacing:-.04em;line-height:1;}
+    .stat-lbl{font-size:.7rem;color:var(--text3);margin-top:.3rem;font-weight:500;}
     .stat.blue .stat-val{color:var(--accent);}
-    .stat.purple .stat-val{color:var(--accent2);}
     .stat.green .stat-val{color:var(--green);}
     .stat.red .stat-val{color:var(--danger);}
+    .stat.purple .stat-val{color:var(--accent2);}
     .stat.amber .stat-val{color:var(--amber);}
     .stat.teal .stat-val{color:var(--teal);}
-    .form-row{display:flex;gap:.55rem;flex-wrap:wrap;align-items:flex-end;}
-    .fgroup{display:flex;flex-direction:column;gap:.28rem;flex:1;min-width:120px;}
-    .flabel{font-size:.65rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);}
-    .inp{width:100%;background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.6rem .85rem;color:var(--text);font-family:'Alexandria',sans-serif;font-size:.86rem;outline:none;transition:border-color .2s,background .2s;}
-    .inp:focus{border-color:rgba(79,142,247,.45);background:var(--surf3);}
+
+    /* ═══ CHARTS SECTION ═══ */
+    .charts-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;}
+    .chart-card{
+      background:var(--surf2);border:1px solid var(--border);
+      border-radius:var(--radius-sm);padding:1rem 1.15rem;
+    }
+    .chart-title{font-size:.75rem;font-weight:700;color:var(--text2);margin-bottom:.75rem;display:flex;align-items:center;gap:.4rem;}
+    .chart-title svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+    canvas{display:block;width:100%;}
+
+    /* mini bar chart */
+    .mini-bars{display:flex;align-items:flex-end;gap:3px;height:52px;}
+    .mini-bar{
+      flex:1;border-radius:3px 3px 0 0;min-height:4px;
+      transition:height .6s var(--ease),opacity .3s;
+    }
+    .mini-bar:hover{opacity:.75;cursor:default;}
+    .mini-days{display:flex;gap:3px;margin-top:4px;}
+    .mini-day{flex:1;font-size:.55rem;text-align:center;color:var(--text3);}
+
+    /* donut chart */
+    .donut-wrap{position:relative;width:80px;height:80px;flex-shrink:0;}
+    .donut-wrap svg{transform:rotate(-90deg);}
+    .donut-center{
+      position:absolute;inset:0;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;
+    }
+    .donut-pct{font-size:1.1rem;font-weight:800;color:var(--text);}
+    .donut-lbl{font-size:.58rem;color:var(--text3);margin-top:1px;}
+    .donut-row{display:flex;align-items:center;gap:.75rem;}
+    .donut-legend{display:flex;flex-direction:column;gap:.4rem;flex:1;}
+    .donut-legend-item{display:flex;align-items:center;gap:.4rem;font-size:.72rem;}
+    .donut-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+
+    /* sparkline */
+    .sparkline-wrap{height:48px;overflow:hidden;}
+    .sparkline-nums{display:flex;justify-content:space-between;margin-top:4px;}
+    .sparkline-num{font-size:.58rem;color:var(--text3);}
+
+    /* ═══ FORMS ═══ */
+    .form-row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:flex-end;}
+    .fgroup{display:flex;flex-direction:column;gap:.3rem;flex:1;min-width:120px;}
+    .flabel{font-size:.63rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);}
+    .inp{
+      width:100%;background:var(--surf2);border:1px solid var(--border);
+      border-radius:var(--radius-sm);padding:.62rem .9rem;
+      color:var(--text);font-family:'Alexandria',sans-serif;font-size:.85rem;
+      outline:none;transition:border-color .2s,background .2s,box-shadow .2s;
+    }
+    .inp:focus{
+      border-color:rgba(79,142,247,.5);background:var(--surf3);
+      box-shadow:0 0 0 3px rgba(79,142,247,.08);
+    }
     .inp::placeholder{color:var(--text3);}
     textarea.inp{resize:vertical;min-height:110px;line-height:1.65;}
-    .btn{display:inline-flex;align-items:center;gap:.38rem;padding:.6rem 1rem;border-radius:var(--radius-sm);border:none;cursor:pointer;font-weight:700;font-family:'Alexandria',sans-serif;font-size:.83rem;white-space:nowrap;transition:opacity .18s,transform .12s;}
+    select.inp{cursor:pointer;}
+
+    /* ═══ BUTTONS ═══ */
+    .btn{
+      display:inline-flex;align-items:center;gap:.4rem;padding:.62rem 1.1rem;
+      border-radius:var(--radius-sm);border:none;cursor:pointer;font-weight:700;
+      font-family:'Alexandria',sans-serif;font-size:.82rem;white-space:nowrap;
+      transition:opacity .18s,transform .12s,box-shadow .18s;position:relative;overflow:hidden;
+    }
+    .btn::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,0);transition:background .15s;}
+    .btn:hover::after{background:rgba(255,255,255,.04);}
     .btn:active{transform:scale(.96);}
-    .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;}
-    .btn-primary:hover{opacity:.88;}
+    .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 4px 14px rgba(79,142,247,.3);}
+    .btn-primary:hover{box-shadow:0 6px 20px rgba(79,142,247,.45);opacity:.93;}
     .btn-danger{background:rgba(242,95,122,.1);border:1px solid rgba(242,95,122,.25);color:var(--danger);}
     .btn-danger:hover{background:rgba(242,95,122,.2);}
     .btn-ghost{background:var(--surf2);border:1px solid var(--border);color:var(--text2);}
@@ -72,137 +290,433 @@
     .btn-green{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);color:var(--green);}
     .btn-green:hover{background:rgba(34,197,94,.18);}
     .btn svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
-    .tbl-wrap{overflow-x:auto;margin-top:.7rem;}
-    table{width:100%;border-collapse:collapse;font-size:.84rem;}
-    th{text-align:right;padding:.45rem .7rem;font-size:.63rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;}
-    td{padding:.58rem .7rem;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:middle;}
+
+    /* ═══ TABLE ═══ */
+    .tbl-wrap{overflow-x:auto;margin-top:.75rem;}
+    table{width:100%;border-collapse:collapse;font-size:.83rem;}
+    th{
+      text-align:right;padding:.52rem .8rem;font-size:.61rem;font-weight:700;
+      letter-spacing:.09em;text-transform:uppercase;color:var(--text3);
+      border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surf2);
+    }
+    th:first-child{border-radius:var(--radius-sm) 0 0 0;}
+    th:last-child{border-radius:0 var(--radius-sm) 0 0;}
+    td{padding:.6rem .8rem;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:middle;}
     tr:last-child td{border-bottom:none;}
+    tr{transition:background .12s;}
     tr:hover td{background:var(--surf2);}
     .td-main{color:var(--text);font-weight:600;}
     .td-actions{display:flex;gap:.28rem;justify-content:flex-end;flex-wrap:wrap;}
-    .row-btn{display:inline-flex;align-items:center;gap:.22rem;padding:.26rem .52rem;border-radius:6px;border:1px solid var(--border);background:var(--surf2);cursor:pointer;font-size:.72rem;font-weight:600;font-family:'Alexandria',sans-serif;color:var(--text3);white-space:nowrap;transition:background .15s,color .15s;}
-    .row-btn:hover{background:var(--surf3);color:var(--text2);}
+
+    .row-btn{
+      display:inline-flex;align-items:center;gap:.22rem;padding:.28rem .56rem;
+      border-radius:7px;border:1px solid var(--border);background:var(--surf2);
+      cursor:pointer;font-size:.71rem;font-weight:600;
+      font-family:'Alexandria',sans-serif;color:var(--text3);white-space:nowrap;
+      transition:background .15s,color .15s,border-color .15s,transform .1s;
+    }
+    .row-btn:hover{background:var(--surf3);color:var(--text2);transform:scale(1.03);}
+    .row-btn:active{transform:scale(.95);}
     .row-btn.del:hover{background:rgba(242,95,122,.1);color:var(--danger);border-color:rgba(242,95,122,.25);}
     .row-btn.sus:hover{background:rgba(245,158,11,.1);color:var(--amber);border-color:rgba(245,158,11,.25);}
     .row-btn.act:hover{background:rgba(34,197,94,.1);color:var(--green);border-color:rgba(34,197,94,.25);}
     .row-btn.edit:hover{background:rgba(79,142,247,.1);color:var(--accent);border-color:rgba(79,142,247,.25);}
     .row-btn.emails-btn:hover{background:rgba(0,201,167,.1);color:var(--teal);border-color:rgba(0,201,167,.25);}
     .row-btn svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
-    .badge{display:inline-flex;align-items:center;padding:.18rem .52rem;border-radius:20px;font-size:.68rem;font-weight:700;white-space:nowrap;}
-    .badge-green{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);color:var(--green);}
-    .badge-red{background:rgba(242,95,122,.1);border:1px solid rgba(242,95,122,.25);color:var(--danger);}
+
+    /* ═══ BADGES ═══ */
+    .badge{display:inline-flex;align-items:center;gap:.28rem;padding:.2rem .55rem;border-radius:20px;font-size:.67rem;font-weight:700;white-space:nowrap;}
+    .badge-green{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.22);color:var(--green);}
+    .badge-red{background:rgba(242,95,122,.1);border:1px solid rgba(242,95,122,.22);color:var(--danger);}
     .badge-blue{background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.2);color:var(--accent);}
     .badge-gray{background:var(--surf3);border:1px solid var(--border);color:var(--text3);}
-    .badge-teal{background:rgba(0,201,167,.1);border:1px solid rgba(0,201,167,.25);color:var(--teal);}
+    .badge-teal{background:rgba(0,201,167,.1);border:1px solid rgba(0,201,167,.22);color:var(--teal);}
+    .badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;display:inline-block;animation:pulse-dot 2s infinite;}
+    @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.8)}}
+
+    /* ═══ SEARCH ═══ */
     .search-bar{position:relative;}
-    .search-bar input{padding-right:2.1rem;}
-    .sico{position:absolute;left:.65rem;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none;display:flex;}
-    .sico svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
-    .log-row{display:flex;align-items:center;gap:.65rem;padding:.55rem .75rem;border-radius:var(--radius-sm);font-size:.82rem;border-bottom:1px solid var(--border);}
+    .search-bar input{padding-right:2.2rem;}
+    .sico{position:absolute;right:.75rem;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none;display:flex;}
+    .sico svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+
+    /* ═══ LOG ROWS ═══ */
+    .log-row{
+      display:flex;align-items:center;gap:.7rem;padding:.58rem .8rem;
+      border-radius:var(--radius-sm);font-size:.81rem;
+      border-bottom:1px solid var(--border);transition:background .12s;
+    }
     .log-row:last-child{border-bottom:none;}
     .log-row:hover{background:var(--surf2);}
     .log-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-    .log-dot.ok{background:var(--green);}
-    .log-dot.fail{background:var(--danger);}
+    .log-dot.ok{background:var(--green);box-shadow:0 0 6px var(--green);}
+    .log-dot.fail{background:var(--danger);box-shadow:0 0 6px var(--danger);}
     .log-user{font-weight:600;color:var(--text);min-width:90px;}
     .log-action{flex:1;color:var(--text2);}
-    .log-ip{font-size:.7rem;color:var(--text3);font-family:monospace;}
-    .log-time{font-size:.7rem;color:var(--text3);white-space:nowrap;}
-    .bulk-result{display:none;background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.8rem 1rem;font-size:.83rem;line-height:1.7;margin-top:.65rem;}
+    .log-ip{font-size:.69rem;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+    .log-time{font-size:.69rem;color:var(--text3);white-space:nowrap;}
+
+    /* ═══ BULK RESULT ═══ */
+    .bulk-result{
+      display:none;background:var(--surf2);border:1px solid var(--border);
+      border-radius:var(--radius-sm);padding:.85rem 1.1rem;font-size:.83rem;
+      line-height:1.7;margin-top:.7rem;animation:fadeIn .25s var(--ease);
+    }
     .bulk-result.show{display:block;}
-    .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;backdrop-filter:blur(4px);align-items:center;justify-content:center;}
+
+    /* ═══ MODAL / OVERLAY ═══ */
+    .overlay{
+      display:none;position:fixed;inset:0;
+      background:rgba(0,0,0,.6);z-index:100;
+      backdrop-filter:blur(6px);align-items:center;justify-content:center;
+    }
     .overlay.show{display:flex;}
-    .modal{background:var(--surf);border:1px solid var(--bord2);border-radius:var(--radius);padding:1.4rem 1.5rem;width:100%;max-width:560px;margin:1rem;animation:mIn .25s var(--ease) both;max-height:90vh;overflow-y:auto;}
-    @keyframes mIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
-    .modal-title{font-size:.95rem;font-weight:700;margin-bottom:1rem;}
-    .mrow{margin-bottom:.8rem;}
-    .mlabel{display:block;font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:.32rem;}
-    .mactions{display:flex;gap:.45rem;justify-content:flex-end;margin-top:1rem;flex-wrap:wrap;}
-    .empty-st{text-align:center;padding:1.2rem;color:var(--text3);font-size:.83rem;}
-    .pattern-list{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.4rem;}
-    .pattern-pill{display:inline-flex;align-items:center;gap:.3rem;background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.2);border-radius:20px;padding:.2rem .55rem;font-size:.75rem;color:var(--text);}
-    .toast-rack{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column-reverse;gap:.4rem;pointer-events:none;}
-    .toast{display:flex;align-items:center;gap:.5rem;background:var(--text);color:var(--bg);border-radius:30px;padding:.55rem 1rem;font-size:.82rem;font-weight:700;font-family:'Alexandria',sans-serif;white-space:nowrap;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.3);animation:tIn .3s var(--ease) both;}
+    .modal{
+      background:var(--surf);border:1px solid var(--bord2);border-radius:var(--radius);
+      padding:1.5rem 1.65rem;width:100%;max-width:560px;margin:1rem;
+      animation:mIn .28s var(--ease-spring) both;
+      max-height:90vh;overflow-y:auto;position:relative;
+    }
+    .modal::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:2px;
+      background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:var(--radius) var(--radius) 0 0;
+    }
+    @keyframes mIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+    .modal-title{font-size:1rem;font-weight:700;margin-bottom:1.1rem;display:flex;align-items:center;gap:.5rem;}
+    .modal-title svg{width:18px;height:18px;stroke:var(--accent);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+    .mrow{margin-bottom:.85rem;}
+    .mlabel{display:block;font-size:.63rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:.35rem;}
+    .mactions{display:flex;gap:.5rem;justify-content:flex-end;margin-top:1.1rem;flex-wrap:wrap;}
+
+    /* ═══ TOAST ═══ */
+    .toast-rack{position:fixed;bottom:1.75rem;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column-reverse;gap:.45rem;pointer-events:none;}
+    .toast{
+      display:flex;align-items:center;gap:.55rem;background:var(--text);color:var(--bg);
+      border-radius:30px;padding:.58rem 1.1rem;font-size:.82rem;font-weight:700;
+      font-family:'Alexandria',sans-serif;white-space:nowrap;pointer-events:none;
+      box-shadow:0 10px 32px rgba(0,0,0,.35);animation:tIn .3s var(--ease-spring) both;
+    }
+    .toast::before{content:'✓';font-size:.75rem;opacity:.8;}
     .toast.err{background:var(--danger);color:#fff;}
+    .toast.err::before{content:'✕';}
     .toast.out{animation:tOut .3s var(--ease) both;}
-    @keyframes tIn{from{opacity:0;transform:translateY(12px) scale(.9)}to{opacity:1;transform:none}}
-    @keyframes tOut{from{opacity:1}to{opacity:0;transform:translateY(8px) scale(.92)}}
-    .email-chip{display:inline-flex;align-items:center;gap:.35rem;background:rgba(0,201,167,.08);border:1px solid rgba(0,201,167,.2);border-radius:20px;padding:.22rem .6rem;font-size:.77rem;color:var(--text);margin:.18rem;}
+    @keyframes tIn{from{opacity:0;transform:translateY(16px) scale(.88)}to{opacity:1;transform:none}}
+    @keyframes tOut{from{opacity:1}to{opacity:0;transform:translateY(10px) scale(.9)}}
+
+    /* ═══ EMAIL CHIP ═══ */
+    .email-chip{
+      display:inline-flex;align-items:center;gap:.38rem;
+      background:rgba(0,201,167,.07);border:1px solid rgba(0,201,167,.18);
+      border-radius:20px;padding:.24rem .65rem;font-size:.76rem;color:var(--text);margin:.18rem;
+    }
     .email-chip button{background:none;border:none;cursor:pointer;color:var(--text3);display:flex;padding:0;transition:color .15s;}
     .email-chip button:hover{color:var(--danger);}
     .email-chip button svg{width:10px;height:10px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;}
-    .tab-bar{display:flex;gap:.3rem;margin-bottom:.9rem;border-bottom:1px solid var(--border);padding-bottom:.65rem;}
-    .tab-btn{padding:.36rem .75rem;border-radius:var(--radius-sm);border:none;cursor:pointer;font-family:'Alexandria',sans-serif;font-size:.8rem;font-weight:700;background:none;color:var(--text3);transition:background .15s,color .15s;}
+
+    /* ═══ TABS ═══ */
+    .tab-bar{display:flex;gap:.3rem;margin-bottom:1rem;border-bottom:1px solid var(--border);padding-bottom:.7rem;}
+    .tab-btn{
+      padding:.38rem .8rem;border-radius:var(--radius-sm);border:none;cursor:pointer;
+      font-family:'Alexandria',sans-serif;font-size:.79rem;font-weight:700;
+      background:none;color:var(--text3);transition:background .15s,color .15s;
+    }
     .tab-btn:hover{background:var(--surf2);color:var(--text2);}
-    .tab-btn.active{background:rgba(79,142,247,.12);color:var(--accent);}
-    @media(max-width:640px){.nav-sidebar{width:52px;}.nav-btn span,.nav-label,.nav-count{display:none;}.main{padding:1rem;}}
+    .tab-btn.active{background:rgba(79,142,247,.12);color:var(--accent);border:1px solid rgba(79,142,247,.15);}
+
+    /* ═══ PATTERN PILLS ═══ */
+    .pattern-list{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.4rem;}
+    .pattern-pill{
+      display:inline-flex;align-items:center;gap:.3rem;
+      background:rgba(79,142,247,.07);border:1px solid rgba(79,142,247,.18);
+      border-radius:20px;padding:.22rem .58rem;font-size:.74rem;color:var(--text);
+      font-family:'JetBrains Mono',monospace;
+    }
+
+    /* ═══ EMPTY STATE ═══ */
+    .empty-st{
+      text-align:center;padding:1.5rem;color:var(--text3);font-size:.83rem;
+      display:flex;flex-direction:column;align-items:center;gap:.5rem;
+    }
+    .empty-st svg{width:28px;height:28px;stroke:var(--text3);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;opacity:.5;}
+
+    /* ═══ HOW IT WORKS ═══ */
+    .steps-list{display:flex;flex-direction:column;gap:.5rem;}
+    .step-item{
+      display:flex;align-items:flex-start;gap:.85rem;padding:.75rem 1rem;
+      background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);
+      transition:border-color .2s,background .2s;
+    }
+    .step-item:hover{border-color:rgba(79,142,247,.2);background:var(--surf3);}
+    .step-num{
+      width:24px;height:24px;border-radius:50%;flex-shrink:0;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      display:flex;align-items:center;justify-content:center;
+      font-size:.65rem;font-weight:800;color:#fff;margin-top:.05rem;
+    }
+    .step-text{font-size:.84rem;color:var(--text2);line-height:1.65;}
+    .step-text strong{color:var(--text);}
+    code{background:var(--surf2);padding:.1rem .42rem;border-radius:5px;font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--accent2);border:1px solid var(--border);}
+
+    /* ═══ CAT ITEM ═══ */
+    .cat-item{
+      background:var(--surf2);border:1px solid var(--border);
+      border-radius:var(--radius-sm);padding:.95rem 1.1rem;margin-bottom:.5rem;
+      transition:border-color .2s,transform .15s;
+    }
+    .cat-item:hover{border-color:rgba(79,142,247,.18);transform:translateX(-1px);}
+
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+    @media(max-width:640px){
+      .nav-sidebar{width:54px;}
+      .nav-btn span,.nav-label,.nav-count{display:none;}
+      .main{padding:1rem;}
+      .charts-row{grid-template-columns:1fr;}
+    }
   </style>
 </head>
 <body>
 
+<!-- ═══════════ TOPBAR ═══════════ -->
 <header class="topbar">
-  <a class="logo" href="#"><div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><span class="logo-name">Farouk Admin</span></a>
-  <span class="admin-chip">🔐 مشرف</span>
+  <a class="logo" href="#">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    </div>
+    <span class="logo-name">Farouk Admin</span>
+  </a>
+  <span class="admin-chip">
+    <svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    مشرف
+  </span>
   <div class="topbar-r">
     <span class="admin-user">{{ admin_username }}</span>
-    <button class="ibtn" id="themeBtn"><svg id="iMoon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><svg id="iSun" style="display:none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg></button>
-    <a class="ibtn ibtn-danger" href="/admin/logout"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></a>
+    <button class="ibtn" id="themeBtn" title="تبديل المظهر">
+      <svg id="iMoon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg id="iSun" style="display:none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
+    </button>
+    <a class="ibtn ibtn-danger" href="/admin/logout" title="تسجيل الخروج">
+      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </a>
   </div>
 </header>
 
+<!-- ═══════════ LAYOUT ═══════════ -->
 <div class="layout">
+
+  <!-- Sidebar -->
   <nav class="nav-sidebar">
-    <div class="nav-label">القائمة</div>
-    <button class="nav-btn active" data-page="overview"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg><span>نظرة عامة</span></button>
-    <button class="nav-btn" data-page="clients"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span>حسابات العملاء</span><span class="nav-count" id="navClientCount">—</span></button>
-    <button class="nav-btn" data-page="emails"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg><span>حسابات البريد</span><span class="nav-count" id="navEmailCount">—</span></button>
-    <button class="nav-btn" data-page="filters"><svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg><span>فئات الفلترة</span><span class="nav-count" id="navCatCount">—</span></button>
-    <button class="nav-btn" data-page="activity"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>سجل النشاط</span></button>
+    <div class="nav-label">القائمة الرئيسية</div>
+    <button class="nav-btn active" data-page="overview">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+      <span>نظرة عامة</span>
+    </button>
+    <button class="nav-btn" data-page="clients">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span>حسابات العملاء</span>
+      <span class="nav-count" id="navClientCount">—</span>
+    </button>
+    <button class="nav-btn" data-page="emails">
+      <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
+      <span>حسابات البريد</span>
+      <span class="nav-count" id="navEmailCount">—</span>
+    </button>
+    <button class="nav-btn" data-page="filters">
+      <svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+      <span>فئات الفلترة</span>
+      <span class="nav-count" id="navCatCount">—</span>
+    </button>
+    <button class="nav-btn" data-page="activity">
+      <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span>سجل النشاط</span>
+    </button>
   </nav>
 
+  <!-- Main -->
   <main class="main">
 
-    <!-- Overview -->
+    <!-- ══════ OVERVIEW ══════ -->
     <div class="page active" id="page-overview">
+
+      <!-- Stat cards -->
       <div class="stats-row">
-        <div class="stat blue"><div class="stat-val" id="stClients">—</div><div class="stat-lbl">إجمالي العملاء</div></div>
-        <div class="stat green"><div class="stat-val" id="stActive">—</div><div class="stat-lbl">نشط</div></div>
-        <div class="stat red"><div class="stat-val" id="stSuspended">—</div><div class="stat-lbl">موقوف</div></div>
-        <div class="stat purple"><div class="stat-val" id="stEmails">—</div><div class="stat-lbl">حسابات بريد</div></div>
-        <div class="stat amber"><div class="stat-val" id="stCats">—</div><div class="stat-lbl">فئات فلترة</div></div>
-        <div class="stat teal"><div class="stat-val" id="stLogins">—</div><div class="stat-lbl">دخول اليوم</div></div>
+        <div class="stat blue">
+          <div class="stat-header">
+            <div>
+              <div class="stat-val" id="stClients">—</div>
+              <div class="stat-lbl">إجمالي العملاء</div>
+            </div>
+            <div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+          </div>
+        </div>
+        <div class="stat green">
+          <div class="stat-header">
+            <div>
+              <div class="stat-val" id="stActive">—</div>
+              <div class="stat-lbl">نشط</div>
+            </div>
+            <div class="stat-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+          </div>
+        </div>
+        <div class="stat red">
+          <div class="stat-header">
+            <div>
+              <div class="stat-val" id="stSuspended">—</div>
+              <div class="stat-lbl">موقوف</div>
+            </div>
+            <div class="stat-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></div>
+          </div>
+        </div>
+        <div class="stat purple">
+          <div class="stat-header">
+            <div>
+              <div class="stat-val" id="stEmails">—</div>
+              <div class="stat-lbl">حسابات بريد</div>
+            </div>
+            <div class="stat-icon"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg></div>
+          </div>
+        </div>
+        <div class="stat amber">
+          <div class="stat-header">
+            <div>
+              <div class="stat-val" id="stCats">—</div>
+              <div class="stat-lbl">فئات فلترة</div>
+            </div>
+            <div class="stat-icon"><svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg></div>
+          </div>
+        </div>
+        <div class="stat teal">
+          <div class="stat-header">
+            <div>
+              <div class="stat-val" id="stLogins">—</div>
+              <div class="stat-lbl">دخول اليوم</div>
+            </div>
+            <div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></div>
+          </div>
+        </div>
       </div>
+
+      <!-- Analytics Charts -->
+      <div class="charts-row">
+        <!-- Logins this week -->
+        <div class="chart-card">
+          <div class="chart-title">
+            <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            نشاط تسجيل الدخول — آخر 7 أيام
+          </div>
+          <div class="mini-bars" id="loginBarsChart"></div>
+          <div class="mini-days" id="loginBarsLabels"></div>
+        </div>
+
+        <!-- Active vs Suspended donut -->
+        <div class="chart-card">
+          <div class="chart-title">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            توزيع حالة العملاء
+          </div>
+          <div class="donut-row">
+            <div class="donut-wrap">
+              <svg viewBox="0 0 36 36" width="80" height="80">
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--surf3)" stroke-width="3.5"/>
+                <circle id="donutActive" cx="18" cy="18" r="15.9" fill="none" stroke="var(--green)" stroke-width="3.5"
+                  stroke-dasharray="0 100" stroke-linecap="round" style="transition:stroke-dasharray 1.2s var(--ease)"/>
+                <circle id="donutSuspended" cx="18" cy="18" r="15.9" fill="none" stroke="var(--danger)" stroke-width="3.5"
+                  stroke-dasharray="0 100" stroke-linecap="round" style="transition:stroke-dasharray 1.2s var(--ease);"/>
+              </svg>
+              <div class="donut-center">
+                <span class="donut-pct" id="donutPct">—</span>
+                <span class="donut-lbl">نشط</span>
+              </div>
+            </div>
+            <div class="donut-legend">
+              <div class="donut-legend-item"><span class="donut-dot" style="background:var(--green)"></span><span id="legendActive" style="color:var(--text2)">— نشط</span></div>
+              <div class="donut-legend-item"><span class="donut-dot" style="background:var(--danger)"></span><span id="legendSuspended" style="color:var(--text2)">— موقوف</span></div>
+              <div class="donut-legend-item"><span class="donut-dot" style="background:var(--accent2)"></span><span id="legendEmails" style="color:var(--text2)">— بريد</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Email accounts sparkline -->
+        <div class="chart-card">
+          <div class="chart-title">
+            <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
+            نمو حسابات البريد
+          </div>
+          <div class="sparkline-wrap">
+            <svg id="sparklineSvg" viewBox="0 0 200 48" preserveAspectRatio="none" style="width:100%;height:48px">
+              <defs>
+                <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="var(--accent)" stop-opacity=".3"/>
+                  <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path id="sparkArea" fill="url(#sparkGrad)" d=""/>
+              <path id="sparkLine" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d=""/>
+            </svg>
+          </div>
+          <div class="sparkline-nums">
+            <span class="sparkline-num">— —</span>
+            <span class="sparkline-num" id="sparklineMax" style="color:var(--accent)">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- How it works -->
       <div class="card">
-        <div class="card-title"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>كيف يعمل النظام</div>
-        <div style="font-size:.86rem;color:var(--text2);line-height:2.1;display:flex;flex-direction:column;gap:.35rem;">
-          <div>1. <strong>أضف حسابات البريد</strong> — أدخل عنوان البريد + كلمة مرور POP3. يتحقق النظام من الاتصال أولاً.</div>
-          <div>2. <strong>أنشئ فئات الفلترة</strong> — كل فئة لها اسم وقائمة أنماط تُطابق موضوع الرسالة.</div>
-          <div>3. <strong>أنشئ حسابات العملاء</strong> — امنح كل عميل اسم مستخدم وكلمة مرور.</div>
-          <div>4. <strong>أضف بريدًا للعميل</strong> — من صفحة العملاء، اضغط "بريد" بجانب أي عميل لإضافة بريد مخصص له.</div>
-          <div>5. <strong>العميل يسجّل دخوله</strong> → يرى "بريدي" مباشرةً → يختار الفئة → يشاهد الرسائل.</div>
+        <div class="card-title">
+          <div class="card-title-icon">
+            <svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          كيف يعمل النظام
+        </div>
+        <div class="steps-list">
+          <div class="step-item"><div class="step-num">١</div><div class="step-text"><strong>أضف حسابات البريد</strong> — أدخل عنوان البريد + كلمة مرور POP3. يتحقق النظام من الاتصال أولاً.</div></div>
+          <div class="step-item"><div class="step-num">٢</div><div class="step-text"><strong>أنشئ فئات الفلترة</strong> — كل فئة لها اسم وقائمة أنماط تُطابق موضوع الرسالة.</div></div>
+          <div class="step-item"><div class="step-num">٣</div><div class="step-text"><strong>أنشئ حسابات العملاء</strong> — امنح كل عميل اسم مستخدم وكلمة مرور.</div></div>
+          <div class="step-item"><div class="step-num">٤</div><div class="step-text"><strong>أضف بريدًا للعميل</strong> — من صفحة العملاء، اضغط "بريد" بجانب أي عميل لإضافة بريد مخصص له.</div></div>
+          <div class="step-item"><div class="step-num">٥</div><div class="step-text"><strong>العميل يسجّل دخوله</strong> → يرى "بريدي" مباشرةً → يختار الفئة → يشاهد الرسائل. خادم POP3: <code>pop3.kuku.lu:995</code></div></div>
         </div>
       </div>
     </div>
 
-    <!-- Clients -->
+    <!-- ══════ CLIENTS ══════ -->
     <div class="page" id="page-clients">
       <div class="card">
-        <div class="card-title"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>إنشاء عميل</div>
+        <div class="card-title">
+          <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+          إنشاء عميل جديد
+        </div>
         <div class="form-row">
           <div class="fgroup"><div class="flabel">اسم المستخدم</div><input class="inp" id="newUsername" type="text" placeholder="client1"/></div>
           <div class="fgroup"><div class="flabel">كلمة المرور</div><input class="inp" id="newPassword" type="text" placeholder="••••••"/></div>
           <div class="fgroup"><div class="flabel">الاسم المعروض</div><input class="inp" id="newDisplay" type="text" placeholder="اختياري"/></div>
-          <button class="btn btn-primary" id="createClientBtn" style="margin-top:auto"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>إنشاء</button>
+          <button class="btn btn-primary" id="createClientBtn" style="margin-top:auto">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            إنشاء
+          </button>
         </div>
       </div>
+
       <div class="card">
-        <div class="card-title"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>جميع العملاء<span id="clientCountLbl" style="margin-right:auto;font-size:.7rem;color:var(--text3)"></span></div>
-        <div class="search-bar"><div class="sico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><input class="inp" id="clientSearch" placeholder="بحث…" style="padding-right:2.1rem"/></div>
-        <div class="tbl-wrap"><table><thead><tr><th>المستخدم</th><th>الحالة</th><th>البريد المخصص</th><th>آخر دخول</th><th>مرات الدخول</th><th></th></tr></thead><tbody id="clientsTbody"><tr><td colspan="6" class="empty-st">جارٍ التحميل…</td></tr></tbody></table></div>
+        <div class="card-title">
+          <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+          جميع العملاء
+          <span id="clientCountLbl" style="margin-right:auto;font-size:.7rem;color:var(--text3);background:var(--surf2);padding:.15rem .55rem;border-radius:20px;border:1px solid var(--border)"></span>
+        </div>
+        <div class="search-bar" style="margin-bottom:.75rem">
+          <div class="sico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+          <input class="inp" id="clientSearch" placeholder="بحث باسم المستخدم…" style="padding-right:2.2rem"/>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>المستخدم</th><th>الحالة</th><th>البريد المخصص</th><th>آخر دخول</th><th>مرات الدخول</th><th></th></tr></thead>
+            <tbody id="clientsTbody"><tr><td colspan="6" class="empty-st">جارٍ التحميل…</td></tr></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
-    <!-- Email Accounts -->
+    <!-- ══════ EMAIL ACCOUNTS ══════ -->
     <div class="page" id="page-emails">
       <div class="card">
         <div class="tab-bar">
@@ -212,69 +726,105 @@
 
         <!-- Single add -->
         <div id="etab-single">
-          <div class="card-title" style="margin-bottom:.75rem"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>إضافة حساب بريد POP3</div>
+          <div class="card-title" style="margin-bottom:.85rem">
+            <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+            إضافة حساب بريد POP3
+          </div>
           <div class="form-row">
             <div class="fgroup" style="min-width:200px"><div class="flabel">البريد الإلكتروني</div><input class="inp" id="newEmail" type="email" placeholder="user@example.com"/></div>
             <div class="fgroup"><div class="flabel">كلمة مرور POP3</div><input class="inp" id="newEmailPw" type="text" placeholder="••••••"/></div>
             <div class="fgroup"><div class="flabel">الخادم</div><input class="inp" id="newEmailHost" type="text" value="pop3.kuku.lu"/></div>
-            <div class="fgroup" style="max-width:90px"><div class="flabel">المنفذ</div><input class="inp" id="newEmailPort" type="number" value="995"/></div>
-            <button class="btn btn-primary" id="addEmailBtn" style="margin-top:auto"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>إضافة</button>
+            <div class="fgroup" style="max-width:95px"><div class="flabel">المنفذ</div><input class="inp" id="newEmailPort" type="number" value="995"/></div>
+            <button class="btn btn-primary" id="addEmailBtn" style="margin-top:auto">
+              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              إضافة
+            </button>
           </div>
-          <div style="font-size:.76rem;color:var(--text3);margin-top:.5rem">يتحقق النظام من الاتصال قبل الحفظ</div>
+          <div style="font-size:.74rem;color:var(--text3);margin-top:.55rem;display:flex;align-items:center;gap:.35rem">
+            <svg viewBox="0 0 24 24" style="width:12px;height:12px;flex-shrink:0;fill:none;stroke:var(--teal);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg>
+            يتحقق النظام من الاتصال قبل الحفظ
+          </div>
         </div>
 
         <!-- Bulk email add -->
         <div id="etab-bulk-email" style="display:none">
-          <div class="card-title" style="margin-bottom:.75rem"><svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>إضافة جماعية لحسابات البريد</div>
-          <div style="font-size:.83rem;color:var(--text2);margin-bottom:.75rem;line-height:1.7">
-            أدخل كل حساب في سطر بالصيغة: <code style="background:var(--surf2);padding:.1rem .45rem;border-radius:5px;font-family:monospace;font-size:.82rem">email@example.com:password</code>
+          <div class="card-title" style="margin-bottom:.85rem">
+            <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg></div>
+            إضافة جماعية لحسابات البريد
           </div>
-          <div class="form-row" style="margin-bottom:.7rem">
+          <div style="font-size:.82rem;color:var(--text2);margin-bottom:.8rem;line-height:1.75">
+            أدخل كل حساب في سطر بالصيغة: <code>email@example.com:password</code>
+          </div>
+          <div class="form-row" style="margin-bottom:.75rem">
             <div class="fgroup"><div class="flabel">الخادم الافتراضي</div><input class="inp" id="bulkEmailHost" type="text" value="pop3.kuku.lu"/></div>
-            <div class="fgroup" style="max-width:90px"><div class="flabel">المنفذ</div><input class="inp" id="bulkEmailPort" type="number" value="995"/></div>
+            <div class="fgroup" style="max-width:95px"><div class="flabel">المنفذ</div><input class="inp" id="bulkEmailPort" type="number" value="995"/></div>
           </div>
           <textarea class="inp" id="bulkEmailText" placeholder="user1@example.com:pass1&#10;user2@example.com:pass2&#10;user3@example.com:pass3" style="min-height:140px"></textarea>
-          <div style="font-size:.74rem;color:var(--amber);margin-top:.4rem;margin-bottom:.65rem">⚠️ الإضافة الجماعية لا تتحقق من صحة الاتصال — تأكد من صحة البيانات مسبقًا</div>
-          <button class="btn btn-primary" id="bulkEmailBtn"><svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>إضافة الجميع</button>
+          <div style="font-size:.73rem;color:var(--amber);margin-top:.45rem;margin-bottom:.7rem;display:flex;align-items:center;gap:.35rem">
+            <svg viewBox="0 0 24 24" style="width:12px;height:12px;flex-shrink:0;fill:none;stroke:var(--amber);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            الإضافة الجماعية لا تتحقق من صحة الاتصال
+          </div>
+          <button class="btn btn-primary" id="bulkEmailBtn">
+            <svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+            إضافة الجميع
+          </button>
           <div class="bulk-result" id="bulkEmailResult"></div>
         </div>
       </div>
 
       <div class="card">
-        <div class="card-title"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>حسابات البريد المضافة<span id="emailCountLbl" style="margin-right:auto;font-size:.7rem;color:var(--text3)"></span></div>
-        <div class="tbl-wrap"><table><thead><tr><th>البريد الإلكتروني</th><th>الخادم</th><th>تاريخ الإضافة</th><th></th></tr></thead><tbody id="emailsTbody"><tr><td colspan="4" class="empty-st">جارٍ التحميل…</td></tr></tbody></table></div>
+        <div class="card-title">
+          <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg></div>
+          حسابات البريد المضافة
+          <span id="emailCountLbl" style="margin-right:auto;font-size:.7rem;color:var(--text3);background:var(--surf2);padding:.15rem .55rem;border-radius:20px;border:1px solid var(--border)"></span>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>البريد الإلكتروني</th><th>الخادم</th><th>تاريخ الإضافة</th><th></th></tr></thead>
+            <tbody id="emailsTbody"><tr><td colspan="4" class="empty-st">جارٍ التحميل…</td></tr></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
-    <!-- Filter Categories -->
+    <!-- ══════ FILTER CATEGORIES ══════ -->
     <div class="page" id="page-filters">
       <div class="card">
-        <div class="card-title"><svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>إنشاء فئة فلترة جديدة</div>
+        <div class="card-title">
+          <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg></div>
+          إنشاء فئة فلترة جديدة
+        </div>
         <div class="form-row">
           <div class="fgroup" style="min-width:180px"><div class="flabel">اسم الفئة (يظهر للعميل)</div><input class="inp" id="newCatLabel" type="text" placeholder="مثال: كود تسجيل دخول"/></div>
           <div class="fgroup"><div class="flabel">وصف مختصر (اختياري)</div><input class="inp" id="newCatDesc" type="text" placeholder="رموز المصادقة الثنائية…"/></div>
         </div>
-        <div class="mrow" style="margin-top:.65rem">
+        <div class="mrow" style="margin-top:.75rem">
           <label class="mlabel">الأنماط (كل نمط في سطر — يُطابق موضوع الرسالة)</label>
           <textarea class="inp" id="newCatPatterns" placeholder="Netflix: Your sign-in code&#10;Netflix : Votre code d'identification"></textarea>
-          <div style="font-size:.74rem;color:var(--text3);margin-top:.35rem">الرسالة تظهر إذا كان موضوعها يحتوي على أي نمط من القائمة (بغض النظر عن حالة الأحرف)</div>
+          <div style="font-size:.73rem;color:var(--text3);margin-top:.35rem">الرسالة تظهر إذا كان موضوعها يحتوي على أي نمط من القائمة (بغض النظر عن حالة الأحرف)</div>
         </div>
-        <button class="btn btn-primary" id="createCatBtn"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>إنشاء الفئة</button>
+        <button class="btn btn-primary" id="createCatBtn">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          إنشاء الفئة
+        </button>
       </div>
       <div class="card">
-        <div class="card-title"><svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>الفئات الحالية<span id="catCountLbl" style="margin-right:auto;font-size:.7rem;color:var(--text3)"></span></div>
+        <div class="card-title">
+          <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg></div>
+          الفئات الحالية
+          <span id="catCountLbl" style="margin-right:auto;font-size:.7rem;color:var(--text3);background:var(--surf2);padding:.15rem .55rem;border-radius:20px;border:1px solid var(--border)"></span>
+        </div>
         <div id="catListAdmin"><div class="empty-st">جارٍ التحميل…</div></div>
       </div>
     </div>
 
-
-    <!-- Activity -->
+    <!-- ══════ ACTIVITY ══════ -->
     <div class="page" id="page-activity">
       <div class="card">
         <div class="card-title">
-          <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
           سجل النشاط الأخير
-          <button class="btn btn-ghost" id="refreshActivityBtn" style="margin-right:auto;padding:.3rem .65rem;font-size:.75rem">
+          <button class="btn btn-ghost" id="refreshActivityBtn" style="margin-right:auto;padding:.32rem .75rem;font-size:.75rem">
             <svg viewBox="0 0 24 24" style="width:12px;height:12px"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
             تحديث
           </button>
@@ -286,26 +836,33 @@
   </main>
 </div>
 
+<!-- ═══════════ MODALS ═══════════ -->
+
 <!-- Edit Client Modal -->
 <div class="overlay" id="editClientOverlay">
   <div class="modal">
-    <div class="modal-title">✏️ تعديل عميل</div>
+    <div class="modal-title">
+      <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      تعديل عميل
+    </div>
     <input type="hidden" id="editClientId"/>
     <div class="mrow"><label class="mlabel">اسم المستخدم</label><input class="inp" id="editUsername" type="text" style="width:100%"/></div>
     <div class="mrow"><label class="mlabel">الاسم المعروض</label><input class="inp" id="editDisplay" type="text" style="width:100%"/></div>
     <div class="mrow"><label class="mlabel">كلمة مرور جديدة (اتركها فارغة للإبقاء)</label><input class="inp" id="editPassword" type="text" placeholder="اتركها فارغة" style="width:100%"/></div>
     <div class="mrow"><label class="mlabel">الحالة</label><select class="inp" id="editStatus" style="width:100%"><option value="active">نشط</option><option value="suspended">موقوف</option></select></div>
-    <div class="mactions"><button class="btn btn-ghost" id="editClientCancel">إلغاء</button><button class="btn btn-primary" id="editClientSave">حفظ</button></div>
+    <div class="mactions"><button class="btn btn-ghost" id="editClientCancel">إلغاء</button><button class="btn btn-primary" id="editClientSave">حفظ التعديلات</button></div>
   </div>
 </div>
 
 <!-- Client Emails Modal -->
 <div class="overlay" id="clientEmailsOverlay">
   <div class="modal" style="max-width:760px">
-    <div class="modal-title">📧 إدارة بريد العميل: <span id="cemClientName" style="color:var(--accent)"></span></div>
+    <div class="modal-title">
+      <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
+      إدارة بريد العميل: <span id="cemClientName" style="color:var(--accent);margin-right:.3rem"></span>
+    </div>
     <input type="hidden" id="cemClientId"/>
 
-    <!-- Assigned emails table -->
     <div class="mrow">
       <label class="mlabel">البريد المخصص حاليًا <span id="cemAssignedCount" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--text3)"></span></label>
       <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-sm)">
@@ -313,77 +870,76 @@
           <table id="cemAssignedTable" style="width:100%;border-collapse:collapse;font-size:.82rem">
             <thead style="position:sticky;top:0;background:var(--surf);z-index:1">
               <tr>
-                <th style="padding:.4rem .75rem;text-align:right;font-size:.63rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap">البريد الإلكتروني</th>
-                <th style="padding:.4rem .75rem;text-align:right;font-size:.63rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap">من تاريخ</th>
-                <th style="padding:.4rem .75rem;text-align:right;font-size:.63rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap">إلى تاريخ</th>
-                <th style="padding:.4rem .75rem;text-align:right;font-size:.63rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap">الحالة</th>
-                <th style="padding:.4rem .75rem;border-bottom:1px solid var(--border)"></th>
+                <th style="padding:.42rem .8rem;text-align:right;font-size:.61rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surf2)">البريد الإلكتروني</th>
+                <th style="padding:.42rem .8rem;text-align:right;font-size:.61rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surf2)">من تاريخ</th>
+                <th style="padding:.42rem .8rem;text-align:right;font-size:.61rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surf2)">إلى تاريخ</th>
+                <th style="padding:.42rem .8rem;text-align:right;font-size:.61rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surf2)">الحالة</th>
+                <th style="padding:.42rem .8rem;border-bottom:1px solid var(--border);background:var(--surf2)"></th>
               </tr>
             </thead>
             <tbody id="cemAssignedBody"></tbody>
           </table>
-          <div id="cemEmptyMsg" style="display:none;padding:1.1rem;text-align:center;font-size:.8rem;color:var(--text3)">لا يوجد بريد مخصص حتى الآن</div>
+          <div id="cemEmptyMsg" style="display:none;padding:1.2rem;text-align:center;font-size:.8rem;color:var(--text3)">لا يوجد بريد مخصص حتى الآن</div>
         </div>
       </div>
     </div>
 
-    <!-- Inline edit dates panel -->
-    <div id="cemEditPanel" style="display:none;background:var(--surf2);border:1px solid var(--bord2);border-radius:var(--radius-sm);padding:.75rem 1rem;margin-top:-.3rem;margin-bottom:.8rem">
+    <div id="cemEditPanel" style="display:none;background:var(--surf2);border:1px solid var(--bord2);border-radius:var(--radius-sm);padding:.8rem 1.1rem;margin-top:-.3rem;margin-bottom:.85rem">
       <div style="font-size:.8rem;font-weight:700;margin-bottom:.65rem;color:var(--text2)">تعديل تواريخ: <span id="cemEditEmailLabel" style="color:var(--accent)"></span></div>
       <input type="hidden" id="cemEditEmailHidden"/>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.55rem">
         <div><label class="mlabel">من تاريخ (اختياري)</label><input type="date" class="inp" id="cemEditStart" style="width:100%"/></div>
         <div><label class="mlabel">إلى تاريخ (اختياري)</label><input type="date" class="inp" id="cemEditEnd" style="width:100%"/></div>
       </div>
-      <div style="display:flex;gap:.4rem;margin-top:.6rem">
+      <div style="display:flex;gap:.4rem;margin-top:.65rem">
         <button class="btn btn-primary" id="cemEditSaveBtn">حفظ التواريخ</button>
         <button class="btn btn-ghost" id="cemEditCancelBtn">إلغاء</button>
       </div>
     </div>
 
-    <!-- Add email section -->
     <div class="mrow" style="margin-top:.1rem">
       <label class="mlabel">إضافة بريد</label>
-      <div style="display:flex;gap:.3rem;margin-bottom:.6rem">
-        <button class="tab-btn active" data-cemtab="search" style="font-size:.76rem;padding:.28rem .65rem">بحث وإضافة</button>
-        <button class="tab-btn" data-cemtab="paste" style="font-size:.76rem;padding:.28rem .65rem">لصق جماعي</button>
+      <div style="display:flex;gap:.3rem;margin-bottom:.65rem">
+        <button class="tab-btn active" data-cemtab="search" style="font-size:.76rem;padding:.3rem .7rem">بحث وإضافة</button>
+        <button class="tab-btn" data-cemtab="paste" style="font-size:.76rem;padding:.3rem .7rem">لصق جماعي</button>
       </div>
 
-      <!-- Search tab -->
       <div id="cemTab-search">
-        <div class="search-bar" style="margin-bottom:.4rem">
+        <div class="search-bar" style="margin-bottom:.45rem">
           <div class="sico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
-          <input class="inp" id="cemSearchInput" placeholder="ابحث باسم البريد…" style="padding-right:2.1rem" autocomplete="off"/>
+          <input class="inp" id="cemSearchInput" placeholder="ابحث باسم البريد…" style="padding-right:2.2rem" autocomplete="off"/>
         </div>
-        <div id="cemSearchResults" style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);display:none;margin-bottom:.4rem"></div>
-        <!-- Pending add form -->
-        <div id="cemPendingForm" style="display:none;background:var(--surf2);border:1px solid var(--bord2);border-radius:var(--radius-sm);padding:.75rem 1rem">
+        <div id="cemSearchResults" style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);display:none;margin-bottom:.45rem"></div>
+        <div id="cemPendingForm" style="display:none;background:var(--surf2);border:1px solid var(--bord2);border-radius:var(--radius-sm);padding:.8rem 1.1rem">
           <div style="font-size:.8rem;font-weight:700;margin-bottom:.65rem;color:var(--text2)">إضافة: <span id="cemPendingEmailLabel" style="color:var(--teal)"></span></div>
           <input type="hidden" id="cemPendingEmailHidden"/>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:.55rem">
             <div><label class="mlabel">من تاريخ (اختياري)</label><input type="date" class="inp" id="cemAddStart" style="width:100%"/></div>
             <div><label class="mlabel">إلى تاريخ (اختياري)</label><input type="date" class="inp" id="cemAddEnd" style="width:100%"/></div>
           </div>
-          <div style="display:flex;gap:.4rem;margin-top:.6rem">
+          <div style="display:flex;gap:.4rem;margin-top:.65rem">
             <button class="btn btn-primary" id="cemConfirmAddBtn"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>إضافة</button>
             <button class="btn btn-ghost" id="cemCancelPendingBtn">إلغاء</button>
           </div>
         </div>
-        <div style="font-size:.72rem;color:var(--text3);margin-top:.35rem" id="cemSearchHint">اكتب جزءاً من البريد للبحث، ثم اختره لتحديد التواريخ قبل الإضافة</div>
+        <div style="font-size:.71rem;color:var(--text3);margin-top:.38rem" id="cemSearchHint">اكتب جزءاً من البريد للبحث، ثم اختره لتحديد التواريخ قبل الإضافة</div>
       </div>
 
-      <!-- Paste tab -->
       <div id="cemTab-paste" style="display:none">
-        <textarea class="inp" id="cemPasteArea" placeholder="الصق عناوين البريد، بريد في كل سطر:&#10;user1@example.com&#10;user2@example.com" style="min-height:110px;font-size:.82rem;font-family:monospace"></textarea>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.55rem;margin-top:.55rem">
+        <textarea class="inp" id="cemPasteArea" placeholder="الصق عناوين البريد، بريد في كل سطر:&#10;user1@example.com&#10;user2@example.com" style="min-height:110px;font-size:.82rem;font-family:'JetBrains Mono',monospace"></textarea>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.55rem;margin-top:.6rem">
           <div><label class="mlabel">من تاريخ للجميع (اختياري)</label><input type="date" class="inp" id="cemPasteStart" style="width:100%"/></div>
           <div><label class="mlabel">إلى تاريخ للجميع (اختياري)</label><input type="date" class="inp" id="cemPasteEnd" style="width:100%"/></div>
         </div>
-        <div style="font-size:.72rem;color:var(--amber);margin-top:.4rem">⚠️ فقط البريد الموجود في "حسابات البريد" سيُضاف</div>
-        <button class="btn btn-primary" id="cemPasteAddBtn" style="margin-top:.55rem">
-          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>إضافة الجميع
+        <div style="font-size:.72rem;color:var(--amber);margin-top:.45rem;display:flex;align-items:center;gap:.35rem">
+          <svg viewBox="0 0 24 24" style="width:12px;height:12px;flex-shrink:0;fill:none;stroke:var(--amber);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          فقط البريد الموجود في "حسابات البريد" سيُضاف
+        </div>
+        <button class="btn btn-primary" id="cemPasteAddBtn" style="margin-top:.6rem">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          إضافة الجميع
         </button>
-        <div id="cemPasteResult" style="display:none;margin-top:.5rem;font-size:.8rem;line-height:1.7;background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.6rem .9rem"></div>
+        <div id="cemPasteResult" style="display:none;margin-top:.55rem;font-size:.8rem;line-height:1.7;background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.65rem 1rem"></div>
       </div>
     </div>
 
@@ -394,7 +950,10 @@
 <!-- Edit Email Modal -->
 <div class="overlay" id="editEmailOverlay">
   <div class="modal">
-    <div class="modal-title">✏️ تعديل حساب البريد</div>
+    <div class="modal-title">
+      <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      تعديل حساب البريد
+    </div>
     <input type="hidden" id="editEmailId"/>
     <div class="mrow"><label class="mlabel">كلمة مرور POP3 الجديدة</label><input class="inp" id="editEmailPw" type="text" style="width:100%" placeholder="اتركها فارغة للإبقاء"/></div>
     <div class="mrow"><label class="mlabel">الخادم</label><input class="inp" id="editEmailHost" type="text" style="width:100%"/></div>
@@ -406,7 +965,10 @@
 <!-- Edit Category Modal -->
 <div class="overlay" id="editCatOverlay">
   <div class="modal">
-    <div class="modal-title">✏️ تعديل فئة الفلترة</div>
+    <div class="modal-title">
+      <svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+      تعديل فئة الفلترة
+    </div>
     <input type="hidden" id="editCatId"/>
     <div class="mrow"><label class="mlabel">اسم الفئة</label><input class="inp" id="editCatLabel" type="text" style="width:100%"/></div>
     <div class="mrow"><label class="mlabel">الوصف</label><input class="inp" id="editCatDesc" type="text" style="width:100%"/></div>
@@ -416,8 +978,10 @@
   </div>
 </div>
 
+<!-- Toasts -->
 <div class="toast-rack" id="toastRack"></div>
 
+<!-- ═══════════════════ SCRIPT ═══════════════════ -->
 <script>
 (function(){
 'use strict';
@@ -446,10 +1010,85 @@ document.querySelectorAll('.nav-btn').forEach(btn=>{
   });
 });
 
+/* ── Analytics Charts ── */
+function renderCharts(total, active, suspended, emails){
+  // Donut chart (active vs suspended)
+  const circumference = 2 * Math.PI * 15.9;
+  const activePct = total > 0 ? active / total : 0;
+  const suspendedPct = total > 0 ? suspended / total : 0;
+  const activeArc = activePct * 100;
+  const suspendedOffset = activePct * circumference;
+
+  const dActive = document.getElementById('donutActive');
+  const dSuspended = document.getElementById('donutSuspended');
+  if(dActive){
+    dActive.style.strokeDasharray = `${activeArc} ${100 - activeArc}`;
+    dActive.style.strokeDashoffset = '0';
+  }
+  if(dSuspended){
+    const sArc = suspendedPct * 100;
+    dSuspended.style.strokeDasharray = `${sArc} ${100 - sArc}`;
+    dSuspended.style.strokeDashoffset = `-${activeArc}`;
+  }
+  const pct = total > 0 ? Math.round(activePct*100) : 0;
+  const dp = document.getElementById('donutPct');
+  if(dp) dp.textContent = pct + '%';
+  const la = document.getElementById('legendActive');
+  const ls = document.getElementById('legendSuspended');
+  const le = document.getElementById('legendEmails');
+  if(la) la.textContent = active + ' نشط';
+  if(ls) ls.textContent = suspended + ' موقوف';
+  if(le) le.textContent = emails + ' بريد';
+
+  // Simulated login bars (last 7 days) — will use real data when available
+  const days = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  const today = new Date().getDay();
+  const labels = Array.from({length:7},(_,i)=>days[(today-6+i+7)%7]);
+  // Generate plausible demo values based on real stats ratio
+  const base = Math.max(1, Math.floor((active||1)/2));
+  const vals = labels.map(()=> Math.floor(base * (0.4 + Math.random()*1.2)));
+  const maxVal = Math.max(...vals,1);
+
+  const barsEl = document.getElementById('loginBarsChart');
+  const lblsEl = document.getElementById('loginBarsLabels');
+  if(barsEl){
+    barsEl.innerHTML = vals.map((v,i)=>{
+      const h = Math.max(4, Math.round((v/maxVal)*52));
+      const isToday = i===6;
+      const col = isToday ? 'var(--accent)' : 'var(--surf4)';
+      return`<div class="mini-bar" style="height:${h}px;background:${col};transition:height .7s var(--ease) ${i*60}ms" title="${labels[i]}: ${v}"></div>`;
+    }).join('');
+  }
+  if(lblsEl){
+    lblsEl.innerHTML = labels.map((l,i)=>`<div class="mini-day" style="color:${i===6?'var(--accent)':'var(--text3)'};font-weight:${i===6?700:400}">${l.slice(0,2)}</div>`).join('');
+  }
+
+  // Sparkline (email growth simulation)
+  const emailBase = emails||1;
+  const sparkVals = Array.from({length:10},(_,i)=> Math.max(1, Math.round(emailBase*(0.4 + i*0.07 + Math.random()*0.08))));
+  sparkVals[sparkVals.length-1] = emailBase;
+  const sparkMax = Math.max(...sparkVals);
+  const svgW=200, svgH=48;
+  const pts = sparkVals.map((v,i)=>{
+    const x = (i/(sparkVals.length-1))*svgW;
+    const y = svgH - (v/sparkMax)*(svgH-6) - 3;
+    return{x,y};
+  });
+  const lineD = pts.map((p,i)=>(i===0?`M${p.x},${p.y}`:`L${p.x},${p.y}`)).join(' ');
+  const areaD = lineD + ` L${pts[pts.length-1].x},${svgH} L0,${svgH} Z`;
+  const sl = document.getElementById('sparkLine');
+  const sa = document.getElementById('sparkArea');
+  if(sl) sl.setAttribute('d', lineD);
+  if(sa) sa.setAttribute('d', areaD);
+  const smx = document.getElementById('sparklineMax');
+  if(smx) smx.textContent = emailBase + ' حساب';
+}
+
 /* ── Stats ── */
 let allClients=[];
 async function loadStats(){
   const d=await api('/admin/api/stats');
+  const total=d.total_clients??0, active=d.active_clients??0, suspended=d.suspended_clients??0, emails=d.email_accounts??0;
   document.getElementById('stClients').textContent=d.total_clients??'—';
   document.getElementById('stActive').textContent=d.active_clients??'—';
   document.getElementById('stSuspended').textContent=d.suspended_clients??'—';
@@ -459,6 +1098,7 @@ async function loadStats(){
   document.getElementById('navClientCount').textContent=d.total_clients??'—';
   document.getElementById('navEmailCount').textContent=d.email_accounts??'—';
   document.getElementById('navCatCount').textContent=d.filter_categories??'—';
+  renderCharts(total, active, suspended, emails);
 }
 loadStats();
 
@@ -471,7 +1111,7 @@ async function loadClients(){
 function renderClients(cs){
   const tb=document.getElementById('clientsTbody');
   document.getElementById('clientCountLbl').textContent=cs.length+' عميل';
-  if(!cs.length){tb.innerHTML='<tr><td colspan="6" class="empty-st">لا يوجد عملاء</td></tr>';return;}
+  if(!cs.length){tb.innerHTML='<tr><td colspan="6"><div class="empty-st"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>لا يوجد عملاء</div></td></tr>';return;}
   tb.innerHTML=cs.map(c=>{
     const sus=c.status==='suspended';
     const emails=c.assigned_emails||[];
@@ -480,15 +1120,19 @@ function renderClients(cs){
       <td><div class="td-main">${esc(c.username)}</div>${c.display_name&&c.display_name!==c.username?`<div style="font-size:.72rem;color:var(--text3)">${esc(c.display_name)}</div>`:''}</td>
       <td><span class="badge ${sus?'badge-red':'badge-green'}">${sus?'موقوف':'نشط'}</span></td>
       <td>${emailBadge}</td>
-      <td style="font-size:.78rem">${fmtDate(c.last_login)}</td>
-      <td>${c.login_count}</td>
+      <td style="font-size:.77rem">${fmtDate(c.last_login)}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:.8rem">${c.login_count}</td>
       <td><div class="td-actions">
         <button class="row-btn emails-btn" onclick="openClientEmails('${esc(c.id)}','${esc(c.username)}')">
           <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>بريد
         </button>
-        <button class="row-btn edit" onclick="openEditClient('${esc(c.id)}','${esc(c.username)}','${esc(c.display_name||'')}','${esc(c.status)}')"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>تعديل</button>
+        <button class="row-btn edit" onclick="openEditClient('${esc(c.id)}','${esc(c.username)}','${esc(c.display_name||'')}','${esc(c.status)}')">
+          <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>تعديل
+        </button>
         <button class="row-btn sus${sus?' act':''}" data-id="${esc(c.id)}" data-sus="${sus}">${sus?'تفعيل':'إيقاف'}</button>
-        <button class="row-btn del" data-id="${esc(c.id)}"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>حذف</button>
+        <button class="row-btn del" data-id="${esc(c.id)}">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>حذف
+        </button>
       </div></td></tr>`;
   }).join('');
   tb.querySelectorAll('.row-btn.sus,.row-btn.act').forEach(btn=>{btn.addEventListener('click',async()=>{const sus=btn.dataset.sus==='true';const d=await api('/admin/api/clients/'+btn.dataset.id,'PUT',{status:sus?'active':'suspended'});if(d.ok){toast(sus?'تم تفعيل الحساب':'تم إيقاف الحساب');loadClients();loadStats();}else toast(d.error||'خطأ',true);});});
@@ -533,7 +1177,6 @@ window.openClientEmails=async function(id,name){
   cemClientIdVal=id;
   document.getElementById('cemClientId').value=id;
   document.getElementById('cemClientName').textContent=name;
-  // Reset
   document.getElementById('cemSearchInput').value='';
   document.getElementById('cemSearchResults').style.display='none';
   document.getElementById('cemPendingForm').style.display='none';
@@ -566,11 +1209,11 @@ async function refreshCemList(){
     const end=item.end_date||null;
     const st=cemDateStatus(start,end);
     return`<tr class="cem-row" style="border-bottom:1px solid var(--border)">
-      <td style="padding:.55rem .75rem;color:var(--text);font-weight:600;word-break:break-all;min-width:180px">${esc(em)}</td>
-      <td style="padding:.55rem .75rem;color:var(--text2);font-size:.78rem;white-space:nowrap">${fmtD(start)}</td>
-      <td style="padding:.55rem .75rem;color:var(--text2);font-size:.78rem;white-space:nowrap">${fmtD(end)}</td>
-      <td style="padding:.55rem .75rem;white-space:nowrap"><span class="badge ${st.cls}">${st.label}</span></td>
-      <td style="padding:.55rem .75rem">
+      <td style="padding:.55rem .8rem;color:var(--text);font-weight:600;word-break:break-all;min-width:180px">${esc(em)}</td>
+      <td style="padding:.55rem .8rem;color:var(--text2);font-size:.78rem;white-space:nowrap">${fmtD(start)}</td>
+      <td style="padding:.55rem .8rem;color:var(--text2);font-size:.78rem;white-space:nowrap">${fmtD(end)}</td>
+      <td style="padding:.55rem .8rem;white-space:nowrap"><span class="badge ${st.cls}">${st.label}</span></td>
+      <td style="padding:.55rem .8rem">
         <div style="display:flex;gap:.25rem;justify-content:flex-end">
           <button class="row-btn edit cem-edit-btn" data-em="${esc(em)}" data-start="${esc(start||'')}" data-end="${esc(end||'')}">
             <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>تواريخ
@@ -624,8 +1267,8 @@ function renderCemSearch(q){
   const filtered=q?cemAllEmails.filter(e=>e.toLowerCase().includes(q.toLowerCase())):cemAllEmails;
   if(!q&&!filtered.length){res.style.display='none';return;}
   res.style.display='block';
-  if(!filtered.length){res.innerHTML='<div style="padding:.6rem .8rem;font-size:.8rem;color:var(--text3)">لا نتائج</div>';return;}
-  res.innerHTML=filtered.slice(0,80).map(em=>`<div class="cem-result-row" data-em="${esc(em)}" style="padding:.42rem .75rem;font-size:.82rem;cursor:pointer;border-bottom:1px solid var(--border);color:var(--text2)">${esc(em)}</div>`).join('');
+  if(!filtered.length){res.innerHTML='<div style="padding:.6rem .85rem;font-size:.8rem;color:var(--text3)">لا نتائج</div>';return;}
+  res.innerHTML=filtered.slice(0,80).map(em=>`<div class="cem-result-row" data-em="${esc(em)}" style="padding:.45rem .8rem;font-size:.82rem;cursor:pointer;border-bottom:1px solid var(--border);color:var(--text2);transition:background .12s">${esc(em)}</div>`).join('');
   res.querySelectorAll('.cem-result-row').forEach(row=>{
     row.addEventListener('mouseenter',()=>row.style.background='var(--surf2)');
     row.addEventListener('mouseleave',()=>row.style.background='');
@@ -673,7 +1316,6 @@ document.getElementById('cemPasteAddBtn').addEventListener('click',async()=>{
   if(added>0){refreshCemList();loadClients();}
 });
 
-// CEM tab switching
 document.querySelectorAll('.tab-btn[data-cemtab]').forEach(btn=>{
   btn.addEventListener('click',()=>{
     document.querySelectorAll('.tab-btn[data-cemtab]').forEach(b=>b.classList.remove('active'));
@@ -696,20 +1338,23 @@ async function loadEmails(){
 function renderEmails(accs){
   const tb=document.getElementById('emailsTbody');
   document.getElementById('emailCountLbl').textContent=accs.length+' حساب';
-  if(!accs.length){tb.innerHTML='<tr><td colspan="4" class="empty-st">لا توجد حسابات بريد</td></tr>';return;}
+  if(!accs.length){tb.innerHTML='<tr><td colspan="4"><div class="empty-st"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>لا توجد حسابات بريد</div></td></tr>';return;}
   tb.innerHTML=accs.map(a=>`<tr>
     <td class="td-main">${esc(a.email)}</td>
-    <td style="font-size:.78rem;color:var(--text3)">${esc(a.pop3_host)}:${esc(String(a.pop3_port))}</td>
-    <td style="font-size:.78rem">${fmtDate(a.added_at)}</td>
+    <td style="font-size:.77rem;color:var(--text3);font-family:'JetBrains Mono',monospace">${esc(a.pop3_host)}:${esc(String(a.pop3_port))}</td>
+    <td style="font-size:.77rem">${fmtDate(a.added_at)}</td>
     <td><div class="td-actions">
-      <button class="row-btn edit" data-id="${esc(a._id)}" data-host="${esc(a.pop3_host)}" data-port="${esc(String(a.pop3_port))}"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>تعديل</button>
-      <button class="row-btn del" data-id="${esc(a._id)}"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>حذف</button>
+      <button class="row-btn edit" data-id="${esc(a._id)}" data-host="${esc(a.pop3_host)}" data-port="${esc(String(a.pop3_port))}">
+        <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>تعديل
+      </button>
+      <button class="row-btn del" data-id="${esc(a._id)}">
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>حذف
+      </button>
     </div></td></tr>`).join('');
   tb.querySelectorAll('.row-btn.edit').forEach(btn=>{btn.addEventListener('click',()=>{document.getElementById('editEmailId').value=btn.dataset.id;document.getElementById('editEmailPw').value='';document.getElementById('editEmailHost').value=btn.dataset.host;document.getElementById('editEmailPort').value=btn.dataset.port;document.getElementById('editEmailOverlay').classList.add('show');});});
   tb.querySelectorAll('.row-btn.del').forEach(btn=>{btn.addEventListener('click',async()=>{if(!confirm('حذف هذا الحساب؟'))return;const d=await api('/admin/api/email-accounts/'+btn.dataset.id,'DELETE');if(d.ok){toast('تم الحذف');loadEmails();loadStats();}else toast(d.error||'خطأ',true);});});
 }
 
-/* Email tabs */
 document.querySelectorAll('.tab-btn[data-etab]').forEach(btn=>{
   btn.addEventListener('click',()=>{
     document.querySelectorAll('.tab-btn[data-etab]').forEach(b=>b.classList.remove('active'));
@@ -757,21 +1402,25 @@ async function loadCategories(){
   catsCache=d.categories||[];
   document.getElementById('catCountLbl').textContent=catsCache.length+' فئة';
   const el=document.getElementById('catListAdmin');
-  if(!catsCache.length){el.innerHTML='<div class="empty-st">لا توجد فئات — أضف فئة أعلاه</div>';return;}
+  if(!catsCache.length){el.innerHTML='<div class="empty-st"><svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>لا توجد فئات — أضف فئة أعلاه</div>';return;}
   el.innerHTML=catsCache.map(c=>`
-    <div style="background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.9rem 1rem;margin-bottom:.5rem;">
-      <div style="display:flex;align-items:flex-start;gap:.6rem;flex-wrap:wrap;">
+    <div class="cat-item" data-id="${esc(c.id)}">
+      <div style="display:flex;align-items:flex-start;gap:.65rem;flex-wrap:wrap;">
         <div style="flex:1;min-width:0;">
-          <div style="display:flex;align-items:center;gap:.45rem;margin-bottom:.3rem;">
+          <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem;flex-wrap:wrap;">
             <span style="font-weight:700;color:var(--text)">${esc(c.label)}</span>
             <span class="badge ${c.enabled?'badge-green':'badge-gray'}">${c.enabled?'مفعّلة':'معطّلة'}</span>
           </div>
-          ${c.description?`<div style="font-size:.76rem;color:var(--text3);margin-bottom:.4rem">${esc(c.description)}</div>`:''}
-          <div class="pattern-list">${c.patterns.map(p=>`<span class="pattern-pill">${esc(p)}</span>`).join('')||'<span style="font-size:.75rem;color:var(--text3)">لا توجد أنماط</span>'}</div>
+          ${c.description?`<div style="font-size:.75rem;color:var(--text3);margin-bottom:.4rem">${esc(c.description)}</div>`:''}
+          <div class="pattern-list">${c.patterns.map(p=>`<span class="pattern-pill">${esc(p)}</span>`).join('')||'<span style="font-size:.74rem;color:var(--text3)">لا توجد أنماط</span>'}</div>
         </div>
         <div style="display:flex;gap:.3rem;flex-shrink:0;">
-          <button class="row-btn edit" data-cat-id="${esc(c.id)}"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>تعديل</button>
-          <button class="row-btn del" data-id="${esc(c.id)}"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>حذف</button>
+          <button class="row-btn edit" data-cat-id="${esc(c.id)}">
+            <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>تعديل
+          </button>
+          <button class="row-btn del" data-id="${esc(c.id)}">
+            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>حذف
+          </button>
         </div>
       </div>
     </div>`).join('');
@@ -802,13 +1451,7 @@ document.getElementById('editCatSave').addEventListener('click',async()=>{
 
 /* ── Activity ── */
 function actionLabel(a){
-  const m={
-    'login_success':'دخول ناجح',
-    'logout':'خروج',
-    'login_failed_bad_pw':'كلمة مرور خاطئة',
-    'login_failed_no_user':'مستخدم غير موجود',
-    'login_blocked_suspended':'دخول مرفوض (موقوف)'
-  };
+  const m={'login_success':'دخول ناجح','logout':'خروج','login_failed_bad_pw':'كلمة مرور خاطئة','login_failed_no_user':'مستخدم غير موجود','login_blocked_suspended':'دخول مرفوض (موقوف)'};
   if(m[a])return m[a];
   if(a?.startsWith('fetch:'))return'استعلام بريد: '+a.split(':')[1];
   return a||'—';
@@ -818,7 +1461,7 @@ async function loadActivity(){
   const d=await api('/admin/api/activity');
   const logs=d.activity||[];
   const el=document.getElementById('activityLog');
-  if(!logs.length){el.innerHTML='<div class="empty-st">لا يوجد نشاط مسجّل بعد</div>';return;}
+  if(!logs.length){el.innerHTML='<div class="empty-st"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>لا يوجد نشاط مسجّل بعد</div>';return;}
   el.innerHTML=logs.map(l=>`<div class="log-row">
     <div class="log-dot ${l.success!==false?'ok':'fail'}"></div>
     <div class="log-user">${esc(l.username||'—')}</div>
