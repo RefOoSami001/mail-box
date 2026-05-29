@@ -680,8 +680,24 @@ async function openMessage(uid){
         document.getElementById('bc').innerHTML=`<div class="body-content"><iframe class="body-frame" id="bodyFrame" sandbox="allow-same-origin allow-popups"></iframe></div>`;
         const frame=document.getElementById('bodyFrame');
         const doc=frame.contentDocument||frame.contentWindow.document;
-        doc.open();doc.write(rawBody);doc.close();
+        const tmp=document.createElement('div');
+        tmp.innerHTML = rawBody;
+        tmp.querySelectorAll('a').forEach(a=>a.setAttribute('target','_blank'));
+        tmp.querySelectorAll('form').forEach(f=>f.setAttribute('target','_blank'));
+        tmp.querySelectorAll('base').forEach(b=>b.remove());
+        doc.open();doc.write(tmp.innerHTML);doc.close();
         try{const bh=doc.documentElement.scrollHeight;if(bh>100)frame.style.minHeight=Math.min(bh+40,1800)+'px';}catch{}
+        try{
+          doc.addEventListener('click',e=>{
+            const a=e.target.closest('a');
+            if(a && a.href){
+              if(a.target !== '_blank'){
+                e.preventDefault();
+                window.open(a.href,'_blank');
+              }
+            }
+          });
+        }catch{}
       }
       function renderPlain(){const tmp=document.createElement('div');tmp.innerHTML=rawBody;document.getElementById('bc').innerHTML=`<div class="body-content"><div class="body-plain">${esc(tmp.textContent||tmp.innerText||'')}</div></div>`;}
       renderHtml();
