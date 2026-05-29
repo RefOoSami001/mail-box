@@ -10,7 +10,7 @@ from pymongo import MongoClient, DESCENDING
 from pymongo.errors import DuplicateKeyError
 from bson import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-in-production")
@@ -62,7 +62,7 @@ def normalize_assigned_emails(raw_list):
 
 def is_email_active(item):
     """Return True if today falls within the item's date range (or no dates set)."""
-    today = datetime.utcnow().date().isoformat()
+    today = datetime.now(timezone.utc).date().isoformat()
     start = item.get("start_date")
     end   = item.get("end_date")
     if start and today < start:
@@ -77,7 +77,7 @@ def log_activity(client_id, username, action, ip="—", success=True):
         login_activity_col.insert_one({
             "client_id": client_id,
             "username":  username,
-            "timestamp": datetime.utcnow(),
+            "timestamp": datetime.now(timezone.utc),
             "action":    action,
             "ip":        ip,
             "success":   success,
@@ -287,7 +287,7 @@ def login():
                 session["client_display"] = doc.get("display_name") or doc["username"]
                 client_accounts_col.update_one(
                     {"_id": doc["_id"]},
-                    {"$set": {"last_login": datetime.utcnow()}, "$inc": {"login_count": 1}}
+                    {"$set": {"last_login": datetime.now(timezone.utc)}, "$inc": {"login_count": 1}}
                 )
                 log_activity(str(doc["_id"]), username, "login_success", get_client_ip(), True)
                 return redirect(url_for("dashboard"))
@@ -385,10 +385,14 @@ def api_fetch():
         warning = "تعذّر تحديث الرسائل — يتم عرض نسخة محفوظة مؤقتاً"
         if patterns:
             summaries = [m for m in summaries if any(p.lower() in m["subject"].lower() for p in patterns)]
+        if summaries:
+            summaries = [summaries[0]]
         return jsonify({"messages": summaries, "total": len(summaries), "warning": warning, "category": category_label, "cached": True})
 
     if patterns:
         summaries = [m for m in summaries if any(p.lower() in m["subject"].lower() for p in patterns)]
+    if summaries:
+        summaries = [summaries[0]]
 
     log_activity(session["client_id"], session["client_username"],
                  f"fetch:{email_addr}:cat:{category_label}", get_client_ip())
@@ -455,7 +459,7 @@ def admin_stats():
     emails    = email_accounts_col.count_documents({})
     cats      = filter_categories_col.count_documents({})
     logins_today = login_activity_col.count_documents({
-        "timestamp": {"$gte": datetime.utcnow().replace(hour=0, minute=0, second=0)},
+        "timestamp": {"$gte": datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)},
         "action": "login_success"
     })
     return jsonify({
@@ -505,7 +509,7 @@ def admin_create_client():
             "display_name":    display,
             "password_hash":   generate_password_hash(password),
             "status":          "active",
-            "created_at":      datetime.utcnow(),
+            "created_at":      datetime.now(timezone.utc),
             "created_by":      session.get("admin_username", "admin"),
             "last_login":      None,
             "login_count":     0,
@@ -584,7 +588,7 @@ def admin_bulk_clients():
                 "display_name":    username,
                 "password_hash":   generate_password_hash(password),
                 "status":          "active",
-                "created_at":      datetime.utcnow(),
+                "created_at":      datetime.now(timezone.utc),
                 "created_by":      session.get("admin_username", "admin"),
                 "last_login":      None,
                 "login_count":     0,
@@ -654,7 +658,7 @@ def admin_assign_client_email(client_id):
         "email":       email,
         "start_date":  start_date,
         "end_date":    end_date,
-        "assigned_at": datetime.utcnow().isoformat(),
+        "assigned_at": datetime.now(timezone.utc).isoformat(),
     })
     client_accounts_col.update_one(
         {"_id": ObjectId(client_id)},
@@ -747,7 +751,7 @@ def admin_add_email():
             "pop3_password": pw,
             "pop3_host":    host,
             "pop3_port":    port,
-            "added_at":     datetime.utcnow(),
+            "added_at":     datetime.now(timezone.utc),
             "added_by":     session.get("admin_username", "admin"),
         })
         _cache.pop(em, None)
@@ -798,7 +802,7 @@ def admin_bulk_emails():
                 "pop3_password": pw,
                 "pop3_host":    host,
                 "pop3_port":    port,
-                "added_at":     datetime.utcnow(),
+                "added_at":     datetime.now(timezone.utc),
                 "added_by":     session.get("admin_username", "admin"),
             })
             _cache.pop(em, None)
@@ -848,6 +852,13 @@ def admin_delete_email(acc_id):
         return jsonify({"error": "Invalid id"}), 400
     return jsonify({"ok": True})
 
+@app.route("/admin/api/email-accounts/bulk-delete", methods=["DELETE"])
+@admin_required
+def admin_bulk_delete_emails():
+    result = email_accounts_col.delete_many({})
+    _cache.clear()
+    return jsonify({"ok": True, "deleted_count": result.deleted_count})
+
 
 # ── Admin API: Filter Categories ──────────────────────────────────
 
@@ -887,7 +898,7 @@ def admin_create_category():
         "patterns":    patterns,
         "enabled":     True,
         "order":       count,
-        "created_at":  datetime.utcnow(),
+        "created_at":  datetime.now(timezone.utc),
     })
     return jsonify({"ok": True, "id": str(result.inserted_id)})
 
