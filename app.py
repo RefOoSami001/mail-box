@@ -235,6 +235,14 @@ def fetch_email_messages(email_addr, pop3_password, pop3_host, pop3_port, limit=
             sender_name, sender_addr = parseaddr(decode_str(sender_raw))
             body, body_type = extract_body(msg)
             preview     = text_preview(msg)
+            msg_ts = None
+            try:
+                msg_dt = parsedate_to_datetime(msg.get("Date", ""))
+                if msg_dt is not None and msg_dt.tzinfo is None:
+                    msg_dt = msg_dt.replace(tzinfo=timezone.utc)
+                msg_ts = msg_dt.isoformat() if msg_dt is not None else None
+            except Exception:
+                msg_ts = None
 
             new_summaries.append({
                 "uid":         uid,
@@ -242,6 +250,7 @@ def fetch_email_messages(email_addr, pop3_password, pop3_host, pop3_port, limit=
                 "sender_name": sender_name or sender_addr,
                 "sender_addr": sender_addr,
                 "date":        format_date(msg.get("Date", "")),
+                "timestamp":   msg_ts,
                 "preview":     preview,
             })
             new_bodies[uid] = {"body": body, "body_type": body_type}
@@ -385,12 +394,16 @@ def api_fetch():
         warning = "تعذّر تحديث الرسائل — يتم عرض نسخة محفوظة مؤقتاً"
         if patterns:
             summaries = [m for m in summaries if any(p.lower() in m["subject"].lower() for p in patterns)]
+        cutoff = datetime.now(timezone.utc) - timedelta(minutes=20)
+        summaries = [m for m in summaries if m.get("timestamp") and datetime.fromisoformat(m["timestamp"]) >= cutoff]
         if summaries:
             summaries = [summaries[0]]
         return jsonify({"messages": summaries, "total": len(summaries), "warning": warning, "category": category_label, "cached": True})
 
     if patterns:
         summaries = [m for m in summaries if any(p.lower() in m["subject"].lower() for p in patterns)]
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=20)
+    summaries = [m for m in summaries if m.get("timestamp") and datetime.fromisoformat(m["timestamp"]) >= cutoff]
     if summaries:
         summaries = [summaries[0]]
 
