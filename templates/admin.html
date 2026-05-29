@@ -773,10 +773,19 @@
       </div>
 
       <div class="card">
+        <div class="search-bar" style="margin-bottom:.75rem">
+          <div class="sico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+          <input class="inp" id="emailSearch" placeholder="بحث بالبريد أو الخادم…" style="padding-right:2.2rem" autocomplete="off"/>
+        </div>
         <div class="card-title">
           <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg></div>
           حسابات البريد المضافة
-          <span id="emailCountLbl" style="margin-right:auto;font-size:.7rem;color:var(--text3);background:var(--surf2);padding:.15rem .55rem;border-radius:20px;border:1px solid var(--border)"></span>
+          <div style="margin-right:auto;display:flex;align-items:center;gap:.45rem">
+            <span id="emailCountLbl" style="font-size:.7rem;color:var(--text3);background:var(--surf2);padding:.15rem .55rem;border-radius:20px;border:1px solid var(--border)"></span>
+            <button class="btn btn-danger" id="deleteAllEmailsBtn" style="padding:.3rem .75rem;font-size:.75rem" disabled>
+              حذف الكل
+            </button>
+          </div>
         </div>
         <div class="tbl-wrap">
           <table>
@@ -1139,6 +1148,7 @@ function renderClients(cs){
   tb.querySelectorAll('.row-btn.del').forEach(btn=>{btn.addEventListener('click',async()=>{if(!confirm('حذف هذا العميل؟'))return;const d=await api('/admin/api/clients/'+btn.dataset.id,'DELETE');if(d.ok){toast('تم الحذف');loadClients();loadStats();}else toast(d.error||'خطأ',true);});});
 }
 document.getElementById('clientSearch').addEventListener('input',function(){const q=this.value.toLowerCase();renderClients(q?allClients.filter(c=>c.username.toLowerCase().includes(q)||(c.display_name||'').toLowerCase().includes(q)):allClients);});
+document.getElementById('emailSearch').addEventListener('input',function(){const q=this.value.toLowerCase();renderEmails(q?allEmails.filter(e=>e.email.toLowerCase().includes(q)||e.pop3_host.toLowerCase().includes(q)):allEmails);});
 document.getElementById('createClientBtn').addEventListener('click',async()=>{
   const u=document.getElementById('newUsername').value.trim(),p=document.getElementById('newPassword').value.trim(),dn=document.getElementById('newDisplay').value.trim();
   if(!u||!p){toast('أدخل اسم المستخدم وكلمة المرور',true);return;}
@@ -1338,6 +1348,7 @@ async function loadEmails(){
 function renderEmails(accs){
   const tb=document.getElementById('emailsTbody');
   document.getElementById('emailCountLbl').textContent=accs.length+' حساب';
+  document.getElementById('deleteAllEmailsBtn').disabled = !accs.length;
   if(!accs.length){tb.innerHTML='<tr><td colspan="4"><div class="empty-st"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>لا توجد حسابات بريد</div></td></tr>';return;}
   tb.innerHTML=accs.map(a=>`<tr>
     <td class="td-main">${esc(a.email)}</td>
@@ -1362,6 +1373,14 @@ document.querySelectorAll('.tab-btn[data-etab]').forEach(btn=>{
     document.getElementById('etab-single').style.display=btn.dataset.etab==='single'?'block':'none';
     document.getElementById('etab-bulk-email').style.display=btn.dataset.etab==='bulk-email'?'block':'none';
   });
+});
+document.getElementById('deleteAllEmailsBtn').addEventListener('click',async()=>{
+  if(!confirm('حذف جميع حسابات البريد؟ هذا الإجراء لا يمكن التراجع عنه.'))return;
+  const btn=document.getElementById('deleteAllEmailsBtn');
+  btn.disabled=true;const originalText=btn.innerHTML;btn.textContent='جارٍ الحذف…';
+  const d=await api('/admin/api/email-accounts/bulk-delete','DELETE');
+  btn.innerHTML=originalText;
+  if(d.ok){toast('تم حذف جميع حسابات البريد');loadEmails();loadStats();}else{toast(d.error||'خطأ',true);btn.disabled=false;}
 });
 
 document.getElementById('addEmailBtn').addEventListener('click',async()=>{
