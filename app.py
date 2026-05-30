@@ -1,6 +1,7 @@
 import poplib
 import email as email_lib
 import os
+import calendar
 import functools
 from email.header import decode_header
 from email.utils import parseaddr, parsedate_to_datetime
@@ -47,6 +48,35 @@ login_activity_col.create_index([("timestamp", DESCENDING)])
 
 _cache: dict = {}
 FETCH_LIMIT = 60
+
+
+def dt_iso(dt):
+    """Serialize a datetime to ISO string, always with UTC timezone info."""
+    if not dt:
+        return "—"
+    if isinstance(dt, str):
+        return dt
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.isoformat()
+
+
+def add_one_month(date_str):
+    """Return date_str + 1 month as YYYY-MM-DD, or None if date_str is falsy."""
+    if not date_str:
+        return None
+    try:
+        d = datetime.strptime(date_str, "%Y-%m-%d")
+        month = d.month + 1
+        year = d.year
+        if month > 12:
+            month = 1
+            year += 1
+        max_day = calendar.monthrange(year, month)[1]
+        day = min(d.day, max_day)
+        return datetime(year, month, day).strftime("%Y-%m-%d")
+    except Exception:
+        return date_str
 
 
 def normalize_assigned_emails(raw_list):
@@ -336,20 +366,21 @@ def api_categories():
 @app.route("/api/my-emails")
 @client_required
 def api_my_emails():
-    """Return the list of emails assigned to the logged-in client, filtered by active date range."""
+    """Return ALL emails assigned to the client, with an 'expired' flag.
+    Expired emails are still returned so the dashboard can show them as expired."""
     doc = client_accounts_col.find_one({"_id": ObjectId(session["client_id"])})
     if not doc:
         return jsonify({"emails": []})
     assigned = normalize_assigned_emails(doc.get("assigned_emails", []))
     result = []
     for item in assigned:
-        if not is_email_active(item):
-            continue
         em = item["email"]
+        active = is_email_active(item)
         result.append({
             "email":      em,
             "start_date": item.get("start_date"),
             "end_date":   item.get("end_date"),
+            "expired":    not active,
         })
     return jsonify({"emails": result})
 
@@ -498,8 +529,8 @@ def admin_list_clients():
             "username":        doc["username"],
             "display_name":    doc.get("display_name", ""),
             "status":          doc.get("status", "active"),
-            "created_at":      doc.get("created_at", "").isoformat() if doc.get("created_at") else "",
-            "last_login":      doc.get("last_login", "").isoformat() if doc.get("last_login") else "—",
+            "created_at":      dt_iso(doc.get("created_at")),
+            "last_login":      dt_iso(doc.get("last_login")) if doc.get("last_login") else "—",
             "login_count":     doc.get("login_count", 0),
             "assigned_emails": assigned,
             "email_count":     len(assigned),
@@ -624,7 +655,7 @@ def admin_client_activity(client_id):
     ).sort("timestamp", DESCENDING).limit(30))
     for l in logs:
         if l.get("timestamp"):
-            l["timestamp"] = l["timestamp"].isoformat()
+            l["timestamp"] = dt_iso(l["timestamp"])
     return jsonify({"activity": logs})
 
 
@@ -664,7 +695,6 @@ def admin_assign_client_email(client_id):
     if not doc:
         return jsonify({"error": "Client not found"}), 404
     assigned = normalize_assigned_emails(doc.get("assigned_emails", []))
-    # Check duplicate
     if any(item["email"] == email for item in assigned):
         return jsonify({"error": f"البريد '{email}' مخصص مسبقاً لهذا العميل"}), 409
     assigned.append({
@@ -731,6 +761,36 @@ def admin_remove_client_email(client_id, email):
     return jsonify({"ok": True})
 
 
+@app.route("/admin/api/clients/<client_id>/emails/renew-all", methods=["POST"])
+@admin_required
+def admin_renew_all_client_emails(client_id):
+    """Renew all assigned emails for a client by shifting dates +1 month.
+    New start_date = old end_date; new end_date = old end_date + 1 month.
+    For emails without an end_date the dates are left unchanged."""
+    try:
+        doc = client_accounts_col.find_one({"_id": ObjectId(client_id)})
+    except Exception:
+        return jsonify({"error": "Invalid id"}), 400
+    if not doc:
+        return jsonify({"error": "Client not found"}), 404
+    assigned = normalize_assigned_emails(doc.get("assigned_emails", []))
+    updated = 0
+    for item in assigned:
+        end = item.get("end_date")
+        if not end:
+            continue
+        new_start = end
+        new_end   = add_one_month(end)
+        item["start_date"] = new_start
+        item["end_date"]   = new_end
+        updated += 1
+    client_accounts_col.update_one(
+        {"_id": ObjectId(client_id)},
+        {"$set": {"assigned_emails": assigned}}
+    )
+    return jsonify({"ok": True, "updated": updated})
+
+
 # ── Admin API: Email Accounts (admin-managed) ─────────────────────
 
 @app.route("/admin/api/email-accounts")
@@ -739,7 +799,7 @@ def admin_list_emails():
     accounts = list(email_accounts_col.find({}, {"pop3_password": 0}).sort("added_at", DESCENDING))
     for a in accounts:
         a["_id"]      = str(a["_id"])
-        a["added_at"] = a["added_at"].isoformat() if a.get("added_at") else ""
+        a["added_at"] = dt_iso(a.get("added_at")) if a.get("added_at") else ""
     return jsonify({"accounts": accounts})
 
 
@@ -776,10 +836,7 @@ def admin_add_email():
 @app.route("/admin/api/email-accounts/bulk", methods=["POST"])
 @admin_required
 def admin_bulk_emails():
-    """
-    Bulk-add email accounts in email:password format, one per line.
-    Uses default POP3 host/port. No connection testing in bulk mode.
-    """
+    """Bulk-add email accounts in email:password format, one per line."""
     data = request.json or {}
     raw  = (data.get("text") or "").strip()
     host = (data.get("host") or DEFAULT_HOST).strip() or DEFAULT_HOST
@@ -864,6 +921,7 @@ def admin_delete_email(acc_id):
     except Exception:
         return jsonify({"error": "Invalid id"}), 400
     return jsonify({"ok": True})
+
 
 @app.route("/admin/api/email-accounts/bulk-delete", methods=["DELETE"])
 @admin_required
@@ -960,8 +1018,16 @@ def admin_all_activity():
     logs = list(login_activity_col.find({}, {"_id": 0}).sort("timestamp", DESCENDING).limit(200))
     for l in logs:
         if l.get("timestamp"):
-            l["timestamp"] = l["timestamp"].isoformat()
+            l["timestamp"] = dt_iso(l["timestamp"])
     return jsonify({"activity": logs})
+
+
+@app.route("/admin/api/activity", methods=["DELETE"])
+@admin_required
+def admin_clear_activity():
+    """Delete all activity logs from the database."""
+    result = login_activity_col.delete_many({})
+    return jsonify({"ok": True, "deleted_count": result.deleted_count})
 
 
 if __name__ == "__main__":
