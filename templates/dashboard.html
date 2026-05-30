@@ -63,7 +63,7 @@
     .sidebar{width:var(--sidebar-w);flex-shrink:0;background:var(--surf);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:background .3s;}
 
     /* My emails panel */
-    .my-emails-panel{padding:.65rem 1rem .6rem;border-bottom:1px solid var(--border);flex-shrink:0;max-height:280px;display:flex;flex-direction:column;gap:.4rem;}
+    .my-emails-panel{padding:.65rem 1rem .6rem;border-bottom:1px solid var(--border);flex-shrink:0;max-height:300px;display:flex;flex-direction:column;gap:.4rem;}
     .my-emails-header{display:flex;align-items:center;gap:.45rem;flex-shrink:0;}
     .my-emails-label{font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);display:flex;align-items:center;gap:.35rem;}
     .my-emails-label svg{width:11px;height:11px;fill:none;stroke:var(--teal);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
@@ -74,7 +74,6 @@
     .my-emails-search input::placeholder{color:var(--text3);}
     .my-emails-search-ico{position:absolute;left:.6rem;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none;display:flex;}
     .my-emails-search-ico svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
-    /* Email table */
     .my-emails-table-wrap{overflow-y:auto;flex:1;border:1px solid var(--border);border-radius:var(--radius-sm);}
     .my-emails-table-wrap::-webkit-scrollbar{width:3px;}
     .my-emails-table-wrap::-webkit-scrollbar-thumb{background:var(--bord2);border-radius:3px;}
@@ -84,11 +83,14 @@
     .my-emails-tbl td{padding:.46rem .6rem;border-bottom:1px solid var(--border);vertical-align:middle;}
     .my-emails-tbl tr:last-child td{border-bottom:none;}
     .my-emails-tbl tr:hover td{background:var(--surf2);}
+    .my-emails-tbl tr.row-expired td{opacity:.6;}
     .em-select-btn{display:inline-flex;align-items:center;gap:.22rem;padding:.22rem .52rem;border-radius:6px;border:1px solid var(--border);background:var(--surf2);cursor:pointer;font-size:.7rem;font-weight:600;font-family:'Alexandria',sans-serif;color:var(--text3);white-space:nowrap;transition:background .15s,color .15s,border-color .15s;}
     .em-select-btn:hover{background:rgba(0,201,167,.1);color:var(--teal);border-color:rgba(0,201,167,.3);}
     .em-select-btn.em-active{background:rgba(0,201,167,.15);color:var(--teal);border-color:rgba(0,201,167,.4);font-weight:700;}
+    .em-select-btn.em-expired{background:rgba(242,95,122,.07);color:var(--danger);border-color:rgba(242,95,122,.25);cursor:default;}
     .em-select-btn svg{width:10px;height:10px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
     .em-date-range{font-size:.68rem;color:var(--text3);white-space:nowrap;}
+    .expired-badge{display:inline-flex;align-items:center;font-size:.6rem;font-weight:700;background:rgba(242,95,122,.1);border:1px solid rgba(242,95,122,.25);color:var(--danger);border-radius:10px;padding:.1rem .38rem;white-space:nowrap;}
     .no-emails-hint{font-size:.74rem;color:var(--text3);padding:.1rem 0;}
 
     .search-panel{padding:.85rem 1rem .75rem;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;gap:.55rem;}
@@ -420,12 +422,17 @@ async function loadMyEmails(){
   }
 }
 
+/* Format date range — always English locale */
 function emFmtRange(start,end){
   if(!start&&!end)return'<span style="color:var(--text3)">—</span>';
-  const fmt=s=>{try{return new Date(s+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit'});}catch{return s;}};
+  const fmt=s=>{
+    try{
+      return new Date(s+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'2-digit'});
+    }catch{return s;}
+  };
   if(start&&end)return`${fmt(start)} ← ${fmt(end)}`;
-  if(start)return`من ${fmt(start)}`;
-  return`حتى ${fmt(end)}`;
+  if(start)return`From ${fmt(start)}`;
+  return`Until ${fmt(end)}`;
 }
 
 function renderMyEmails(){
@@ -434,7 +441,9 @@ function renderMyEmails(){
   const countEl=document.getElementById('myEmailsCount');
   if(!myEmails.length){panel.style.display='none';return;}
   panel.style.display='flex';
-  countEl.textContent=myEmails.length;
+  const activeCount=myEmails.filter(e=>!e.expired).length;
+  const expiredCount=myEmails.filter(e=>e.expired).length;
+  countEl.textContent=activeCount+(expiredCount?` (${expiredCount} منتهي)`:'');
   searchWrap.style.display=myEmails.length>5?'block':'none';
   renderEmailRows(myEmails);
   const filterInput=document.getElementById('myEmailsFilter');
@@ -451,6 +460,20 @@ function renderEmailRows(list){
   const curVal=document.getElementById('emailInput').value.trim().toLowerCase();
   body.innerHTML=list.map((item,i)=>{
     const active=item.email.toLowerCase()===curVal;
+    const expired=!!item.expired;
+    if(expired){
+      return`<tr class="row-expired">
+        <td style="color:var(--text3);font-size:.68rem;padding-right:.5rem">${i+1}</td>
+        <td style="color:var(--text2);word-break:break-all;font-size:.78rem">${esc(item.email)}</td>
+        <td class="em-date-range">
+          ${emFmtRange(item.start_date,item.end_date)}
+          <span class="expired-badge" style="margin-right:.3rem">منتهي</span>
+        </td>
+        <td><button class="em-select-btn em-expired" disabled>
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>منتهي
+        </button></td>
+      </tr>`;
+    }
     return`<tr>
       <td style="color:var(--text3);font-size:.68rem;padding-right:.5rem">${i+1}</td>
       <td style="color:var(--text);font-weight:600;word-break:break-all;font-size:.78rem">${esc(item.email)}</td>
@@ -460,11 +483,11 @@ function renderEmailRows(list){
       </button></td>
     </tr>`;
   }).join('');
-  body.querySelectorAll('.em-select-btn').forEach(btn=>{
+  body.querySelectorAll('.em-select-btn:not(.em-expired)').forEach(btn=>{
     btn.addEventListener('click',()=>{
       const em=btn.dataset.email;
       document.getElementById('emailInput').value=em;
-      body.querySelectorAll('.em-select-btn').forEach(b=>{b.classList.remove('em-active');b.innerHTML='<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>اختيار';});
+      body.querySelectorAll('.em-select-btn').forEach(b=>{b.classList.remove('em-active');if(!b.classList.contains('em-expired'))b.innerHTML='<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>اختيار';});
       btn.classList.add('em-active');
       btn.innerHTML='<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>محدد';
       checkFetchReady();
@@ -524,7 +547,7 @@ function updateCatBtn(){
 /* ── Enable fetch button ── */
 const emailInput=document.getElementById('emailInput');
 emailInput.addEventListener('input',()=>{
-  document.getElementById('myEmailsBody')?.querySelectorAll('.em-select-btn').forEach(b=>{
+  document.getElementById('myEmailsBody')?.querySelectorAll('.em-select-btn:not(.em-expired)').forEach(b=>{
     const isActive=b.dataset.email===emailInput.value.trim().toLowerCase();
     b.classList.toggle('em-active',isActive);
     b.innerHTML=`<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>${isActive?'محدد':'اختيار'}`;
@@ -662,7 +685,6 @@ async function openMessage(uid){
     const isHtml=body.body_type==='html';
     const rawBody=body.body||'';
 
-    /* OTP detection */
     let codeText=null;
     if(isHtml){const tmp=document.createElement('div');tmp.innerHTML=rawBody;codeText=detectCode(tmp.textContent||tmp.innerText||'');}
     else{codeText=detectCode(rawBody);}
@@ -691,10 +713,7 @@ async function openMessage(uid){
           doc.addEventListener('click',e=>{
             const a=e.target.closest('a');
             if(a && a.href){
-              if(a.target !== '_blank'){
-                e.preventDefault();
-                window.open(a.href,'_blank');
-              }
+              if(a.target !== '_blank'){e.preventDefault();window.open(a.href,'_blank');}
             }
           });
         }catch{}

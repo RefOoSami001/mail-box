@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl" data-theme="dark">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
   <title>Farouk Account — لوحة التحكم</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
@@ -86,15 +86,19 @@
     .ibtn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
     .ibtn-danger:hover{background:rgba(242,95,122,.1);color:var(--danger);border-color:rgba(242,95,122,.25);}
 
+    /* hamburger — shown only on mobile */
+    .hamburger{display:none;width:36px;height:36px;border-radius:var(--radius-sm);background:var(--surf2);border:1px solid var(--border);align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:var(--text2);}
+    .hamburger svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+
     /* ═══ LAYOUT ═══ */
-    .layout{display:flex;flex:1;overflow:hidden;min-height:0;}
+    .layout{display:flex;flex:1;overflow:hidden;min-height:0;position:relative;}
 
     /* ═══ SIDEBAR ═══ */
     .nav-sidebar{
       width:228px;flex-shrink:0;background:var(--surf);
       border-left:1px solid var(--border);
       display:flex;flex-direction:column;padding:.85rem .65rem;gap:.08rem;
-      transition:background .3s;position:relative;
+      transition:background .3s,transform .3s var(--ease);position:relative;z-index:30;
     }
     .nav-sidebar::before{
       content:'';position:absolute;top:0;right:0;bottom:0;width:1px;
@@ -132,6 +136,10 @@
       transition:transform .2s var(--ease-spring);
     }
     .nav-btn:hover .nav-count{transform:scale(1.1);}
+
+    /* sidebar overlay backdrop (mobile) */
+    .sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:20;backdrop-filter:blur(3px);}
+    .sidebar-backdrop.show{display:block;}
 
     /* ═══ MAIN ═══ */
     .main{flex:1;overflow-y:auto;padding:1.75rem;display:flex;flex-direction:column;gap:1.25rem;min-width:0;}
@@ -222,23 +230,15 @@
     .chart-title svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
     canvas{display:block;width:100%;}
 
-    /* mini bar chart */
     .mini-bars{display:flex;align-items:flex-end;gap:3px;height:52px;}
-    .mini-bar{
-      flex:1;border-radius:3px 3px 0 0;min-height:4px;
-      transition:height .6s var(--ease),opacity .3s;
-    }
+    .mini-bar{flex:1;border-radius:3px 3px 0 0;min-height:4px;transition:height .6s var(--ease),opacity .3s;}
     .mini-bar:hover{opacity:.75;cursor:default;}
     .mini-days{display:flex;gap:3px;margin-top:4px;}
     .mini-day{flex:1;font-size:.55rem;text-align:center;color:var(--text3);}
 
-    /* donut chart */
     .donut-wrap{position:relative;width:80px;height:80px;flex-shrink:0;}
     .donut-wrap svg{transform:rotate(-90deg);}
-    .donut-center{
-      position:absolute;inset:0;display:flex;flex-direction:column;
-      align-items:center;justify-content:center;
-    }
+    .donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
     .donut-pct{font-size:1.1rem;font-weight:800;color:var(--text);}
     .donut-lbl{font-size:.58rem;color:var(--text3);margin-top:1px;}
     .donut-row{display:flex;align-items:center;gap:.75rem;}
@@ -246,7 +246,6 @@
     .donut-legend-item{display:flex;align-items:center;gap:.4rem;font-size:.72rem;}
     .donut-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 
-    /* sparkline */
     .sparkline-wrap{height:48px;overflow:hidden;}
     .sparkline-nums{display:flex;justify-content:space-between;margin-top:4px;}
     .sparkline-num{font-size:.58rem;color:var(--text3);}
@@ -345,6 +344,7 @@
       display:flex;align-items:center;gap:.7rem;padding:.58rem .8rem;
       border-radius:var(--radius-sm);font-size:.81rem;
       border-bottom:1px solid var(--border);transition:background .12s;
+      flex-wrap:wrap;
     }
     .log-row:last-child{border-bottom:none;}
     .log-row:hover{background:var(--surf2);}
@@ -368,12 +368,12 @@
     .overlay{
       display:none;position:fixed;inset:0;
       background:rgba(0,0,0,.6);z-index:100;
-      backdrop-filter:blur(6px);align-items:center;justify-content:center;
+      backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:1rem;
     }
     .overlay.show{display:flex;}
     .modal{
       background:var(--surf);border:1px solid var(--bord2);border-radius:var(--radius);
-      padding:1.5rem 1.65rem;width:100%;max-width:560px;margin:1rem;
+      padding:1.5rem 1.65rem;width:100%;max-width:560px;
       animation:mIn .28s var(--ease-spring) both;
       max-height:90vh;overflow-y:auto;position:relative;
     }
@@ -414,7 +414,7 @@
     .email-chip button svg{width:10px;height:10px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;}
 
     /* ═══ TABS ═══ */
-    .tab-bar{display:flex;gap:.3rem;margin-bottom:1rem;border-bottom:1px solid var(--border);padding-bottom:.7rem;}
+    .tab-bar{display:flex;gap:.3rem;margin-bottom:1rem;border-bottom:1px solid var(--border);padding-bottom:.7rem;flex-wrap:wrap;}
     .tab-btn{
       padding:.38rem .8rem;border-radius:var(--radius-sm);border:none;cursor:pointer;
       font-family:'Alexandria',sans-serif;font-size:.79rem;font-weight:700;
@@ -467,11 +467,66 @@
 
     @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 
+    /* ═══════════════════════════════
+       MOBILE RESPONSIVE
+    ═══════════════════════════════ */
     @media(max-width:640px){
-      .nav-sidebar{width:54px;}
-      .nav-btn span,.nav-label,.nav-count{display:none;}
-      .main{padding:1rem;}
+      /* Show hamburger button */
+      .hamburger{display:flex;}
+      .admin-user,.admin-chip{display:none;}
+      .logo-name{font-size:.9rem;}
+
+      /* Sidebar slides in as drawer */
+      .nav-sidebar{
+        position:fixed;top:0;right:0;bottom:0;width:220px;
+        z-index:50;box-shadow:-8px 0 32px rgba(0,0,0,.4);
+        transform:translateX(100%);
+      }
+      .nav-sidebar.open{transform:translateX(0);}
+      .nav-sidebar .nav-btn span,.nav-sidebar .nav-label,.nav-sidebar .nav-count{display:flex;}
+
+      /* Full-width main */
+      .main{padding:.85rem .75rem;gap:.85rem;}
+      .topbar{padding:0 .85rem;gap:.55rem;}
+      .topbar{height:54px;}
+
+      /* Stats: 2 columns */
+      .stats-row{grid-template-columns:repeat(2,1fr);}
+
+      /* Charts: stack */
       .charts-row{grid-template-columns:1fr;}
+
+      /* Forms: stack vertically */
+      .form-row{flex-direction:column;}
+      .fgroup{min-width:unset;width:100%;}
+      .btn{width:100%;justify-content:center;}
+
+      /* Tables: horizontal scroll */
+      .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+      .tbl-wrap table{min-width:520px;}
+
+      /* Cards: less padding */
+      .card{padding:.95rem 1rem;}
+
+      /* Modal: full-screen on mobile */
+      .overlay{align-items:flex-end;padding:0;}
+      .modal{
+        border-radius:var(--radius) var(--radius) 0 0;max-width:100%;
+        max-height:95vh;margin:0;
+      }
+
+      /* Log rows wrap nicely */
+      .log-user{min-width:unset;}
+      .log-action{min-width:140px;}
+
+      /* Modals inner grids */
+      .modal [style*="grid-template-columns:1fr 1fr"]{display:flex!important;flex-direction:column!important;}
+    }
+
+    @media(min-width:641px) and (max-width:900px){
+      .nav-sidebar{width:180px;}
+      .main{padding:1.1rem;}
+      .charts-row{grid-template-columns:1fr 1fr;}
     }
   </style>
 </head>
@@ -479,6 +534,9 @@
 
 <!-- ═══════════ TOPBAR ═══════════ -->
 <header class="topbar">
+  <button class="hamburger" id="hamburgerBtn" aria-label="القائمة">
+    <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
   <a class="logo" href="#">
     <div class="logo-mark">
       <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -501,11 +559,14 @@
   </div>
 </header>
 
+<!-- Sidebar backdrop for mobile -->
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
 <!-- ═══════════ LAYOUT ═══════════ -->
 <div class="layout">
 
   <!-- Sidebar -->
-  <nav class="nav-sidebar">
+  <nav class="nav-sidebar" id="navSidebar">
     <div class="nav-label">القائمة الرئيسية</div>
     <button class="nav-btn active" data-page="overview">
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
@@ -538,7 +599,6 @@
     <!-- ══════ OVERVIEW ══════ -->
     <div class="page active" id="page-overview">
 
-      <!-- Stat cards -->
       <div class="stats-row">
         <div class="stat blue">
           <div class="stat-header">
@@ -596,9 +656,7 @@
         </div>
       </div>
 
-      <!-- Analytics Charts -->
       <div class="charts-row">
-        <!-- Logins this week -->
         <div class="chart-card">
           <div class="chart-title">
             <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
@@ -607,8 +665,6 @@
           <div class="mini-bars" id="loginBarsChart"></div>
           <div class="mini-days" id="loginBarsLabels"></div>
         </div>
-
-        <!-- Active vs Suspended donut -->
         <div class="chart-card">
           <div class="chart-title">
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
@@ -635,8 +691,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Email accounts sparkline -->
         <div class="chart-card">
           <div class="chart-title">
             <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
@@ -661,7 +715,6 @@
         </div>
       </div>
 
-      <!-- How it works -->
       <div class="card">
         <div class="card-title">
           <div class="card-title-icon">
@@ -724,7 +777,6 @@
           <button class="tab-btn" data-etab="bulk-email">إضافة جماعية</button>
         </div>
 
-        <!-- Single add -->
         <div id="etab-single">
           <div class="card-title" style="margin-bottom:.85rem">
             <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
@@ -746,7 +798,6 @@
           </div>
         </div>
 
-        <!-- Bulk email add -->
         <div id="etab-bulk-email" style="display:none">
           <div class="card-title" style="margin-bottom:.85rem">
             <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg></div>
@@ -833,10 +884,16 @@
         <div class="card-title">
           <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
           سجل النشاط الأخير
-          <button class="btn btn-ghost" id="refreshActivityBtn" style="margin-right:auto;padding:.32rem .75rem;font-size:.75rem">
-            <svg viewBox="0 0 24 24" style="width:12px;height:12px"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-            تحديث
-          </button>
+          <div style="margin-right:auto;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
+            <button class="btn btn-ghost" id="refreshActivityBtn" style="padding:.32rem .75rem;font-size:.75rem">
+              <svg viewBox="0 0 24 24" style="width:12px;height:12px"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              تحديث
+            </button>
+            <button class="btn btn-danger" id="clearActivityBtn" style="padding:.32rem .75rem;font-size:.75rem">
+              <svg viewBox="0 0 24 24" style="width:12px;height:12px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+              مسح النشاط
+            </button>
+          </div>
         </div>
         <div id="activityLog"><div class="empty-st">جارٍ التحميل…</div></div>
       </div>
@@ -873,7 +930,13 @@
     <input type="hidden" id="cemClientId"/>
 
     <div class="mrow">
-      <label class="mlabel">البريد المخصص حاليًا <span id="cemAssignedCount" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--text3)"></span></label>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:.45rem">
+        <label class="mlabel" style="margin-bottom:0">البريد المخصص حاليًا <span id="cemAssignedCount" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--text3)"></span></label>
+        <button class="btn btn-green" id="cemRenewAllBtn" style="padding:.28rem .7rem;font-size:.74rem">
+          <svg viewBox="0 0 24 24" style="width:12px;height:12px"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          تجديد الكل
+        </button>
+      </div>
       <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-sm)">
         <div style="max-height:230px;overflow-y:auto">
           <table id="cemAssignedTable" style="width:100%;border-collapse:collapse;font-size:.82rem">
@@ -995,6 +1058,15 @@
 (function(){
 'use strict';
 
+/* ── Hamburger / mobile sidebar ── */
+const hamburgerBtn=document.getElementById('hamburgerBtn');
+const navSidebar=document.getElementById('navSidebar');
+const sidebarBackdrop=document.getElementById('sidebarBackdrop');
+function openSidebar(){navSidebar.classList.add('open');sidebarBackdrop.classList.add('show');}
+function closeSidebar(){navSidebar.classList.remove('open');sidebarBackdrop.classList.remove('show');}
+hamburgerBtn.addEventListener('click',openSidebar);
+sidebarBackdrop.addEventListener('click',closeSidebar);
+
 /* ── Theme ── */
 const html=document.documentElement,moon=document.getElementById('iMoon'),sun=document.getElementById('iSun');
 function applyTheme(t){html.setAttribute('data-theme',t);localStorage.setItem('mb-theme',t);moon.style.display=t==='dark'?'block':'none';sun.style.display=t==='light'?'block':'none';}
@@ -1005,7 +1077,10 @@ document.getElementById('themeBtn').onclick=()=>applyTheme(html.getAttribute('da
 function toast(msg,isErr=false){const rack=document.getElementById('toastRack');const el=document.createElement('div');el.className='toast'+(isErr?' err':'');el.textContent=msg;rack.appendChild(el);setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),300);},2800);}
 function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 async function api(url,method='GET',body=null){const opts={method,headers:{'Content-Type':'application/json'}};if(body)opts.body=JSON.stringify(body);const r=await fetch(url,opts);return r.json();}
-function fmtDate(s){if(!s||s==='—')return'—';try{return new Date(s).toLocaleString('ar-EG',{dateStyle:'short',timeStyle:'short'});}catch{return s;}}
+
+/* ── Date formatters — English locale ── */
+function fmtDate(s){if(!s||s==='—')return'—';try{return new Date(s).toLocaleString('en-GB',{dateStyle:'short',timeStyle:'short'});}catch{return s;}}
+function fmtD(s){if(!s)return'<span style="color:var(--text3)">—</span>';try{return new Date(s+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}catch{return s;}}
 
 /* ── Nav ── */
 document.querySelectorAll('.nav-btn').forEach(btn=>{
@@ -1016,17 +1091,16 @@ document.querySelectorAll('.nav-btn').forEach(btn=>{
     document.getElementById('page-'+btn.dataset.page).classList.add('active');
     const loaders={clients:loadClients,emails:loadEmails,filters:loadCategories,activity:loadActivity,overview:loadStats};
     loaders[btn.dataset.page]?.();
+    closeSidebar();
   });
 });
 
 /* ── Analytics Charts ── */
 function renderCharts(total, active, suspended, emails){
-  // Donut chart (active vs suspended)
   const circumference = 2 * Math.PI * 15.9;
   const activePct = total > 0 ? active / total : 0;
   const suspendedPct = total > 0 ? suspended / total : 0;
   const activeArc = activePct * 100;
-  const suspendedOffset = activePct * circumference;
 
   const dActive = document.getElementById('donutActive');
   const dSuspended = document.getElementById('donutSuspended');
@@ -1049,11 +1123,9 @@ function renderCharts(total, active, suspended, emails){
   if(ls) ls.textContent = suspended + ' موقوف';
   if(le) le.textContent = emails + ' بريد';
 
-  // Simulated login bars (last 7 days) — will use real data when available
   const days = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
   const today = new Date().getDay();
   const labels = Array.from({length:7},(_,i)=>days[(today-6+i+7)%7]);
-  // Generate plausible demo values based on real stats ratio
   const base = Math.max(1, Math.floor((active||1)/2));
   const vals = labels.map(()=> Math.floor(base * (0.4 + Math.random()*1.2)));
   const maxVal = Math.max(...vals,1);
@@ -1072,7 +1144,6 @@ function renderCharts(total, active, suspended, emails){
     lblsEl.innerHTML = labels.map((l,i)=>`<div class="mini-day" style="color:${i===6?'var(--accent)':'var(--text3)'};font-weight:${i===6?700:400}">${l.slice(0,2)}</div>`).join('');
   }
 
-  // Sparkline (email growth simulation)
   const emailBase = emails||1;
   const sparkVals = Array.from({length:10},(_,i)=> Math.max(1, Math.round(emailBase*(0.4 + i*0.07 + Math.random()*0.08))));
   sparkVals[sparkVals.length-1] = emailBase;
@@ -1181,7 +1252,6 @@ function cemDateStatus(start,end){
   if(end&&today>end)return{label:'منتهي',cls:'badge-red'};
   return{label:'نشط',cls:'badge-green'};
 }
-function fmtD(s){if(!s)return'<span style="color:var(--text3)">—</span>';try{return new Date(s+'T00:00:00').toLocaleDateString('ar-EG',{day:'2-digit',month:'short',year:'numeric'});}catch{return s;}}
 
 window.openClientEmails=async function(id,name){
   cemClientIdVal=id;
@@ -1255,6 +1325,17 @@ async function refreshCemList(){
     });
   });
 }
+
+/* ── Renew All button ── */
+document.getElementById('cemRenewAllBtn').addEventListener('click',async()=>{
+  const d=await api('/admin/api/clients/'+cemClientIdVal+'/emails/renew-all','POST');
+  if(d.ok){
+    toast(`تم تجديد ${d.updated} بريد ✓`);
+    refreshCemList();
+  } else {
+    toast(d.error||'خطأ',true);
+  }
+});
 
 document.getElementById('cemEditSaveBtn').addEventListener('click',async()=>{
   const em=document.getElementById('cemEditEmailHidden').value;
@@ -1490,6 +1571,21 @@ async function loadActivity(){
   </div>`).join('');
 }
 document.getElementById('refreshActivityBtn').addEventListener('click',loadActivity);
+
+/* ── Clear Activity ── */
+document.getElementById('clearActivityBtn').addEventListener('click',async()=>{
+  if(!confirm('مسح جميع سجلات النشاط؟ لا يمكن التراجع عن هذا الإجراء.'))return;
+  const btn=document.getElementById('clearActivityBtn');
+  btn.disabled=true;
+  const d=await api('/admin/api/activity','DELETE');
+  btn.disabled=false;
+  if(d.ok){
+    toast(`تم مسح ${d.deleted_count||0} سجل ✓`);
+    loadActivity();
+  } else {
+    toast(d.error||'خطأ',true);
+  }
+});
 
 })();
 </script>
