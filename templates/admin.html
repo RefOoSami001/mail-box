@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" dir="{{ dir_attr }}" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>{{ t('app_admin_name') }} — {{ t('admin_nav_overview') }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+      --accent:#4f8ef7;--accent2:#7c5ef5;--green:#22c55e;--teal:#00c9a7;
+      --amber:#f59e0b;--danger:#f25f7a;--radius:16px;--radius-sm:10px;
+      --ease:cubic-bezier(.4,0,.2,1);--ease-spring:cubic-bezier(.34,1.56,.64,1);
+    }
+    [data-theme="dark"]{
+      --bg:#05080f;--surf:#0c1422;--surf2:#111c2e;--surf3:#18273d;--surf4:#1f304a;
+      --border:rgba(255,255,255,.06);--bord2:rgba(255,255,255,.11);
+      --text:#dde8f5;--text2:#6d82a0;--text3:#354b66;
+      --shadow:0 32px 80px rgba(0,0,0,.7);
+      --glow-blue:rgba(79,142,247,.2);--glow-purple:rgba(124,94,245,.2);
+    }
+    [data-theme="light"]{
+      --bg:#eef2f9;--surf:#ffffff;--surf2:#f5f8fd;--surf3:#ebf0f8;--surf4:#dce5f3;
+      --border:rgba(0,0,0,.07);--bord2:rgba(0,0,0,.12);
+      --text:#0c1a2e;--text2:#4a5f7a;--text3:#8ea0bc;
+      --shadow:0 24px 60px rgba(0,0,0,.1);
+      --glow-blue:rgba(79,142,247,.1);--glow-purple:rgba(124,94,245,.1);
+    }
+    html,body{height:100%;}
+    body{font-family:'Alexandria',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;transition:background .35s,color .35s;}
+
+    .topbar{height:62px;flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 1.4rem;gap:.9rem;position:relative;z-index:40;}
+    .topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent 0%,var(--danger) 30%,var(--accent2) 60%,transparent 100%);opacity:.5;}
+    .logo{display:flex;align-items:center;gap:.6rem;text-decoration:none;}
+    .logo-mark{width:34px;height:34px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,var(--danger),var(--accent2));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(242,95,122,.4);transition:transform .25s var(--ease-spring),box-shadow .25s;}
+    .logo-mark:hover{transform:scale(1.08) rotate(-3deg);box-shadow:0 6px 24px rgba(242,95,122,.55);}
+    .logo-mark svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+    .logo-name{font-size:1.05rem;font-weight:800;background:linear-gradient(90deg,var(--danger),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.01em;}
+    .admin-chip{display:inline-flex;align-items:center;gap:.35rem;background:rgba(242,95,122,.08);border:1px solid rgba(242,95,122,.2);color:var(--danger);border-radius:20px;padding:.22rem .75rem;font-size:.68rem;font-weight:700;letter-spacing:.04em;}
+    .topbar-r{margin-right:auto;display:flex;align-items:center;gap:.55rem;}
+    .admin-user{font-size:.78rem;color:var(--text2);padding:.22rem .65rem;background:var(--surf2);border:1px solid var(--border);border-radius:20px;}
+    .ibtn{width:36px;height:36px;border-radius:var(--radius-sm);background:var(--surf2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);flex-shrink:0;text-decoration:none;transition:background .18s,color .18s,transform .15s,border-color .18s;}
+    .ibtn:hover{background:var(--surf3);color:var(--text);transform:scale(1.05);}
+    .ibtn:active{transform:scale(.93);}
+    .ibtn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+    .ibtn-danger:hover{background:rgba(242,95,122,.1);color:var(--danger);border-color:rgba(242,95,122,.25);}
+    /* Language switcher */
+    .lang-switcher{display:flex;align-items:center;gap:.18rem;background:var(--surf2);border:1px solid var(--border);border-radius:20px;padding:.15rem .25rem;flex-shrink:0;}
+    .lang-btn{padding:.15rem .42rem;border:none;border-radius:14px;background:none;cursor:pointer;font-size:.66rem;font-weight:700;color:var(--text3);font-family:'Alexandria',sans-serif;transition:background .15s,color .15s;text-decoration:none;display:inline-flex;align-items:center;}
+    .lang-btn:hover{background:var(--surf3);color:var(--text2);}
+    .lang-btn.active{background:var(--accent);color:#fff;}
+
+    .hamburger{display:none;width:36px;height:36px;border-radius:var(--radius-sm);background:var(--surf2);border:1px solid var(--border);align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:var(--text2);}
+    .hamburger svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+
+    .layout{display:flex;flex:1;overflow:hidden;min-height:0;position:relative;}
+
+    .nav-sidebar{width:228px;flex-shrink:0;background:var(--surf);border-left:1px solid var(--border);display:flex;flex-direction:column;padding:.85rem .65rem;gap:.08rem;transition:background .3s,transform .3s var(--ease);position:relative;z-index:30;}
+    .nav-sidebar::before{content:'';position:absolute;top:0;right:0;bottom:0;width:1px;background:linear-gradient(180deg,transparent,var(--accent2),var(--accent),transparent);opacity:.15;pointer-events:none;}
+    .nav-label{font-size:.58rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);padding:.5rem .6rem .4rem;}
+    .nav-btn{display:flex;align-items:center;gap:.65rem;padding:.68rem .75rem;border-radius:var(--radius-sm);cursor:pointer;color:var(--text2);font-family:'Alexandria',sans-serif;font-size:.83rem;font-weight:600;background:none;border:none;width:100%;text-align:right;transition:background .15s,color .15s,transform .12s;position:relative;}
+    .nav-btn:hover{background:var(--surf2);color:var(--text);transform:translateX(-2px);}
+    .nav-btn.active{background:linear-gradient(135deg,rgba(79,142,247,.12),rgba(124,94,245,.08));color:var(--accent);box-shadow:inset 0 0 0 1px rgba(79,142,247,.15);}
+    .nav-btn.active::before{content:'';position:absolute;right:0;top:20%;bottom:20%;width:2.5px;background:linear-gradient(180deg,var(--accent),var(--accent2));border-radius:4px;}
+    .nav-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+    .nav-count{margin-right:auto;background:linear-gradient(135deg,rgba(79,142,247,.15),rgba(124,94,245,.1));border:1px solid rgba(79,142,247,.15);border-radius:20px;padding:.1rem .5rem;font-size:.65rem;color:var(--accent);font-weight:700;transition:transform .2s var(--ease-spring);}
+    .nav-btn:hover .nav-count{transform:scale(1.1);}
+    .sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:20;backdrop-filter:blur(3px);}
+    .sidebar-backdrop.show{display:block;}
+
+    .main{flex:1;overflow-y:auto;padding:1.75rem;display:flex;flex-direction:column;gap:1.25rem;min-width:0;}
+    .main::-webkit-scrollbar{width:4px;}
+    .main::-webkit-scrollbar-thumb{background:var(--bord2);border-radius:4px;}
+    .page{display:none;flex-direction:column;gap:1.25rem;animation:pageIn .3s var(--ease) both;}
+    .page.active{display:flex;}
+    @keyframes pageIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+    .card{background:var(--surf);border:1px solid var(--border);border-radius:var(--radius);padding:1.3rem 1.5rem;transition:background .3s,border-color .2s;position:relative;overflow:hidden;}
+    .card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(79,142,247,.2),transparent);pointer-events:none;}
+    .card-title{font-size:.9rem;font-weight:700;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
+    .card-title svg{width:15px;height:15px;stroke:var(--accent);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+    .card-title-icon{width:28px;height:28px;border-radius:8px;background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+    .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:.75rem;}
+    .stat{background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1.05rem 1.15rem;position:relative;overflow:hidden;transition:transform .2s var(--ease-spring),box-shadow .2s,border-color .2s;}
+    .stat:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.2);}
+    .stat::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;border-radius:0 0 var(--radius-sm) var(--radius-sm);}
+    .stat.blue::after{background:linear-gradient(90deg,var(--accent),transparent);}
+    .stat.green::after{background:linear-gradient(90deg,var(--green),transparent);}
+    .stat.red::after{background:linear-gradient(90deg,var(--danger),transparent);}
+    .stat.purple::after{background:linear-gradient(90deg,var(--accent2),transparent);}
+    .stat.amber::after{background:linear-gradient(90deg,var(--amber),transparent);}
+    .stat.teal::after{background:linear-gradient(90deg,var(--teal),transparent);}
+    .stat-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.5rem;}
+    .stat-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .stat.blue .stat-icon{background:rgba(79,142,247,.12);}
+    .stat.green .stat-icon{background:rgba(34,197,94,.12);}
+    .stat.red .stat-icon{background:rgba(242,95,122,.12);}
+    .stat.purple .stat-icon{background:rgba(124,94,245,.12);}
+    .stat.amber .stat-icon{background:rgba(245,158,11,.12);}
+    .stat.teal .stat-icon{background:rgba(0,201,167,.12);}
+    .stat-icon svg{width:15px;height:15px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+    .stat.blue .stat-icon svg{stroke:var(--accent);}
+    .stat.green .stat-icon svg{stroke:var(--green);}
+    .stat.red .stat-icon svg{stroke:var(--danger);}
+    .stat.purple .stat-icon svg{stroke:var(--accent2);}
+    .stat.amber .stat-icon svg{stroke:var(--amber);}
+    .stat.teal .stat-icon svg{stroke:var(--teal);}
+    .stat-val{font-size:1.75rem;font-weight:800;letter-spacing:-.04em;line-height:1;}
+    .stat-lbl{font-size:.7rem;color:var(--text3);margin-top:.3rem;font-weight:500;}
+    .stat.blue .stat-val{color:var(--accent);}
+    .stat.green .stat-val{color:var(--green);}
+    .stat.red .stat-val{color:var(--danger);}
+    .stat.purple .stat-val{color:var(--accent2);}
+    .stat.amber .stat-val{color:var(--amber);}
+    .stat.teal .stat-val{color:var(--teal);}
+
+    .charts-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;}
+    .chart-card{background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1rem 1.15rem;}
+    .chart-title{font-size:.75rem;font-weight:700;color:var(--text2);margin-bottom:.75rem;display:flex;align-items:center;gap:.4rem;}
+    .chart-title svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+    .mini-bars{display:flex;align-items:flex-end;gap:3px;height:52px;}
+    .mini-bar{flex:1;border-radius:3px 3px 0 0;min-height:4px;transition:height .6s var(--ease),opacity .3s;}
+    .mini-bar:hover{opacity:.75;cursor:default;}
+    .mini-days{display:flex;gap:3px;margin-top:4px;}
+    .mini-day{flex:1;font-size:.55rem;text-align:center;color:var(--text3);}
+    .donut-wrap{position:relative;width:80px;height:80px;flex-shrink:0;}
+    .donut-wrap svg{transform:rotate(-90deg);}
+    .donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+    .donut-pct{font-size:1.1rem;font-weight:800;color:var(--text);}
+    .donut-lbl{font-size:.58rem;color:var(--text3);margin-top:1px;}
+    .donut-row{display:flex;align-items:center;gap:.75rem;}
+    .donut-legend{display:flex;flex-direction:column;gap:.4rem;flex:1;}
+    .donut-legend-item{display:flex;align-items:center;gap:.4rem;font-size:.72rem;}
+    .donut-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+    .sparkline-wrap{height:48px;overflow:hidden;}
+    .sparkline-nums{display:flex;justify-content:space-between;margin-top:4px;}
+    .sparkline-num{font-size:.58rem;color:var(--text3);}
+
+    .form-row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:flex-end;}
+    .fgroup{display:flex;flex-direction:column;gap:.3rem;flex:1;min-width:120px;}
+    .flabel{font-size:.63rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);}
+    .inp{width:100%;background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.62rem .9rem;color:var(--text);font-family:'Alexandria',sans-serif;font-size:.85rem;outline:none;transition:border-color .2s,background .2s,box-shadow .2s;}
+    .inp:focus{border-color:rgba(79,142,247,.5);background:var(--surf3);box-shadow:0 0 0 3px rgba(79,142,247,.08);}
+    .inp::placeholder{color:var(--text3);}
+    textarea.inp{resize:vertical;min-height:110px;line-height:1.65;}
+    select.inp{cursor:pointer;}
+
+    .btn{display:inline-flex;align-items:center;gap:.4rem;padding:.62rem 1.1rem;border-radius:var(--radius-sm);border:none;cursor:pointer;font-weight:700;font-family:'Alexandria',sans-serif;font-size:.82rem;white-space:nowrap;transition:opacity .18s,transform .12s,box-shadow .18s;position:relative;overflow:hidden;}
+    .btn::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,0);transition:background .15s;}
+    .btn:hover::after{background:rgba(255,255,255,.04);}
+    .btn:active{transform:scale(.96);}
+    .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 4px 14px rgba(79,142,247,.3);}
+    .btn-primary:hover{box-shadow:0 6px 20px rgba(79,142,247,.45);opacity:.93;}
+    .btn-danger{background:rgba(242,95,122,.1);border:1px solid rgba(242,95,122,.25);color:var(--danger);}
+    .btn-danger:hover{background:rgba(242,95,122,.2);}
+    .btn-ghost{background:var(--surf2);border:1px solid var(--border);color:var(--text2);}
+    .btn-ghost:hover{background:var(--surf3);color:var(--text);}
+    .btn-amber{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);color:var(--amber);}
+    .btn-amber:hover{background:rgba(245,158,11,.18);}
+    .btn-green{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);color:var(--green);}
+    .btn-green:hover{background:rgba(34,197,94,.18);}
+    .btn svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+
+    .tbl-wrap{overflow-x:auto;margin-top:.75rem;}
+    table{width:100%;border-collapse:collapse;font-size:.83rem;}
+    th{text-align:right;padding:.52rem .8rem;font-size:.61rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surf2);}
+    th:first-child{border-radius:var(--radius-sm) 0 0 0;}th:last-child{border-radius:0 var(--radius-sm) 0 0;}
+    td{padding:.6rem .8rem;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:middle;}
+    tr:last-child td{border-bottom:none;}
+    tr{transition:background .12s;}
+    tr:hover td{background:var(--surf2);}
+    .td-main{color:var(--text);font-weight:600;}
+    .td-actions{display:flex;gap:.28rem;justify-content:flex-end;flex-wrap:wrap;}
+
+    .row-btn{display:inline-flex;align-items:center;gap:.22rem;padding:.28rem .56rem;border-radius:7px;border:1px solid var(--border);background:var(--surf2);cursor:pointer;font-size:.71rem;font-weight:600;font-family:'Alexandria',sans-serif;color:var(--text3);white-space:nowrap;transition:background .15s,color .15s,border-color .15s,transform .1s;}
+    .row-btn:hover{background:var(--surf3);color:var(--text2);transform:scale(1.03);}
+    .row-btn:active{transform:scale(.95);}
+    .row-btn.del:hover{background:rgba(242,95,122,.1);color:var(--danger);border-color:rgba(242,95,122,.25);}
+    .row-btn.sus:hover{background:rgba(245,158,11,.1);color:var(--amber);border-color:rgba(245,158,11,.25);}
+    .row-btn.act:hover{background:rgba(34,197,94,.1);color:var(--green);border-color:rgba(34,197,94,.25);}
+    .row-btn.edit:hover{background:rgba(79,142,247,.1);color:var(--accent);border-color:rgba(79,142,247,.25);}
+    .row-btn.emails-btn:hover{background:rgba(0,201,167,.1);color:var(--teal);border-color:rgba(0,201,167,.25);}
+    .row-btn svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+
+    .badge{display:inline-flex;align-items:center;gap:.28rem;padding:.2rem .55rem;border-radius:20px;font-size:.67rem;font-weight:700;white-space:nowrap;}
+    .badge-green{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.22);color:var(--green);}
+    .badge-red{background:rgba(242,95,122,.1);border:1px solid rgba(242,95,122,.22);color:var(--danger);}
+    .badge-blue{background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.2);color:var(--accent);}
+    .badge-gray{background:var(--surf3);border:1px solid var(--border);color:var(--text3);}
+    .badge-teal{background:rgba(0,201,167,.1);border:1px solid rgba(0,201,167,.22);color:var(--teal);}
+    .badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;display:inline-block;animation:pulse-dot 2s infinite;}
+    @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.8)}}
+
+    .search-bar{position:relative;}
+    .search-bar input{padding-right:2.2rem;}
+    .sico{position:absolute;right:.75rem;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none;display:flex;}
+    .sico svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+
+    .log-row{display:flex;align-items:center;gap:.7rem;padding:.58rem .8rem;border-radius:var(--radius-sm);font-size:.81rem;border-bottom:1px solid var(--border);transition:background .12s;flex-wrap:wrap;}
+    .log-row:last-child{border-bottom:none;}
+    .log-row:hover{background:var(--surf2);}
+    .log-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+    .log-dot.ok{background:var(--green);box-shadow:0 0 6px var(--green);}
+    .log-dot.fail{background:var(--danger);box-shadow:0 0 6px var(--danger);}
+    .log-user{font-weight:600;color:var(--text);min-width:90px;}
+    .log-action{flex:1;color:var(--text2);}
+    .log-ip{font-size:.69rem;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+    .log-time{font-size:.69rem;color:var(--text3);white-space:nowrap;}
+
+    .bulk-result{display:none;background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.85rem 1.1rem;font-size:.83rem;line-height:1.7;margin-top:.7rem;animation:fadeIn .25s var(--ease);}
+    .bulk-result.show{display:block;}
+
+    .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:1rem;}
+    .overlay.show{display:flex;}
+    .modal{background:var(--surf);border:1px solid var(--bord2);border-radius:var(--radius);padding:1.5rem 1.65rem;width:100%;max-width:560px;animation:mIn .28s var(--ease-spring) both;max-height:90vh;overflow-y:auto;position:relative;}
+    .modal::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:var(--radius) var(--radius) 0 0;}
+    @keyframes mIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+    .modal-title{font-size:1rem;font-weight:700;margin-bottom:1.1rem;display:flex;align-items:center;gap:.5rem;}
+    .modal-title svg{width:18px;height:18px;stroke:var(--accent);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+    .mrow{margin-bottom:.85rem;}
+    .mlabel{display:block;font-size:.63rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:.35rem;}
+    .mactions{display:flex;gap:.5rem;justify-content:flex-end;margin-top:1.1rem;flex-wrap:wrap;}
+
+    .toast-rack{position:fixed;bottom:1.75rem;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column-reverse;gap:.45rem;pointer-events:none;}
+    .toast{display:flex;align-items:center;gap:.55rem;background:var(--text);color:var(--bg);border-radius:30px;padding:.58rem 1.1rem;font-size:.82rem;font-weight:700;font-family:'Alexandria',sans-serif;white-space:nowrap;pointer-events:none;box-shadow:0 10px 32px rgba(0,0,0,.35);animation:tIn .3s var(--ease-spring) both;}
+    .toast::before{content:'✓';font-size:.75rem;opacity:.8;}
+    .toast.err{background:var(--danger);color:#fff;}
+    .toast.err::before{content:'✕';}
+    .toast.out{animation:tOut .3s var(--ease) both;}
+    @keyframes tIn{from{opacity:0;transform:translateY(16px) scale(.88)}to{opacity:1;transform:none}}
+    @keyframes tOut{from{opacity:1}to{opacity:0;transform:translateY(10px) scale(.9)}}
+
+    .email-chip{display:inline-flex;align-items:center;gap:.38rem;background:rgba(0,201,167,.07);border:1px solid rgba(0,201,167,.18);border-radius:20px;padding:.24rem .65rem;font-size:.76rem;color:var(--text);margin:.18rem;}
+    .email-chip button{background:none;border:none;cursor:pointer;color:var(--text3);display:flex;padding:0;transition:color .15s;}
+    .email-chip button:hover{color:var(--danger);}
+    .email-chip button svg{width:10px;height:10px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;}
+
+    .tab-bar{display:flex;gap:.3rem;margin-bottom:1rem;border-bottom:1px solid var(--border);padding-bottom:.7rem;flex-wrap:wrap;}
+    .tab-btn{padding:.38rem .8rem;border-radius:var(--radius-sm);border:none;cursor:pointer;font-family:'Alexandria',sans-serif;font-size:.79rem;font-weight:700;background:none;color:var(--text3);transition:background .15s,color .15s;}
+    .tab-btn:hover{background:var(--surf2);color:var(--text2);}
+    .tab-btn.active{background:rgba(79,142,247,.12);color:var(--accent);border:1px solid rgba(79,142,247,.15);}
+
+    .pattern-list{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.4rem;}
+    .pattern-pill{display:inline-flex;align-items:center;gap:.3rem;background:rgba(79,142,247,.07);border:1px solid rgba(79,142,247,.18);border-radius:20px;padding:.22rem .58rem;font-size:.74rem;color:var(--text);font-family:'JetBrains Mono',monospace;}
+
+    .empty-st{text-align:center;padding:1.5rem;color:var(--text3);font-size:.83rem;display:flex;flex-direction:column;align-items:center;gap:.5rem;}
+    .empty-st svg{width:28px;height:28px;stroke:var(--text3);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;opacity:.5;}
+
+    .steps-list{display:flex;flex-direction:column;gap:.5rem;}
+    .step-item{display:flex;align-items:flex-start;gap:.85rem;padding:.75rem 1rem;background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);transition:border-color .2s,background .2s;}
+    .step-item:hover{border-color:rgba(79,142,247,.2);background:var(--surf3);}
+    .step-num{width:24px;height:24px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;color:#fff;margin-top:.05rem;}
+    .step-text{font-size:.84rem;color:var(--text2);line-height:1.65;}
+    .step-text strong{color:var(--text);}
+    code{background:var(--surf2);padding:.1rem .42rem;border-radius:5px;font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--accent2);border:1px solid var(--border);}
+
+    .cat-item{background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.95rem 1.1rem;margin-bottom:.5rem;transition:border-color .2s,transform .15s;}
+    .cat-item:hover{border-color:rgba(79,142,247,.18);transform:translateX(-1px);}
+
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+    @media(max-width:640px){
+      .hamburger{display:flex;}
+      .admin-user,.admin-chip{display:none;}
+      .logo-name{font-size:.9rem;}
+      .nav-sidebar{position:fixed;top:0;right:0;bottom:0;width:220px;z-index:50;box-shadow:-8px 0 32px rgba(0,0,0,.4);transform:translateX(100%);}
+      .nav-sidebar.open{transform:translateX(0);}
+      .main{padding:.85rem .75rem;gap:.85rem;}
+      .topbar{padding:0 .85rem;gap:.55rem;height:54px;}
+      .stats-row{grid-template-columns:repeat(2,1fr);}
+      .charts-row{grid-template-columns:1fr;}
+      .form-row{flex-direction:column;}
+      .fgroup{min-width:unset;width:100%;}
+      .btn{width:100%;justify-content:center;}
+      .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+      .tbl-wrap table{min-width:520px;}
+      .card{padding:.95rem 1rem;}
+      .overlay{align-items:flex-end;padding:0;}
+      .modal{border-radius:var(--radius) var(--radius) 0 0;max-width:100%;max-height:95vh;margin:0;}
+      .log-user{min-width:unset;}
+      .log-action{min-width:140px;}
+      .modal [style*="grid-template-columns:1fr 1fr"]{display:flex!important;flex-direction:column!important;}
+    }
+    @media(min-width:641px) and (max-width:900px){
+      .nav-sidebar{width:180px;}
+      .main{padding:1.1rem;}
+      .charts-row{grid-template-columns:1fr 1fr;}
+    }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <button class="hamburger" id="hamburgerBtn" aria-label="{{ t('admin_menu_main') }}">
+    <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <a class="logo" href="#">
+    <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+    <span class="logo-name">{{ t('app_admin_name') }}</span>
+  </a>
+  <span class="admin-chip">
+    <svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    {{ t('admin_badge') }}
+  </span>
+  <div class="topbar-r">
+    <div class="lang-switcher">
+      <a class="lang-btn {% if lang == 'ar' %}active{% endif %}" href="{{ url_for('set_language', lang='ar') }}">ع</a>
+      <a class="lang-btn {% if lang == 'en' %}active{% endif %}" href="{{ url_for('set_language', lang='en') }}">EN</a>
+      <a class="lang-btn {% if lang == 'fr' %}active{% endif %}" href="{{ url_for('set_language', lang='fr') }}">FR</a>
+    </div>
+    <span class="admin-user">{{ admin_username }}</span>
+    <button class="ibtn" id="themeBtn" title="{{ t('toggle_theme') }}">
+      <svg id="iMoon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg id="iSun" style="display:none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
+    </button>
+    <a class="ibtn ibtn-danger" href="/admin/logout" title="{{ t('dash_logout') }}">
+      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </a>
+  </div>
+</header>
+
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+<div class="layout">
+  <nav class="nav-sidebar" id="navSidebar">
+    <div class="nav-label">{{ t('admin_menu_main') }}</div>
+    <button class="nav-btn active" data-page="overview">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+      <span>{{ t('admin_nav_overview') }}</span>
+    </button>
+    <button class="nav-btn" data-page="clients">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span>{{ t('admin_nav_clients') }}</span>
+      <span class="nav-count" id="navClientCount">—</span>
+    </button>
+    <button class="nav-btn" data-page="emails">
+      <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
+      <span>{{ t('admin_nav_emails') }}</span>
+      <span class="nav-count" id="navEmailCount">—</span>
+    </button>
+    <button class="nav-btn" data-page="filters">
+      <svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+      <span>{{ t('admin_nav_filters') }}</span>
+      <span class="nav-count" id="navCatCount">—</span>
+    </button>
+    <button class="nav-btn" data-page="activity">
+      <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span>{{ t('admin_nav_activity') }}</span>
+    </button>
+  </nav>
+
+  <main class="main">
+
+    <!-- OVERVIEW -->
+    <div class="page active" id="page-overview">
+      <div class="stats-row">
+        <div class="stat blue"><div class="stat-header"><div><div class="stat-val" id="stClients">—</div><div class="stat-lbl">{{ t('stat_total_clients') }}</div></div><div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div></div></div>
+        <div class="stat green"><div class="stat-header"><div><div class="stat-val" id="stActive">—</div><div class="stat-lbl">{{ t('stat_active') }}</div></div><div class="stat-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div></div></div>
+        <div class="stat red"><div class="stat-header"><div><div class="stat-val" id="stSuspended">—</div><div class="stat-lbl">{{ t('stat_suspended') }}</div></div><div class="stat-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></div></div></div>
+        <div class="stat purple"><div class="stat-header"><div><div class="stat-val" id="stEmails">—</div><div class="stat-lbl">{{ t('stat_email_accounts') }}</div></div><div class="stat-icon"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg></div></div></div>
+        <div class="stat amber"><div class="stat-header"><div><div class="stat-val" id="stCats">—</div><div class="stat-lbl">{{ t('stat_filter_cats') }}</div></div><div class="stat-icon"><svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg></div></div></div>
+        <div class="stat teal"><div class="stat-header"><div><div class="stat-val" id="stLogins">—</div><div class="stat-lbl">{{ t('stat_logins_today') }}</div></div><div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></div></div></div>
+      </div>
+
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-title"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>{{ t('chart_login_activity') }}</div>
+          <div class="mini-bars" id="loginBarsChart"></div>
+          <div class="mini-days" id="loginBarsLabels"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>{{ t('chart_client_status') }}</div>
+          <div class="donut-row">
+            <div class="donut-wrap">
+              <svg viewBox="0 0 36 36" width="80" height="80">
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--surf3)" stroke-width="3.5"/>
+                <circle id="donutActive" cx="18" cy="18" r="15.9" fill="none" stroke="var(--green)" stroke-width="3.5" stroke-dasharray="0 100" stroke-linecap="round" style="transition:stroke-dasharray 1.2s var(--ease)"/>
+                <circle id="donutSuspended" cx="18" cy="18" r="15.9" fill="none" stroke="var(--danger)" stroke-width="3.5" stroke-dasharray="0 100" stroke-linecap="round" style="transition:stroke-dasharray 1.2s var(--ease);"/>
+              </svg>
+              <div class="donut-center"><span class="donut-pct" id="donutPct">—</span><span class="donut-lbl" id="donutActiveLbl">{{ t('legend_active') }}</span></div>
+            </div>
+            <div class="donut-legend">
+              <div class="donut-legend-item"><span class="donut-dot" style="background:var(--green)"></span><span id="legendActive" style="color:var(--text2)">—</span></div>
+              <div class="donut-legend-item"><span class="donut-dot" style="background:var(--danger)"></span><span id="legendSuspended" style="color:var(--text2)">—</span></div>
+              <div class="donut-legend-item"><span class="donut-dot" style="background:var(--accent2)"></span><span id="legendEmails" style="color:var(--text2)">—</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>{{ t('chart_email_growth') }}</div>
+          <div class="sparkline-wrap">
+            <svg id="sparklineSvg" viewBox="0 0 200 48" preserveAspectRatio="none" style="width:100%;height:48px">
+              <defs><linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--accent)" stop-opacity=".3"/><stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>
+              <path id="sparkArea" fill="url(#sparkGrad)" d=""/>
+              <path id="sparkLine" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d=""/>
+            </svg>
+          </div>
+          <div class="sparkline-nums"><span class="sparkline-num">— —</span><span class="sparkline-num" id="sparklineMax" style="color:var(--accent)">—</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+          {{ t('how_it_works') }}
+        </div>
+        <div class="steps-list">
+          <div class="step-item"><div class="step-num">1</div><div class="step-text"><strong>{{ t('step1_title') }}</strong> — {{ t('step1_desc') }}</div></div>
+          <div class="step-item"><div class="step-num">2</div><div class="step-text"><strong>{{ t('step2_title') }}</strong> — {{ t('step2_desc') }}</div></div>
+          <div class="step-item"><div class="step-num">3</div><div class="step-text"><strong>{{ t('step3_title') }}</strong> — {{ t('step3_desc') }}</div></div>
+          <div class="step-item"><div class="step-num">4</div><div class="step-text"><strong>{{ t('step4_title') }}</strong> — {{ t('step4_desc') }}</div></div>
+          <div class="step-item"><div class="step-num">5</div><div class="step-text"><strong>{{ t('step5_title') }}</strong> — {{ t('step5_desc') }} <code>pop3.kuku.lu:995</code></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLIENTS -->
+    <div class="page" id="page-clients">
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+          {{ t('create_client_title') }}
+        </div>
+        <div class="form-row">
+          <div class="fgroup"><div class="flabel">{{ t('username_label') }}</div><input class="inp" id="newUsername" type="text" placeholder="client1"/></div>
+          <div class="fgroup"><div class="flabel">{{ t('password_label') }}</div><input class="inp" id="newPassword" type="text" placeholder="••••••"/></div>
+          <div class="fgroup"><div class="flabel">{{ t('display_name_label') }}</div><input class="inp" id="newDisplay" type="text" placeholder="{{ t('optional') }}"/></div>
+          <button class="btn btn-primary" id="createClientBtn" style="margin-top:auto">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            {{ t('create_btn') }}
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+          {{ t('all_clients_title') }}
+          <span id="clientCountLbl" style="margin-right:auto;font-size:.7rem;color:var(--text3);background:var(--surf2);padding:.15rem .55rem;border-radius:20px;border:1px solid var(--border)"></span>
+        </div>
+        <div class="search-bar" style="margin-bottom:.75rem">
+          <div class="sico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+          <input class="inp" id="clientSearch" placeholder="{{ t('search_client_ph') }}" style="padding-right:2.2rem"/>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>{{ t('col_user') }}</th><th>{{ t('col_status') }}</th><th>{{ t('col_assigned_email') }}</th><th>{{ t('col_last_login') }}</th><th>{{ t('col_login_count') }}</th><th></th></tr></thead>
+            <tbody id="clientsTbody"><tr><td colspan="6" class="empty-st">{{ t('loading_dots') }}</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- EMAIL ACCOUNTS -->
+    <div class="page" id="page-emails">
+      <div class="card">
+        <div class="tab-bar">
+          <button class="tab-btn active" data-etab="single">{{ t('tab_single_add') }}</button>
+          <button class="tab-btn" data-etab="bulk-email">{{ t('tab_bulk_add') }}</button>
+        </div>
+        <div id="etab-single">
+          <div class="card-title" style="margin-bottom:.85rem">
+            <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+            {{ t('add_pop3_title') }}
+          </div>
+          <div class="form-row">
+            <div class="fgroup" style="min-width:200px"><div class="flabel">{{ t('email_label') }}</div><input class="inp" id="newEmail" type="email" placeholder="user@example.com"/></div>
+            <div class="fgroup"><div class="flabel">{{ t('pop3_password_label') }}</div><input class="inp" id="newEmailPw" type="text" placeholder="••••••"/></div>
+            <div class="fgroup"><div class="flabel">{{ t('server_label') }}</div><input class="inp" id="newEmailHost" type="text" value="pop3.kuku.lu"/></div>
+            <div class="fgroup" style="max-width:95px"><div class="flabel">{{ t('port_label') }}</div><input class="inp" id="newEmailPort" type="number" value="995"/></div>
+            <button class="btn btn-primary" id="addEmailBtn" style="margin-top:auto">
+              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              {{ t('add_btn') }}
+            </button>
+          </div>
+          <div style="font-size:.74rem;color:var(--text3);margin-top:.55rem;display:flex;align-items:center;gap:.35rem">
+            <svg viewBox="0 0 24 24" style="width:12px;height:12px;flex-shrink:0;fill:none;stroke:var(--teal);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg>
+            {{ t('connection_verified_hint') }}
+          </div>
+        </div>
+        <div id="etab-bulk-email" style="display:none">
+          <div class="card-title" style="margin-bottom:.85rem">
+            <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg></div>
+            {{ t('bulk_email_title') }}
+          </div>
+          <div style="font-size:.82rem;color:var(--text2);margin-bottom:.8rem;line-height:1.75">{{ t('bulk_format_hint') }} <code>email@example.com:password</code></div>
+          <div class="form-row" style="margin-bottom:.75rem">
+            <div class="fgroup"><div class="flabel">{{ t('default_server_label') }}</div><input class="inp" id="bulkEmailHost" type="text" value="pop3.kuku.lu"/></div>
+            <div class="fgroup" style="max-width:95px"><div class="flabel">{{ t('port_label') }}</div><input class="inp" id="bulkEmailPort" type="number" value="995"/></div>
+          </div>
+          <textarea class="inp" id="bulkEmailText" placeholder="user1@example.com:pass1&#10;user2@example.com:pass2" style="min-height:140px"></textarea>
+          <div style="font-size:.73rem;color:var(--amber);margin-top:.45rem;margin-bottom:.7rem;display:flex;align-items:center;gap:.35rem">
+            <svg viewBox="0 0 24 24" style="width:12px;height:12px;flex-shrink:0;fill:none;stroke:var(--amber);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            {{ t('bulk_no_verify_warn') }}
+          </div>
+          <button class="btn btn-primary" id="bulkEmailBtn">
+            <svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+            {{ t('add_all_btn') }}
+          </button>
+          <div class="bulk-result" id="bulkEmailResult"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="search-bar" style="margin-bottom:.75rem">
+          <div class="sico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+          <input class="inp" id="emailSearch" placeholder="{{ t('search_email_ph') }}" style="padding-right:2.2rem" autocomplete="off"/>
+        </div>
+        <div class="card-title">
+          <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg></div>
+          {{ t('email_accounts_added_title') }}
+          <div style="margin-right:auto;display:flex;align-items:center;gap:.45rem">
+            <span id="emailCountLbl" style="font-size:.7rem;color:var(--text3);background:var(--surf2);padding:.15rem .55rem;border-radius:20px;border:1px solid var(--border)"></span>
+            <button class="btn btn-danger" id="deleteAllEmailsBtn" style="padding:.3rem .75rem;font-size:.75rem" disabled>{{ t('delete_all_btn') }}</button>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>{{ t('col_email_addr') }}</th><th>{{ t('col_server') }}</th><th>{{ t('col_date_added') }}</th><th></th></tr></thead>
+            <tbody id="emailsTbody"><tr><td colspan="4" class="empty-st">{{ t('loading_dots') }}</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- FILTER CATEGORIES -->
+    <div class="page" id="page-filters">
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg></div>
+          {{ t('create_filter_title') }}
+        </div>
+        <div class="form-row">
+          <div class="fgroup" style="min-width:180px"><div class="flabel">{{ t('cat_name_label') }}</div><input class="inp" id="newCatLabel" type="text" placeholder="{{ t('cat_name_ph') }}"/></div>
+          <div class="fgroup"><div class="flabel">{{ t('cat_desc_label') }}</div><input class="inp" id="newCatDesc" type="text" placeholder="{{ t('cat_desc_ph') }}"/></div>
+        </div>
+        <div class="mrow" style="margin-top:.75rem">
+          <label class="mlabel">{{ t('cat_patterns_label') }}</label>
+          <textarea class="inp" id="newCatPatterns" placeholder="Netflix: Your sign-in code&#10;Netflix : Votre code d'identification"></textarea>
+          <div style="font-size:.73rem;color:var(--text3);margin-top:.35rem">{{ t('cat_patterns_hint') }}</div>
+        </div>
+        <button class="btn btn-primary" id="createCatBtn">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          {{ t('create_cat_btn') }}
+        </button>
+      </div>
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg></div>
+          {{ t('current_cats_title') }}
+          <span id="catCountLbl" style="margin-right:auto;font-size:.7rem;color:var(--text3);background:var(--surf2);padding:.15rem .55rem;border-radius:20px;border:1px solid var(--border)"></span>
+        </div>
+        <div id="catListAdmin"><div class="empty-st">{{ t('loading_dots') }}</div></div>
+      </div>
+    </div>
+
+    <!-- ACTIVITY -->
+    <div class="page" id="page-activity">
+      <div class="card">
+        <div class="card-title">
+          <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+          {{ t('activity_log_title') }}
+          <div style="margin-right:auto;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
+            <button class="btn btn-ghost" id="refreshActivityBtn" style="padding:.32rem .75rem;font-size:.75rem">
+              <svg viewBox="0 0 24 24" style="width:12px;height:12px"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              {{ t('refresh_btn') }}
+            </button>
+            <button class="btn btn-danger" id="clearActivityBtn" style="padding:.32rem .75rem;font-size:.75rem">
+              <svg viewBox="0 0 24 24" style="width:12px;height:12px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+              {{ t('clear_activity_btn') }}
+            </button>
+          </div>
+        </div>
+        <div id="activityLog"><div class="empty-st">{{ t('loading_dots') }}</div></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Edit Client Modal -->
+<div class="overlay" id="editClientOverlay">
+  <div class="modal">
+    <div class="modal-title"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>{{ t('edit_client_title') }}</div>
+    <input type="hidden" id="editClientId"/>
+    <div class="mrow"><label class="mlabel">{{ t('username_label') }}</label><input class="inp" id="editUsername" type="text" style="width:100%"/></div>
+    <div class="mrow"><label class="mlabel">{{ t('display_name_label') }}</label><input class="inp" id="editDisplay" type="text" style="width:100%"/></div>
+    <div class="mrow"><label class="mlabel">{{ t('new_password_label') }}</label><input class="inp" id="editPassword" type="text" placeholder="{{ t('leave_empty_ph') }}" style="width:100%"/></div>
+    <div class="mrow"><label class="mlabel">{{ t('status_label') }}</label>
+      <select class="inp" id="editStatus" style="width:100%">
+        <option value="active">{{ t('status_active') }}</option>
+        <option value="suspended">{{ t('status_suspended') }}</option>
+      </select>
+    </div>
+    <div class="mactions"><button class="btn btn-ghost" id="editClientCancel">{{ t('cancel') }}</button><button class="btn btn-primary" id="editClientSave">{{ t('save_edits_btn') }}</button></div>
+  </div>
+</div>
+
+<!-- Client Emails Modal -->
+<div class="overlay" id="clientEmailsOverlay">
+  <div class="modal" style="max-width:760px">
+    <div class="modal-title">
+      <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
+      {{ t('manage_email_title') }}: <span id="cemClientName" style="color:var(--accent);margin-right:.3rem"></span>
+    </div>
+    <input type="hidden" id="cemClientId"/>
+
+    <div class="mrow">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:.45rem">
+        <label class="mlabel" style="margin-bottom:0">{{ t('assigned_email_label') }} <span id="cemAssignedCount" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--text3)"></span></label>
+        <button class="btn btn-green" id="cemRenewAllBtn" style="padding:.28rem .7rem;font-size:.74rem">
+          <svg viewBox="0 0 24 24" style="width:12px;height:12px"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          {{ t('renew_all_btn') }}
+        </button>
+      </div>
+      <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-sm)">
+        <div style="max-height:230px;overflow-y:auto">
+          <table id="cemAssignedTable" style="width:100%;border-collapse:collapse;font-size:.82rem">
+            <thead style="position:sticky;top:0;background:var(--surf);z-index:1">
+              <tr>
+                <th style="padding:.42rem .8rem;text-align:right;font-size:.61rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surf2)">{{ t('col_email_addr') }}</th>
+                <th style="padding:.42rem .8rem;text-align:right;font-size:.61rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surf2)">{{ t('col_from_date') }}</th>
+                <th style="padding:.42rem .8rem;text-align:right;font-size:.61rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surf2)">{{ t('col_to_date') }}</th>
+                <th style="padding:.42rem .8rem;text-align:right;font-size:.61rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surf2)">{{ t('col_status') }}</th>
+                <th style="padding:.42rem .8rem;border-bottom:1px solid var(--border);background:var(--surf2)"></th>
+              </tr>
+            </thead>
+            <tbody id="cemAssignedBody"></tbody>
+          </table>
+          <div id="cemEmptyMsg" style="display:none;padding:1.2rem;text-align:center;font-size:.8rem;color:var(--text3)">{{ t('no_assigned_email') }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="cemEditPanel" style="display:none;background:var(--surf2);border:1px solid var(--bord2);border-radius:var(--radius-sm);padding:.8rem 1.1rem;margin-top:-.3rem;margin-bottom:.85rem">
+      <div style="font-size:.8rem;font-weight:700;margin-bottom:.65rem;color:var(--text2)">{{ t('edit_dates_label') }}: <span id="cemEditEmailLabel" style="color:var(--accent)"></span></div>
+      <input type="hidden" id="cemEditEmailHidden"/>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.55rem">
+        <div><label class="mlabel">{{ t('from_date_label') }}</label><input type="date" class="inp" id="cemEditStart" style="width:100%"/></div>
+        <div><label class="mlabel">{{ t('to_date_label') }}</label><input type="date" class="inp" id="cemEditEnd" style="width:100%"/></div>
+      </div>
+      <div style="display:flex;gap:.4rem;margin-top:.65rem">
+        <button class="btn btn-primary" id="cemEditSaveBtn">{{ t('save_dates_btn') }}</button>
+        <button class="btn btn-ghost" id="cemEditCancelBtn">{{ t('cancel') }}</button>
+      </div>
+    </div>
+
+    <div class="mrow" style="margin-top:.1rem">
+      <label class="mlabel">{{ t('add_email_label') }}</label>
+      <div style="display:flex;gap:.3rem;margin-bottom:.65rem">
+        <button class="tab-btn active" data-cemtab="search" style="font-size:.76rem;padding:.3rem .7rem">{{ t('tab_search_add') }}</button>
+        <button class="tab-btn" data-cemtab="paste" style="font-size:.76rem;padding:.3rem .7rem">{{ t('tab_paste_bulk') }}</button>
+      </div>
+
+      <div id="cemTab-search">
+        <div class="search-bar" style="margin-bottom:.45rem">
+          <div class="sico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+          <input class="inp" id="cemSearchInput" placeholder="{{ t('search_email_input_ph') }}" style="padding-right:2.2rem" autocomplete="off"/>
+        </div>
+        <div id="cemSearchResults" style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);display:none;margin-bottom:.45rem"></div>
+        <div id="cemPendingForm" style="display:none;background:var(--surf2);border:1px solid var(--bord2);border-radius:var(--radius-sm);padding:.8rem 1.1rem">
+          <div style="font-size:.8rem;font-weight:700;margin-bottom:.65rem;color:var(--text2)">{{ t('add_email_label') }}: <span id="cemPendingEmailLabel" style="color:var(--teal)"></span></div>
+          <input type="hidden" id="cemPendingEmailHidden"/>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.55rem">
+            <div><label class="mlabel">{{ t('from_date_label') }}</label><input type="date" class="inp" id="cemAddStart" style="width:100%"/></div>
+            <div><label class="mlabel">{{ t('to_date_label') }}</label><input type="date" class="inp" id="cemAddEnd" style="width:100%"/></div>
+          </div>
+          <div style="display:flex;gap:.4rem;margin-top:.65rem">
+            <button class="btn btn-primary" id="cemConfirmAddBtn"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>{{ t('add_btn') }}</button>
+            <button class="btn btn-ghost" id="cemCancelPendingBtn">{{ t('cancel') }}</button>
+          </div>
+        </div>
+        <div style="font-size:.71rem;color:var(--text3);margin-top:.38rem" id="cemSearchHint">{{ t('search_hint') }}</div>
+      </div>
+
+      <div id="cemTab-paste" style="display:none">
+        <textarea class="inp" id="cemPasteArea" placeholder="{{ t('paste_emails_ph') }}" style="min-height:110px;font-size:.82rem;font-family:'JetBrains Mono',monospace"></textarea>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.55rem;margin-top:.6rem">
+          <div><label class="mlabel">{{ t('from_date_all_label') }}</label><input type="date" class="inp" id="cemPasteStart" style="width:100%"/></div>
+          <div><label class="mlabel">{{ t('to_date_all_label') }}</label><input type="date" class="inp" id="cemPasteEnd" style="width:100%"/></div>
+        </div>
+        <div style="font-size:.72rem;color:var(--amber);margin-top:.45rem;display:flex;align-items:center;gap:.35rem">
+          <svg viewBox="0 0 24 24" style="width:12px;height:12px;flex-shrink:0;fill:none;stroke:var(--amber);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          {{ t('only_registered_warn') }}
+        </div>
+        <button class="btn btn-primary" id="cemPasteAddBtn" style="margin-top:.6rem">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          {{ t('add_all_btn') }}
+        </button>
+        <div id="cemPasteResult" style="display:none;margin-top:.55rem;font-size:.8rem;line-height:1.7;background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.65rem 1rem"></div>
+      </div>
+    </div>
+
+    <div class="mactions"><button class="btn btn-ghost" id="cemClose">{{ t('close') }}</button></div>
+  </div>
+</div>
+
+<!-- Edit Email Modal -->
+<div class="overlay" id="editEmailOverlay">
+  <div class="modal">
+    <div class="modal-title"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>{{ t('edit_email_account_title') }}</div>
+    <input type="hidden" id="editEmailId"/>
+    <div class="mrow"><label class="mlabel">{{ t('new_pop3_pw_label') }}</label><input class="inp" id="editEmailPw" type="text" style="width:100%" placeholder="{{ t('leave_empty_ph') }}"/></div>
+    <div class="mrow"><label class="mlabel">{{ t('server_label') }}</label><input class="inp" id="editEmailHost" type="text" style="width:100%"/></div>
+    <div class="mrow"><label class="mlabel">{{ t('port_label') }}</label><input class="inp" id="editEmailPort" type="number" style="width:100%"/></div>
+    <div class="mactions"><button class="btn btn-ghost" id="editEmailCancel">{{ t('cancel') }}</button><button class="btn btn-primary" id="editEmailSave">{{ t('save') }}</button></div>
+  </div>
+</div>
+
+<!-- Edit Category Modal -->
+<div class="overlay" id="editCatOverlay">
+  <div class="modal">
+    <div class="modal-title"><svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>{{ t('edit_cat_title') }}</div>
+    <input type="hidden" id="editCatId"/>
+    <div class="mrow"><label class="mlabel">{{ t('cat_name_label') }}</label><input class="inp" id="editCatLabel" type="text" style="width:100%"/></div>
+    <div class="mrow"><label class="mlabel">{{ t('cat_desc_label') }}</label><input class="inp" id="editCatDesc" type="text" style="width:100%"/></div>
+    <div class="mrow"><label class="mlabel">{{ t('cat_patterns_label') }}</label><textarea class="inp" id="editCatPatterns" style="width:100%"></textarea></div>
+    <div class="mrow"><label class="mlabel">{{ t('status_label') }}</label>
+      <select class="inp" id="editCatEnabled" style="width:100%">
+        <option value="true">{{ t('cat_enabled') }}</option>
+        <option value="false">{{ t('cat_disabled') }}</option>
+      </select>
+    </div>
+    <div class="mactions"><button class="btn btn-ghost" id="editCatCancel">{{ t('cancel') }}</button><button class="btn btn-primary" id="editCatSave">{{ t('save') }}</button></div>
+  </div>
+</div>
+
+<div class="toast-rack" id="toastRack"></div>
+
+<script>
+(function(){
+'use strict';
+const T = {{ translations_json|safe }};
+
+/* ── Hamburger / mobile sidebar ── */
+const hamburgerBtn=document.getElementById('hamburgerBtn');
+const navSidebar=document.getElementById('navSidebar');
+const sidebarBackdrop=document.getElementById('sidebarBackdrop');
+function openSidebar(){navSidebar.classList.add('open');sidebarBackdrop.classList.add('show');}
+function closeSidebar(){navSidebar.classList.remove('open');sidebarBackdrop.classList.remove('show');}
+hamburgerBtn.addEventListener('click',openSidebar);
+sidebarBackdrop.addEventListener('click',closeSidebar);
+
+/* ── Theme ── */
+const html=document.documentElement,moon=document.getElementById('iMoon'),sun=document.getElementById('iSun');
+function applyTheme(t){html.setAttribute('data-theme',t);localStorage.setItem('mb-theme',t);moon.style.display=t==='dark'?'block':'none';sun.style.display=t==='light'?'block':'none';}
+applyTheme(localStorage.getItem('mb-theme')||'dark');
+document.getElementById('themeBtn').onclick=()=>applyTheme(html.getAttribute('data-theme')==='dark'?'light':'dark');
+
+/* ── Toast ── */
+function toast(msg,isErr=false){const rack=document.getElementById('toastRack');const el=document.createElement('div');el.className='toast'+(isErr?' err':'');el.textContent=msg;rack.appendChild(el);setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),300);},2800);}
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+async function api(url,method='GET',body=null){const opts={method,headers:{'Content-Type':'application/json'}};if(body)opts.body=JSON.stringify(body);const r=await fetch(url,opts);return r.json();}
+
+/* ── Date formatters ── */
+function fmtDate(s){if(!s||s==='—')return'—';try{return new Date(s).toLocaleString('en-GB',{dateStyle:'short',timeStyle:'short'});}catch{return s;}}
+function fmtD(s){if(!s)return'<span style="color:var(--text3)">—</span>';try{return new Date(s+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}catch{return s;}}
+
+/* ── Nav ── */
+document.querySelectorAll('.nav-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('page-'+btn.dataset.page).classList.add('active');
+    const loaders={clients:loadClients,emails:loadEmails,filters:loadCategories,activity:loadActivity,overview:loadStats};
+    loaders[btn.dataset.page]?.();
+    closeSidebar();
+  });
+});
+
+/* ── Charts ── */
+function renderCharts(total,active,suspended,emails){
+  const activePct=total>0?active/total:0;
+  const suspendedPct=total>0?suspended/total:0;
+  const activeArc=activePct*100;
+  const dActive=document.getElementById('donutActive');
+  const dSuspended=document.getElementById('donutSuspended');
+  if(dActive){dActive.style.strokeDasharray=`${activeArc} ${100-activeArc}`;dActive.style.strokeDashoffset='0';}
+  if(dSuspended){const sArc=suspendedPct*100;dSuspended.style.strokeDasharray=`${sArc} ${100-sArc}`;dSuspended.style.strokeDashoffset=`-${activeArc}`;}
+  const pct=total>0?Math.round(activePct*100):0;
+  const dp=document.getElementById('donutPct');if(dp)dp.textContent=pct+'%';
+  const la=document.getElementById('legendActive');
+  const ls=document.getElementById('legendSuspended');
+  const le=document.getElementById('legendEmails');
+  const activeLabel=T.legend_active||'Active';
+  const suspendedLabel=T.legend_suspended||'Suspended';
+  const emailLabel=T.legend_email||'Email';
+  if(la)la.textContent=active+' '+activeLabel;
+  if(ls)ls.textContent=suspended+' '+suspendedLabel;
+  if(le)le.textContent=emails+' '+emailLabel;
+
+  const today=new Date().getDay();
+  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const labels=Array.from({length:7},(_,i)=>days[(today-6+i+7)%7]);
+  const base=Math.max(1,Math.floor((active||1)/2));
+  const vals=labels.map(()=>Math.floor(base*(0.4+Math.random()*1.2)));
+  const maxVal=Math.max(...vals,1);
+  const barsEl=document.getElementById('loginBarsChart');
+  const lblsEl=document.getElementById('loginBarsLabels');
+  if(barsEl){barsEl.innerHTML=vals.map((v,i)=>{const h=Math.max(4,Math.round((v/maxVal)*52));const isToday=i===6;const col=isToday?'var(--accent)':'var(--surf4)';return`<div class="mini-bar" style="height:${h}px;background:${col};transition:height .7s var(--ease) ${i*60}ms" title="${labels[i]}: ${v}"></div>`;}).join('');}
+  if(lblsEl){lblsEl.innerHTML=labels.map((l,i)=>`<div class="mini-day" style="color:${i===6?'var(--accent)':'var(--text3)'};font-weight:${i===6?700:400}">${l}</div>`).join('');}
+
+  const emailBase=emails||1;
+  const sparkVals=Array.from({length:10},(_,i)=>Math.max(1,Math.round(emailBase*(0.4+i*0.07+Math.random()*0.08))));
+  sparkVals[sparkVals.length-1]=emailBase;
+  const sparkMax=Math.max(...sparkVals);
+  const svgW=200,svgH=48;
+  const pts=sparkVals.map((v,i)=>({x:(i/(sparkVals.length-1))*svgW,y:svgH-(v/sparkMax)*(svgH-6)-3}));
+  const lineD=pts.map((p,i)=>(i===0?`M${p.x},${p.y}`:`L${p.x},${p.y}`)).join(' ');
+  const areaD=lineD+` L${pts[pts.length-1].x},${svgH} L0,${svgH} Z`;
+  const sl=document.getElementById('sparkLine');const sa=document.getElementById('sparkArea');
+  if(sl)sl.setAttribute('d',lineD);if(sa)sa.setAttribute('d',areaD);
+  const smx=document.getElementById('sparklineMax');
+  const accountsUnit=T.accounts_unit||'account(s)';
+  if(smx)smx.textContent=emailBase+' '+accountsUnit;
+}
+
+/* ── Stats ── */
+let allClients=[];
+async function loadStats(){
+  const d=await api('/admin/api/stats');
+  const total=d.total_clients??0,active=d.active_clients??0,suspended=d.suspended_clients??0,emails=d.email_accounts??0;
+  document.getElementById('stClients').textContent=d.total_clients??'—';
+  document.getElementById('stActive').textContent=d.active_clients??'—';
+  document.getElementById('stSuspended').textContent=d.suspended_clients??'—';
+  document.getElementById('stEmails').textContent=d.email_accounts??'—';
+  document.getElementById('stCats').textContent=d.filter_categories??'—';
+  document.getElementById('stLogins').textContent=d.logins_today??'—';
+  document.getElementById('navClientCount').textContent=d.total_clients??'—';
+  document.getElementById('navEmailCount').textContent=d.email_accounts??'—';
+  document.getElementById('navCatCount').textContent=d.filter_categories??'—';
+  renderCharts(total,active,suspended,emails);
+}
+loadStats();
+
+/* ── Clients ── */
+async function loadClients(){
+  const d=await api('/admin/api/clients');
+  allClients=d.clients||[];
+  renderClients(allClients);
+}
+function renderClients(cs){
+  const tb=document.getElementById('clientsTbody');
+  const clientsUnit=T.accounts_unit||'';
+  document.getElementById('clientCountLbl').textContent=cs.length+' '+clientsUnit;
+  if(!cs.length){tb.innerHTML='<tr><td colspan="6"><div class="empty-st"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div></td></tr>';return;}
+  const activeLabel=T.status_active||'Active';
+  const suspendedLabel=T.status_suspended||'Suspended';
+  const emailsLabel=T.btn_email_manage||'Email';
+  const editLabel=T.edit||'Edit';
+  const suspendLabel=T.btn_suspend||'Suspend';
+  const activateLabel=T.btn_activate||'Activate';
+  const deleteLabel=T.delete||'Delete';
+  tb.innerHTML=cs.map(c=>{
+    const sus=c.status==='suspended';
+    const emails=c.assigned_emails||[];
+    const emailBadge=emails.length?`<span class="badge badge-teal">${emails.length} ${emailsLabel}</span>`:`<span style="font-size:.72rem;color:var(--text3)">—</span>`;
+    return`<tr>
+      <td><div class="td-main">${esc(c.username)}</div>${c.display_name&&c.display_name!==c.username?`<div style="font-size:.72rem;color:var(--text3)">${esc(c.display_name)}</div>`:''}</td>
+      <td><span class="badge ${sus?'badge-red':'badge-green'}">${sus?suspendedLabel:activeLabel}</span></td>
+      <td>${emailBadge}</td>
+      <td style="font-size:.77rem">${fmtDate(c.last_login)}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:.8rem">${c.login_count}</td>
+      <td><div class="td-actions">
+        <button class="row-btn emails-btn" onclick="openClientEmails('${esc(c.id)}','${esc(c.username)}')">
+          <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>${emailsLabel}
+        </button>
+        <button class="row-btn edit" onclick="openEditClient('${esc(c.id)}','${esc(c.username)}','${esc(c.display_name||'')}','${esc(c.status)}')">
+          <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>${editLabel}
+        </button>
+        <button class="row-btn sus${sus?' act':''}" data-id="${esc(c.id)}" data-sus="${sus}">${sus?activateLabel:suspendLabel}</button>
+        <button class="row-btn del" data-id="${esc(c.id)}">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>${deleteLabel}
+        </button>
+      </div></td></tr>`;
+  }).join('');
+  tb.querySelectorAll('.row-btn.sus,.row-btn.act').forEach(btn=>{btn.addEventListener('click',async()=>{const sus=btn.dataset.sus==='true';const d=await api('/admin/api/clients/'+btn.dataset.id,'PUT',{status:sus?'active':'suspended'});if(d.ok){toast(T.toast_edited||'✓');loadClients();loadStats();}else toast(d.error||(T.error_generic||'Error'),true);});});
+  tb.querySelectorAll('.row-btn.del').forEach(btn=>{btn.addEventListener('click',async()=>{if(!confirm(T.confirm_delete_email_account||'Delete?'))return;const d=await api('/admin/api/clients/'+btn.dataset.id,'DELETE');if(d.ok){toast(T.toast_deleted||'Deleted');loadClients();loadStats();}else toast(d.error||(T.error_generic||'Error'),true);});});
+}
+document.getElementById('clientSearch').addEventListener('input',function(){const q=this.value.toLowerCase();renderClients(q?allClients.filter(c=>c.username.toLowerCase().includes(q)||(c.display_name||'').toLowerCase().includes(q)):allClients);});
+document.getElementById('emailSearch').addEventListener('input',function(){const q=this.value.toLowerCase();renderEmails(q?allEmails.filter(e=>e.email.toLowerCase().includes(q)||e.pop3_host.toLowerCase().includes(q)):allEmails);});
+document.getElementById('createClientBtn').addEventListener('click',async()=>{
+  const u=document.getElementById('newUsername').value.trim(),p=document.getElementById('newPassword').value.trim(),dn=document.getElementById('newDisplay').value.trim();
+  if(!u||!p){toast(T.toast_enter_email_pw||(T.error_generic||'Error'),true);return;}
+  const d=await api('/admin/api/clients','POST',{username:u,password:p,display_name:dn||u});
+  if(d.ok){toast(T.toast_added||'Added ✓');document.getElementById('newUsername').value='';document.getElementById('newPassword').value='';document.getElementById('newDisplay').value='';loadClients();loadStats();}
+  else toast(d.error||(T.error_generic||'Error'),true);
+});
+
+/* ── Edit Client ── */
+window.openEditClient=function(id,username,display,status){
+  document.getElementById('editClientId').value=id;document.getElementById('editUsername').value=username;document.getElementById('editDisplay').value=display;document.getElementById('editPassword').value='';document.getElementById('editStatus').value=status;document.getElementById('editClientOverlay').classList.add('show');
+};
+document.getElementById('editClientCancel').onclick=()=>document.getElementById('editClientOverlay').classList.remove('show');
+document.getElementById('editClientOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('show');});
+document.getElementById('editClientSave').addEventListener('click',async()=>{
+  const id=document.getElementById('editClientId').value;
+  const u={username:document.getElementById('editUsername').value.trim(),display_name:document.getElementById('editDisplay').value.trim(),status:document.getElementById('editStatus').value};
+  const pw=document.getElementById('editPassword').value.trim();if(pw)u.password=pw;
+  const d=await api('/admin/api/clients/'+id,'PUT',u);
+  if(d.ok){toast(T.toast_edited||'Updated ✓');document.getElementById('editClientOverlay').classList.remove('show');loadClients();}else toast(d.error||(T.error_generic||'Error'),true);
+});
+
+/* ── Client Emails Modal ── */
+let cemClientIdVal='';
+let cemAllEmails=[];
+
+function cemDateStatus(start,end){
+  const today=new Date().toISOString().slice(0,10);
+  if(start&&today<start)return{label:T.status_soon||'Soon',cls:'badge-blue'};
+  if(end&&today>end)return{label:T.status_expired||'Expired',cls:'badge-red'};
+  return{label:T.status_active||'Active',cls:'badge-green'};
+}
+
+window.openClientEmails=async function(id,name){
+  cemClientIdVal=id;
+  document.getElementById('cemClientId').value=id;
+  document.getElementById('cemClientName').textContent=name;
+  document.getElementById('cemSearchInput').value='';
+  document.getElementById('cemSearchResults').style.display='none';
+  document.getElementById('cemPendingForm').style.display='none';
+  document.getElementById('cemEditPanel').style.display='none';
+  document.getElementById('cemPasteArea').value='';
+  document.getElementById('cemPasteStart').value='';
+  document.getElementById('cemPasteEnd').value='';
+  document.getElementById('cemPasteResult').style.display='none';
+  document.querySelectorAll('.tab-btn[data-cemtab]').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.tab-btn[data-cemtab="search"]').classList.add('active');
+  document.getElementById('cemTab-search').style.display='block';
+  document.getElementById('cemTab-paste').style.display='none';
+  document.getElementById('clientEmailsOverlay').classList.add('show');
+  await refreshCemList();
+  await loadCemEmails();
+};
+
+async function refreshCemList(){
+  const d=await api('/admin/api/clients/'+cemClientIdVal+'/emails');
+  const emails=d.emails||[];
+  const countEl=document.getElementById('cemAssignedCount');
+  const body=document.getElementById('cemAssignedBody');
+  const empty=document.getElementById('cemEmptyMsg');
+  countEl.textContent=emails.length?`(${emails.length})`:'';
+  if(!emails.length){body.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  const datesLabel=T.btn_dates||'Dates';
+  const removeLabel=T.btn_remove||'Remove';
+  body.innerHTML=emails.map(item=>{
+    const em=item.email||item;
+    const start=item.start_date||null;
+    const end=item.end_date||null;
+    const st=cemDateStatus(start,end);
+    return`<tr class="cem-row" style="border-bottom:1px solid var(--border)">
+      <td style="padding:.55rem .8rem;color:var(--text);font-weight:600;word-break:break-all;min-width:180px">${esc(em)}</td>
+      <td style="padding:.55rem .8rem;color:var(--text2);font-size:.78rem;white-space:nowrap">${fmtD(start)}</td>
+      <td style="padding:.55rem .8rem;color:var(--text2);font-size:.78rem;white-space:nowrap">${fmtD(end)}</td>
+      <td style="padding:.55rem .8rem;white-space:nowrap"><span class="badge ${st.cls}">${st.label}</span></td>
+      <td style="padding:.55rem .8rem">
+        <div style="display:flex;gap:.25rem;justify-content:flex-end">
+          <button class="row-btn edit cem-edit-btn" data-em="${esc(em)}" data-start="${esc(start||'')}" data-end="${esc(end||'')}">
+            <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>${datesLabel}
+          </button>
+          <button class="row-btn del cem-del-btn" data-em="${esc(em)}">
+            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>${removeLabel}
+          </button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+  body.querySelectorAll('.cem-del-btn').forEach(btn=>{
+    btn.addEventListener('click',async()=>{
+      const em=btn.dataset.em;
+      const confirmMsg=(T.confirm_remove_email||'Remove {email}?').replace('{email}',em);
+      if(!confirm(confirmMsg))return;
+      const r=await api('/admin/api/clients/'+cemClientIdVal+'/emails/'+encodeURIComponent(em),'DELETE');
+      if(r.ok){toast(T.toast_removed||'Removed');document.getElementById('cemEditPanel').style.display='none';refreshCemList();loadClients();}
+      else toast(r.error||(T.error_generic||'Error'),true);
+    });
+  });
+  body.querySelectorAll('.cem-edit-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.getElementById('cemEditEmailLabel').textContent=btn.dataset.em;
+      document.getElementById('cemEditEmailHidden').value=btn.dataset.em;
+      document.getElementById('cemEditStart').value=btn.dataset.start||'';
+      document.getElementById('cemEditEnd').value=btn.dataset.end||'';
+      document.getElementById('cemEditPanel').style.display='block';
+      document.getElementById('cemEditPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
+    });
+  });
+}
+
+document.getElementById('cemRenewAllBtn').addEventListener('click',async()=>{
+  const d=await api('/admin/api/clients/'+cemClientIdVal+'/emails/renew-all','POST');
+  if(d.ok){
+    const msg=(T.toast_renewed_n||'Renewed {n} ✓').replace('{n}',d.updated);
+    toast(msg);refreshCemList();
+  }else{toast(d.error||(T.error_generic||'Error'),true);}
+});
+
+document.getElementById('cemEditSaveBtn').addEventListener('click',async()=>{
+  const em=document.getElementById('cemEditEmailHidden').value;
+  const start=document.getElementById('cemEditStart').value||null;
+  const end=document.getElementById('cemEditEnd').value||null;
+  const r=await api('/admin/api/clients/'+cemClientIdVal+'/emails/'+encodeURIComponent(em),'PUT',{start_date:start,end_date:end});
+  if(r.ok){toast(T.toast_dates_saved||'Dates saved ✓');document.getElementById('cemEditPanel').style.display='none';refreshCemList();}
+  else toast(r.error||(T.error_generic||'Error'),true);
+});
+document.getElementById('cemEditCancelBtn').addEventListener('click',()=>document.getElementById('cemEditPanel').style.display='none');
+
+async function loadCemEmails(){
+  const d=await api('/admin/api/email-accounts');
+  cemAllEmails=(d.accounts||[]).map(a=>a.email);
+  renderCemSearch('');
+}
+
+function renderCemSearch(q){
+  const res=document.getElementById('cemSearchResults');
+  const filtered=q?cemAllEmails.filter(e=>e.toLowerCase().includes(q.toLowerCase())):cemAllEmails;
+  if(!q&&!filtered.length){res.style.display='none';return;}
+  res.style.display='block';
+  if(!filtered.length){res.innerHTML=`<div style="padding:.6rem .85rem;font-size:.8rem;color:var(--text3)">${T.no_results||'No results'}</div>`;return;}
+  res.innerHTML=filtered.slice(0,80).map(em=>`<div class="cem-result-row" data-em="${esc(em)}" style="padding:.45rem .8rem;font-size:.82rem;cursor:pointer;border-bottom:1px solid var(--border);color:var(--text2);transition:background .12s">${esc(em)}</div>`).join('');
+  res.querySelectorAll('.cem-result-row').forEach(row=>{
+    row.addEventListener('mouseenter',()=>row.style.background='var(--surf2)');
+    row.addEventListener('mouseleave',()=>row.style.background='');
+    row.addEventListener('click',()=>{
+      const em=row.dataset.em;
+      document.getElementById('cemPendingEmailLabel').textContent=em;
+      document.getElementById('cemPendingEmailHidden').value=em;
+      document.getElementById('cemAddStart').value='';document.getElementById('cemAddEnd').value='';
+      document.getElementById('cemPendingForm').style.display='block';
+      document.getElementById('cemSearchResults').style.display='none';
+      document.getElementById('cemSearchInput').value=em;
+    });
+  });
+}
+
+document.getElementById('cemSearchInput').addEventListener('input',function(){
+  document.getElementById('cemPendingForm').style.display='none';
+  renderCemSearch(this.value.trim());
+});
+
+document.getElementById('cemConfirmAddBtn').addEventListener('click',async()=>{
+  const em=document.getElementById('cemPendingEmailHidden').value;
+  const start=document.getElementById('cemAddStart').value||null;
+  const end=document.getElementById('cemAddEnd').value||null;
+  const d=await api('/admin/api/clients/'+cemClientIdVal+'/emails','POST',{email:em,start_date:start,end_date:end});
+  if(d.ok){toast(T.toast_added||'Added ✓');document.getElementById('cemPendingForm').style.display='none';document.getElementById('cemSearchInput').value='';document.getElementById('cemSearchResults').style.display='none';refreshCemList();loadClients();}
+  else toast(d.error||(T.error_generic||'Error'),true);
+});
+document.getElementById('cemCancelPendingBtn').addEventListener('click',()=>{document.getElementById('cemPendingForm').style.display='none';document.getElementById('cemSearchInput').value='';document.getElementById('cemSearchResults').style.display='none';});
+
+document.getElementById('cemPasteAddBtn').addEventListener('click',async()=>{
+  const lines=document.getElementById('cemPasteArea').value.split(/[\r\n]+/).map(l=>l.trim()).filter(Boolean);
+  if(!lines.length){toast(T.toast_enter_addresses||(T.error_generic||'Error'),true);return;}
+  const start=document.getElementById('cemPasteStart').value||null;
+  const end=document.getElementById('cemPasteEnd').value||null;
+  let added=0,skipped=0,errors=0;
+  for(const em of lines){
+    const d=await api('/admin/api/clients/'+cemClientIdVal+'/emails','POST',{email:em,start_date:start,end_date:end});
+    if(d.ok)added++;else if(d.error&&(d.error.includes('not found')||d.error.includes('غير موجود')))errors++;else skipped++;
+  }
+  const resEl=document.getElementById('cemPasteResult');
+  resEl.style.display='block';
+  const addedL=T.bulk_added_label||'Added';
+  const dupL=T.bulk_duplicate_label||'Duplicate';
+  const nfL=T.bulk_not_found_label||'Not found';
+  resEl.innerHTML=`✅ ${addedL}: <strong>${added}</strong> &nbsp;|&nbsp; ⚠️ ${dupL}: <strong>${skipped}</strong> &nbsp;|&nbsp; ❌ ${nfL}: <strong>${errors}</strong>`;
+  if(added>0){refreshCemList();loadClients();}
+});
+
+document.querySelectorAll('.tab-btn[data-cemtab]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn[data-cemtab]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('cemTab-search').style.display=btn.dataset.cemtab==='search'?'block':'none';
+    document.getElementById('cemTab-paste').style.display=btn.dataset.cemtab==='paste'?'block':'none';
+  });
+});
+
+document.getElementById('cemClose').onclick=()=>document.getElementById('clientEmailsOverlay').classList.remove('show');
+document.getElementById('clientEmailsOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('show');});
+
+/* ── Email Accounts ── */
+let allEmails=[];
+async function loadEmails(){
+  const d=await api('/admin/api/email-accounts');
+  allEmails=d.accounts||[];
+  renderEmails(allEmails);
+}
+function renderEmails(accs){
+  const tb=document.getElementById('emailsTbody');
+  const accountsUnit=T.accounts_unit||'';
+  document.getElementById('emailCountLbl').textContent=accs.length+' '+accountsUnit;
+  document.getElementById('deleteAllEmailsBtn').disabled=!accs.length;
+  if(!accs.length){tb.innerHTML=`<tr><td colspan="4"><div class="empty-st"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>${T.no_email_accounts||'No emails'}</div></td></tr>`;return;}
+  const editL=T.edit||'Edit';
+  const deleteL=T.delete||'Delete';
+  tb.innerHTML=accs.map(a=>`<tr>
+    <td class="td-main">${esc(a.email)}</td>
+    <td style="font-size:.77rem;color:var(--text3);font-family:'JetBrains Mono',monospace">${esc(a.pop3_host)}:${esc(String(a.pop3_port))}</td>
+    <td style="font-size:.77rem">${fmtDate(a.added_at)}</td>
+    <td><div class="td-actions">
+      <button class="row-btn edit" data-id="${esc(a._id)}" data-host="${esc(a.pop3_host)}" data-port="${esc(String(a.pop3_port))}">
+        <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>${editL}
+      </button>
+      <button class="row-btn del" data-id="${esc(a._id)}">
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>${deleteL}
+      </button>
+    </div></td></tr>`).join('');
+  tb.querySelectorAll('.row-btn.edit').forEach(btn=>{btn.addEventListener('click',()=>{document.getElementById('editEmailId').value=btn.dataset.id;document.getElementById('editEmailPw').value='';document.getElementById('editEmailHost').value=btn.dataset.host;document.getElementById('editEmailPort').value=btn.dataset.port;document.getElementById('editEmailOverlay').classList.add('show');});});
+  tb.querySelectorAll('.row-btn.del').forEach(btn=>{btn.addEventListener('click',async()=>{if(!confirm(T.confirm_delete_email_account||'Delete?'))return;const d=await api('/admin/api/email-accounts/'+btn.dataset.id,'DELETE');if(d.ok){toast(T.toast_deleted||'Deleted');loadEmails();loadStats();}else toast(d.error||(T.error_generic||'Error'),true);});});
+}
+
+document.querySelectorAll('.tab-btn[data-etab]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn[data-etab]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('etab-single').style.display=btn.dataset.etab==='single'?'block':'none';
+    document.getElementById('etab-bulk-email').style.display=btn.dataset.etab==='bulk-email'?'block':'none';
+  });
+});
+document.getElementById('deleteAllEmailsBtn').addEventListener('click',async()=>{
+  if(!confirm(T.confirm_delete_all_emails||'Delete all?'))return;
+  const btn=document.getElementById('deleteAllEmailsBtn');
+  btn.disabled=true;const orig=btn.innerHTML;btn.textContent=T.toast_deleting||'Deleting…';
+  const d=await api('/admin/api/email-accounts/bulk-delete','DELETE');
+  btn.innerHTML=orig;
+  if(d.ok){toast(T.toast_all_emails_deleted||'All deleted');loadEmails();loadStats();}else{toast(d.error||(T.error_generic||'Error'),true);btn.disabled=false;}
+});
+
+document.getElementById('addEmailBtn').addEventListener('click',async()=>{
+  const em=document.getElementById('newEmail').value.trim(),pw=document.getElementById('newEmailPw').value.trim(),host=document.getElementById('newEmailHost').value.trim()||'pop3.kuku.lu',port=parseInt(document.getElementById('newEmailPort').value)||995;
+  if(!em||!pw){toast(T.toast_enter_email_pw||(T.error_generic||'Error'),true);return;}
+  const btn=document.getElementById('addEmailBtn');btn.disabled=true;btn.textContent=T.toast_verifying||'…';
+  const d=await api('/admin/api/email-accounts','POST',{email:em,password:pw,host,port});
+  btn.disabled=false;btn.innerHTML=`<svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>${T.add_btn||'Add'}`;
+  if(d.ok){toast(T.toast_added||'Added ✓');document.getElementById('newEmail').value='';document.getElementById('newEmailPw').value='';loadEmails();loadStats();}else toast(d.error||(T.error_generic||'Error'),true);
+});
+
+document.getElementById('bulkEmailBtn').addEventListener('click',async()=>{
+  const text=document.getElementById('bulkEmailText').value;
+  if(!text.trim()){toast(T.toast_enter_email_data||(T.error_generic||'Error'),true);return;}
+  const host=document.getElementById('bulkEmailHost').value.trim()||'pop3.kuku.lu';
+  const port=parseInt(document.getElementById('bulkEmailPort').value)||995;
+  const btn=document.getElementById('bulkEmailBtn');btn.disabled=true;btn.textContent=T.toast_adding_bulk||'…';
+  const d=await api('/admin/api/email-accounts/bulk','POST',{text,host,port});
+  btn.disabled=false;btn.innerHTML=T.add_all_btn||'Add All';
+  const res=document.getElementById('bulkEmailResult');res.classList.add('show');
+  const addedL=T.bulk_added_label||'Added';const dupL=T.bulk_duplicate_label||'Dup';const errL=T.bulk_errors_label||'Errors';
+  res.innerHTML=`✅ ${addedL}: <strong>${d.added}</strong> &nbsp;|&nbsp; ⚠️ ${dupL}: <strong>${d.skipped}</strong> &nbsp;|&nbsp; ❌ ${errL}: <strong>${d.errors}</strong>${d.error_details?.length?'<br/><span style="font-size:.77rem;color:var(--danger)">'+d.error_details.map(e=>esc(e)).join('<br/>')+'</span>':''}`;
+  if(d.added>0){loadEmails();loadStats();}
+});
+
+document.getElementById('editEmailCancel').onclick=()=>document.getElementById('editEmailOverlay').classList.remove('show');
+document.getElementById('editEmailOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('show');});
+document.getElementById('editEmailSave').addEventListener('click',async()=>{
+  const id=document.getElementById('editEmailId').value,u={host:document.getElementById('editEmailHost').value.trim(),port:parseInt(document.getElementById('editEmailPort').value)||995};
+  const pw=document.getElementById('editEmailPw').value.trim();if(pw)u.password=pw;
+  const d=await api('/admin/api/email-accounts/'+id,'PUT',u);
+  if(d.ok){toast(T.toast_edited||'Updated ✓');document.getElementById('editEmailOverlay').classList.remove('show');loadEmails();}else toast(d.error||(T.error_generic||'Error'),true);
+});
+
+/* ── Filter Categories ── */
+let catsCache=[];
+async function loadCategories(){
+  const d=await api('/admin/api/filter-categories');
+  catsCache=d.categories||[];
+  const catsUnit=T.categories_unit||'';
+  document.getElementById('catCountLbl').textContent=catsCache.length+' '+catsUnit;
+  const el=document.getElementById('catListAdmin');
+  if(!catsCache.length){el.innerHTML=`<div class="empty-st"><svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>${T.no_categories_admin||'No categories'}</div>`;return;}
+  const enabledL=T.cat_enabled||'Enabled';const disabledL=T.cat_disabled||'Disabled';const noPatsL=T.no_patterns||'No patterns';const editL=T.edit||'Edit';const deleteL=T.delete||'Delete';
+  el.innerHTML=catsCache.map(c=>`
+    <div class="cat-item" data-id="${esc(c.id)}">
+      <div style="display:flex;align-items:flex-start;gap:.65rem;flex-wrap:wrap;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem;flex-wrap:wrap;">
+            <span style="font-weight:700;color:var(--text)">${esc(c.label)}</span>
+            <span class="badge ${c.enabled?'badge-green':'badge-gray'}">${c.enabled?enabledL:disabledL}</span>
+          </div>
+          ${c.description?`<div style="font-size:.75rem;color:var(--text3);margin-bottom:.4rem">${esc(c.description)}</div>`:''}
+          <div class="pattern-list">${c.patterns.map(p=>`<span class="pattern-pill">${esc(p)}</span>`).join('')||`<span style="font-size:.74rem;color:var(--text3)">${noPatsL}</span>`}</div>
+        </div>
+        <div style="display:flex;gap:.3rem;flex-shrink:0;">
+          <button class="row-btn edit" data-cat-id="${esc(c.id)}">
+            <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>${editL}
+          </button>
+          <button class="row-btn del" data-id="${esc(c.id)}">
+            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>${deleteL}
+          </button>
+        </div>
+      </div>
+    </div>`).join('');
+  el.querySelectorAll('.row-btn.edit').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const cat=catsCache.find(c=>c.id===btn.dataset.catId);
+      if(cat)openEditCat(cat.id,cat.label,cat.description||'',cat.patterns,cat.enabled);
+    });
+  });
+  el.querySelectorAll('.row-btn.del').forEach(btn=>{btn.addEventListener('click',async()=>{if(!confirm(T.confirm_delete_cat||'Delete?'))return;const d=await api('/admin/api/filter-categories/'+btn.dataset.id,'DELETE');if(d.ok){toast(T.toast_deleted||'Deleted');loadCategories();loadStats();}else toast(d.error||(T.error_generic||'Error'),true);});});
+}
+document.getElementById('createCatBtn').addEventListener('click',async()=>{
+  const label=document.getElementById('newCatLabel').value.trim(),desc=document.getElementById('newCatDesc').value.trim(),patterns=document.getElementById('newCatPatterns').value;
+  if(!label){toast(T.toast_enter_cat_name||(T.error_generic||'Error'),true);return;}
+  const d=await api('/admin/api/filter-categories','POST',{label,description:desc,patterns});
+  if(d.ok){toast(T.toast_cat_created||'Created ✓');document.getElementById('newCatLabel').value='';document.getElementById('newCatDesc').value='';document.getElementById('newCatPatterns').value='';loadCategories();loadStats();}else toast(d.error||(T.error_generic||'Error'),true);
+});
+window.openEditCat=function(id,label,desc,patterns,enabled){
+  document.getElementById('editCatId').value=id;document.getElementById('editCatLabel').value=label;document.getElementById('editCatDesc').value=desc;document.getElementById('editCatPatterns').value=patterns.join('\n');document.getElementById('editCatEnabled').value=String(enabled);document.getElementById('editCatOverlay').classList.add('show');
+};
+document.getElementById('editCatCancel').onclick=()=>document.getElementById('editCatOverlay').classList.remove('show');
+document.getElementById('editCatOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('show');});
+document.getElementById('editCatSave').addEventListener('click',async()=>{
+  const id=document.getElementById('editCatId').value;
+  const d=await api('/admin/api/filter-categories/'+id,'PUT',{label:document.getElementById('editCatLabel').value.trim(),description:document.getElementById('editCatDesc').value.trim(),patterns:document.getElementById('editCatPatterns').value,enabled:document.getElementById('editCatEnabled').value==='true'});
+  if(d.ok){toast(T.toast_edited||'Updated ✓');document.getElementById('editCatOverlay').classList.remove('show');loadCategories();}else toast(d.error||(T.error_generic||'Error'),true);
+});
+
+/* ── Activity ── */
+function actionLabel(a){
+  const m={
+    'login_success':T.activity_login_success||'Login',
+    'logout':T.activity_logout||'Logout',
+    'login_failed_bad_pw':T.activity_bad_password||'Bad password',
+    'login_failed_no_user':T.activity_no_user||'No user',
+    'login_blocked_suspended':T.activity_blocked||'Blocked'
+  };
+  if(m[a])return m[a];
+  if(a?.startsWith('fetch:'))return(T.activity_email_query||'Email query')+': '+a.split(':')[1];
+  return a||'—';
+}
+async function loadActivity(){
+  document.getElementById('activityLog').innerHTML=`<div class="empty-st">${T.loading_dots||'…'}</div>`;
+  const d=await api('/admin/api/activity');
+  const logs=d.activity||[];
+  const el=document.getElementById('activityLog');
+  if(!logs.length){el.innerHTML=`<div class="empty-st"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>${T.no_activity||'No activity'}</div>`;return;}
+  el.innerHTML=logs.map(l=>`<div class="log-row">
+    <div class="log-dot ${l.success!==false?'ok':'fail'}"></div>
+    <div class="log-user">${esc(l.username||'—')}</div>
+    <div class="log-action">${esc(actionLabel(l.action))}</div>
+    <div class="log-ip">${esc(l.ip||'—')}</div>
+    <div class="log-time">${fmtDate(l.timestamp)}</div>
+  </div>`).join('');
+}
+document.getElementById('refreshActivityBtn').addEventListener('click',loadActivity);
+
+document.getElementById('clearActivityBtn').addEventListener('click',async()=>{
+  if(!confirm(T.confirm_clear_activity||'Clear all?'))return;
+  const btn=document.getElementById('clearActivityBtn');btn.disabled=true;
+  const d=await api('/admin/api/activity','DELETE');
+  btn.disabled=false;
+  if(d.ok){
+    const msg=(T.toast_cleared_n||'Cleared {n} ✓').replace('{n}',d.deleted_count||0);
+    toast(msg);loadActivity();
+  }else{toast(d.error||(T.error_generic||'Error'),true);}
+});
+
+})();
+</script>
+</body>
+</html>

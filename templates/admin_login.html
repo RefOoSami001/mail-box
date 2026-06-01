@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}" dir="{{ dir_attr }}" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ t('admin_login_page_title') }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    [data-theme="dark"] {
+      --bg:#05080f; --surface:rgba(12,18,32,.94); --border:rgba(255,255,255,.08);
+      --border2:rgba(255,255,255,.14); --text:#dde3f0; --text2:#8b97b0; --muted:#4a5468;
+      --danger:#f25f7a; --glow1:rgba(242,95,122,.12); --glow2:rgba(124,94,245,.1);
+      --shadow:0 40px 100px rgba(0,0,0,.65); --grid:rgba(242,95,122,.018);
+    }
+    [data-theme="light"] {
+      --bg:#fdf0f2; --surface:rgba(255,255,255,.96); --border:rgba(0,0,0,.08);
+      --border2:rgba(0,0,0,.14); --text:#111827; --text2:#4b5563; --muted:#9ca3af;
+      --danger:#dc2626; --glow1:rgba(242,95,122,.08); --glow2:rgba(124,94,245,.06);
+      --shadow:0 40px 100px rgba(0,0,0,.14); --grid:rgba(220,38,38,.025);
+    }
+    :root { --accent:#f25f7a; --accent2:#7c5ef5; }
+    body {
+      font-family:'Alexandria',sans-serif; background:var(--bg); color:var(--text);
+      min-height:100vh; display:flex; align-items:center; justify-content:center;
+      overflow:hidden; position:relative; transition:background .3s,color .3s;
+    }
+    body::before {
+      content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+      background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+      background-size:44px 44px;
+    }
+    .glow { position:fixed; border-radius:50%; filter:blur(90px); pointer-events:none; z-index:0; opacity:0; animation:glowIn 1s ease forwards; }
+    .g1 { width:500px;height:500px;background:radial-gradient(circle,var(--glow1),transparent 70%);top:-160px;right:-80px;animation-delay:.1s; }
+    .g2 { width:420px;height:420px;background:radial-gradient(circle,var(--glow2),transparent 70%);bottom:-130px;left:-60px;animation-delay:.3s; }
+    @keyframes glowIn { to { opacity:1; } }
+    .theme-toggle {
+      position:fixed; top:1rem; left:1rem; z-index:20; width:38px; height:38px;
+      background:var(--surface); border:1px solid var(--border); border-radius:10px;
+      display:flex; align-items:center; justify-content:center; cursor:pointer;
+      color:var(--text2); transition:background .2s,color .2s; backdrop-filter:blur(12px);
+    }
+    .theme-toggle:hover { color:var(--text); }
+    .theme-toggle svg { width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round; }
+    .lang-switcher {
+      position:fixed; top:1rem; right:1rem; z-index:20;
+      display:flex; align-items:center; gap:.2rem;
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:20px; padding:.2rem .3rem; backdrop-filter:blur(12px);
+    }
+    .lang-btn {
+      padding:.2rem .5rem; border:none; border-radius:14px; background:none;
+      cursor:pointer; font-size:.68rem; font-weight:700; color:var(--muted);
+      font-family:'Alexandria',sans-serif; transition:background .15s,color .15s; text-decoration:none;
+      display:inline-flex; align-items:center;
+    }
+    .lang-btn:hover { background:var(--border2); color:var(--text2); }
+    .lang-btn.active { background:var(--accent); color:#fff; }
+    .card {
+      position:relative; z-index:1; width:100%; max-width:420px; margin:1rem;
+      background:var(--surface); border:1px solid var(--border); border-radius:24px;
+      padding:2.8rem 2.4rem 2.4rem; backdrop-filter:blur(24px); box-shadow:var(--shadow);
+      animation:cardIn .5s cubic-bezier(.22,1,.36,1) both;
+    }
+    @keyframes cardIn { from{opacity:0;transform:translateY(20px) scale(.98)} to{opacity:1;transform:none} }
+    .logo { display:flex; align-items:center; gap:.65rem; margin-bottom:1.8rem; }
+    .logo-mark {
+      width:44px; height:44px; flex-shrink:0;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      border-radius:13px; display:flex; align-items:center; justify-content:center;
+      box-shadow:0 6px 20px rgba(242,95,122,.3);
+    }
+    .logo-mark svg { width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round; }
+    .logo-name { font-size:1.5rem; font-weight:800; background:linear-gradient(90deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .admin-badge {
+      display:inline-flex; align-items:center; gap:.45rem;
+      background:rgba(242,95,122,.1); border:1px solid rgba(242,95,122,.25);
+      color:var(--danger); border-radius:20px; padding:.3rem .8rem;
+      font-size:.72rem; font-weight:700; margin-bottom:1.5rem;
+    }
+    h1 { font-size:1.5rem; font-weight:700; letter-spacing:-.02em; margin-bottom:.4rem; }
+    .subtitle { font-size:.88rem; color:var(--text2); margin-bottom:1.8rem; line-height:1.6; }
+    .error-box {
+      display:flex; align-items:flex-start; gap:.5rem;
+      background:rgba(220,38,38,.08); border:1px solid rgba(220,38,38,.22);
+      border-radius:11px; padding:.8rem .95rem; color:var(--danger);
+      font-size:.86rem; margin-bottom:1.3rem; line-height:1.5;
+    }
+    .field { margin-bottom:1.2rem; }
+    label { display:block; font-size:.71rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin-bottom:.45rem; }
+    .inp-wrap { position:relative; }
+    .inp-icon { position:absolute; right:.9rem; top:50%; transform:translateY(-50%); color:var(--muted); pointer-events:none; display:flex; }
+    [dir="ltr"] .inp-icon { right:auto; left:.9rem; }
+    .inp-icon svg { width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round; }
+    input {
+      width:100%; background:rgba(242,95,122,.04); border:1px solid var(--border2);
+      border-radius:11px; padding:.82rem 2.5rem .82rem 1rem;
+      color:var(--text); font-family:'Alexandria',sans-serif; font-size:.93rem; outline:none;
+      transition:border-color .2s,box-shadow .2s,background .2s;
+    }
+    [dir="ltr"] input { padding:.82rem 1rem .82rem 2.5rem; }
+    input:focus { border-color:rgba(242,95,122,.45); box-shadow:0 0 0 3px rgba(242,95,122,.1); background:rgba(242,95,122,.06); }
+    input::placeholder { color:var(--muted); }
+    button[type="submit"] {
+      width:100%; padding:.9rem;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      border:none; border-radius:13px; color:#fff;
+      font-family:'Alexandria',sans-serif; font-size:.98rem; font-weight:700;
+      cursor:pointer; margin-top:.4rem; box-shadow:0 6px 20px rgba(242,95,122,.32);
+      transition:opacity .2s,transform .15s;
+    }
+    button[type="submit"]:hover { opacity:.9; }
+    button[type="submit"]:active { transform:scale(.98); }
+    .back-link { display:block; text-align:center; font-size:.74rem; color:var(--muted); margin-top:1.2rem; text-decoration:none; transition:color .15s; }
+    .back-link:hover { color:var(--text2); }
+  </style>
+</head>
+<body>
+  <div class="glow g1"></div>
+  <div class="glow g2"></div>
+
+  <button class="theme-toggle" id="themeBtn" title="{{ t('toggle_theme') }}">
+    <svg id="iconMoon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    <svg id="iconSun" viewBox="0 0 24 24" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg>
+  </button>
+
+  <div class="lang-switcher">
+    <a class="lang-btn {% if lang == 'ar' %}active{% endif %}" href="{{ url_for('set_language', lang='ar') }}">ع</a>
+    <a class="lang-btn {% if lang == 'en' %}active{% endif %}" href="{{ url_for('set_language', lang='en') }}">EN</a>
+    <a class="lang-btn {% if lang == 'fr' %}active{% endif %}" href="{{ url_for('set_language', lang='fr') }}">FR</a>
+  </div>
+
+  <div class="card">
+    <div class="logo">
+      <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+      <span class="logo-name">{{ t('app_name') }}</span>
+    </div>
+    <div class="admin-badge">{{ t('admin_login_badge') }}</div>
+    <h1>{{ t('admin_login_heading') }}</h1>
+    <p class="subtitle">{{ t('admin_login_subtitle') }}</p>
+    {% if error %}
+    <div class="error-box">⚠️ <span>{{ error }}</span></div>
+    {% endif %}
+    <form method="POST">
+      <div class="field">
+        <label>{{ t('admin_login_username') }}</label>
+        <div class="inp-wrap">
+          <div class="inp-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+          <input name="username" type="text" placeholder="{{ t('admin_login_username_ph') }}" autocomplete="username" required />
+        </div>
+      </div>
+      <div class="field">
+        <label>{{ t('admin_login_password') }}</label>
+        <div class="inp-wrap">
+          <div class="inp-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+          <input type="password" name="password" placeholder="••••••••" autocomplete="current-password" required />
+        </div>
+      </div>
+      <button type="submit">{{ t('admin_login_submit') }}</button>
+    </form>
+    <a class="back-link" href="/">{{ t('admin_login_back') }}</a>
+  </div>
+
+  <script>
+    const html=document.documentElement,moon=document.getElementById('iconMoon'),sun=document.getElementById('iconSun');
+    function applyTheme(t){html.setAttribute('data-theme',t);localStorage.setItem('mb-theme',t);moon.style.display=t==='dark'?'block':'none';sun.style.display=t==='light'?'block':'none';}
+    applyTheme(localStorage.getItem('mb-theme')||'dark');
+    document.getElementById('themeBtn').addEventListener('click',()=>applyTheme(html.getAttribute('data-theme')==='dark'?'light':'dark'));
+  </script>
+</body>
+</html>
