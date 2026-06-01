@@ -1,9 +1,17 @@
 <!DOCTYPE html>
+<<<<<<< HEAD
 <html lang="{{ lang }}" dir="{{ dir_attr }}" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{{ t('login_page_title') }}</title>
+=======
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Farouk Account — تسجيل الدخول</title>
+>>>>>>> origin/main
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
@@ -43,6 +51,7 @@
     }
     .theme-toggle:hover { color:var(--text); }
     .theme-toggle svg { width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round; }
+<<<<<<< HEAD
     /* Language switcher */
     .lang-switcher {
       position:fixed; top:1rem; right:1rem; z-index:20;
@@ -58,6 +67,8 @@
     }
     .lang-btn:hover { background:var(--border2); color:var(--text2); }
     .lang-btn.active { background:var(--accent); color:#fff; }
+=======
+>>>>>>> origin/main
     .card {
       position:relative; z-index:1; width:100%; max-width:430px; margin:1rem;
       background:var(--surface); border:1px solid var(--border); border-radius:24px;
@@ -93,7 +104,10 @@
     label { display:block; font-size:.71rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin-bottom:.45rem; }
     .inp-wrap { position:relative; }
     .inp-icon { position:absolute; right:.9rem; top:50%; transform:translateY(-50%); color:var(--muted); pointer-events:none; display:flex; }
+<<<<<<< HEAD
     [dir="ltr"] .inp-icon { right:auto; left:.9rem; }
+=======
+>>>>>>> origin/main
     .inp-icon svg { width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round; }
     input {
       width:100%; background:rgba(79,142,247,.04); border:1px solid var(--border2);
@@ -101,7 +115,10 @@
       color:var(--text); font-family:'Alexandria',sans-serif; font-size:.93rem; outline:none;
       transition:border-color .2s,box-shadow .2s,background .2s;
     }
+<<<<<<< HEAD
     [dir="ltr"] input { padding:.82rem 1rem .82rem 2.5rem; }
+=======
+>>>>>>> origin/main
     input:focus { border-color:rgba(79,142,247,.5); box-shadow:0 0 0 3px rgba(79,142,247,.1); background:rgba(79,142,247,.06); }
     input::placeholder { color:var(--muted); }
     .pw-toggle {
@@ -109,7 +126,10 @@
       background:none; border:none; cursor:pointer; color:var(--muted); display:flex;
       transition:color .15s; padding:0;
     }
+<<<<<<< HEAD
     [dir="ltr"] .pw-toggle { left:auto; right:.75rem; }
+=======
+>>>>>>> origin/main
     .pw-toggle:hover { color:var(--text2); }
     .pw-toggle svg { width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round; }
     button[type="submit"] {
@@ -134,11 +154,16 @@
   <div class="glow g1"></div>
   <div class="glow g2"></div>
 
+<<<<<<< HEAD
   <button class="theme-toggle" id="themeBtn" title="{{ t('toggle_theme') }}">
+=======
+  <button class="theme-toggle" id="themeBtn" title="تبديل المظهر">
+>>>>>>> origin/main
     <svg id="iconMoon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
     <svg id="iconSun" viewBox="0 0 24 24" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
   </button>
 
+<<<<<<< HEAD
   <div class="lang-switcher">
     <a class="lang-btn {% if lang == 'ar' %}active{% endif %}" href="{{ url_for('set_language', lang='ar') }}">ع</a>
     <a class="lang-btn {% if lang == 'en' %}active{% endif %}" href="{{ url_for('set_language', lang='en') }}">EN</a>
@@ -157,28 +182,57 @@
       <small>{{ t('login_admin_by') }}</small>
     </p>
 
+=======
+  <div class="card">
+    <div class="logo">
+      <div class="logo-mark"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg></div>
+      <span class="logo-name">Farouk Account</span>
+    </div>
+
+    <h1>مرحباً بك</h1>
+    <p class="subtitle">
+      يمكنك تلقي جميع الرسائل الخاصة بحسابات نتفليكس وجميع الاشتراكات الأخرى
+      <br/>
+      <span class="admin">المشرف: فاروق</span>
+    </p>
+>>>>>>> origin/main
     {% if error %}
     <div class="error-box">⚠️ <span>{{ error }}</span></div>
     {% endif %}
 
     <form method="POST" id="loginForm">
       <div class="field">
+<<<<<<< HEAD
         <label>{{ t('login_username_label') }}</label>
         <div class="inp-wrap">
           <div class="inp-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
           <input name="username" type="text" placeholder="{{ t('login_username_placeholder') }}"
+=======
+        <label>اسم المستخدم</label>
+        <div class="inp-wrap">
+          <div class="inp-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+          <input name="username" type="text" placeholder="اسم المستخدم"
+>>>>>>> origin/main
                  value="{{ request.form.username or '' }}"
                  autocomplete="username" required />
         </div>
       </div>
 
       <div class="field">
+<<<<<<< HEAD
         <label>{{ t('login_password_label') }}</label>
+=======
+        <label>كلمة المرور</label>
+>>>>>>> origin/main
         <div class="inp-wrap">
           <div class="inp-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
           <input name="password" type="password" id="pwInput" placeholder="••••••••"
                  autocomplete="current-password" required />
+<<<<<<< HEAD
           <button type="button" class="pw-toggle" id="pwToggle" title="{{ t('login_show_hide') }}">
+=======
+          <button type="button" class="pw-toggle" id="pwToggle" title="إظهار/إخفاء">
+>>>>>>> origin/main
             <svg id="eyeOpen" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             <svg id="eyeClosed" viewBox="0 0 24 24" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
           </button>
@@ -186,17 +240,29 @@
       </div>
 
       <button type="submit" id="submitBtn">
+<<<<<<< HEAD
         <span id="btnText">{{ t('login_submit') }}</span>
+=======
+        <span id="btnText">الدخول إلى الحساب</span>
+>>>>>>> origin/main
         <span class="spin" id="btnSpin"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg></span>
       </button>
     </form>
 
+<<<<<<< HEAD
     <p class="footer-note">{{ t('login_secure') }}</p>
     <a class="admin-link" href="/admin/login">{{ t('login_admin_link') }}</a>
   </div>
 
   <script>
     const T = {{ translations_json|safe }};
+=======
+    <p class="footer-note">اتصال آمن مشفر · SSL/TLS</p>
+    <a class="admin-link" href="/admin/login">دخول المشرف ←</a>
+  </div>
+
+  <script>
+>>>>>>> origin/main
     const html  = document.documentElement;
     const moon  = document.getElementById('iconMoon');
     const sun   = document.getElementById('iconSun');
@@ -217,7 +283,11 @@
     });
 
     document.getElementById('loginForm').addEventListener('submit',()=>{
+<<<<<<< HEAD
       document.getElementById('btnText').textContent = T.login_loading || '…';
+=======
+      document.getElementById('btnText').textContent = 'جارٍ الدخول…';
+>>>>>>> origin/main
       document.getElementById('btnSpin').style.display = 'inline-flex';
     });
   </script>

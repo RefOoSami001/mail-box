@@ -1,9 +1,17 @@
 <!DOCTYPE html>
+<<<<<<< HEAD
 <html lang="{{ lang }}" dir="{{ dir_attr }}" data-theme="dark">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
   <title>{{ t('dash_page_title') }}</title>
+=======
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>Farouk Account</title>
+>>>>>>> origin/main
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <style>
@@ -51,6 +59,7 @@
     .ibtn:active{transform:scale(.93);}
     .ibtn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
     .ibtn-logout:hover{background:rgba(242,95,122,.1);color:var(--danger);border-color:rgba(242,95,122,.25);}
+<<<<<<< HEAD
     /* Language switcher */
     .lang-switcher{display:flex;align-items:center;gap:.18rem;background:var(--surf2);border:1px solid var(--border);border-radius:20px;padding:.15rem .25rem;flex-shrink:0;}
     .lang-btn{padding:.15rem .42rem;border:none;border-radius:14px;background:none;cursor:pointer;font-size:.66rem;font-weight:700;color:var(--text3);font-family:'Alexandria',sans-serif;transition:background .15s,color .15s;text-decoration:none;display:inline-flex;align-items:center;}
@@ -67,12 +76,25 @@
     .fetch-btn-full:hover:not(:disabled){opacity:.88;}
     .fetch-btn-full:disabled{opacity:.45;cursor:not-allowed;}
     .fetch-btn-full svg{width:14px;height:14px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+=======
+    .btn-fetch{display:flex;align-items:center;gap:.4rem;height:34px;padding:0 .9rem;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;cursor:pointer;color:#fff;font-family:'Alexandria',sans-serif;font-size:.8rem;font-weight:700;white-space:nowrap;flex-shrink:0;transition:opacity .2s,transform .12s;box-shadow:0 3px 12px rgba(79,142,247,.3);}
+    .btn-fetch:hover:not(:disabled){opacity:.88;}
+    .btn-fetch:disabled{opacity:.45;cursor:not-allowed;}
+    .btn-fetch svg{width:14px;height:14px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+>>>>>>> origin/main
     .spin-ico{animation:spinA .6s linear infinite;}
     @keyframes spinA{to{transform:rotate(360deg);}}
 
     .layout{display:flex;flex:1;overflow:hidden;min-height:0;}
+<<<<<<< HEAD
     .sidebar{width:var(--sidebar-w);flex-shrink:0;background:var(--surf);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:background .3s;}
 
+=======
+
+    .sidebar{width:var(--sidebar-w);flex-shrink:0;background:var(--surf);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:background .3s;}
+
+    /* My emails panel */
+>>>>>>> origin/main
     .my-emails-panel{padding:.65rem 1rem .6rem;border-bottom:1px solid var(--border);flex-shrink:0;max-height:300px;display:flex;flex-direction:column;gap:.4rem;}
     .my-emails-header{display:flex;align-items:center;gap:.45rem;flex-shrink:0;}
     .my-emails-label{font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);display:flex;align-items:center;gap:.35rem;}
@@ -101,10 +123,15 @@
     .em-select-btn svg{width:10px;height:10px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
     .em-date-range{font-size:.68rem;color:var(--text3);white-space:nowrap;}
     .expired-badge{display:inline-flex;align-items:center;font-size:.6rem;font-weight:700;background:rgba(242,95,122,.1);border:1px solid rgba(242,95,122,.25);color:var(--danger);border-radius:10px;padding:.1rem .38rem;white-space:nowrap;}
+<<<<<<< HEAD
+=======
+    .no-emails-hint{font-size:.74rem;color:var(--text3);padding:.1rem 0;}
+>>>>>>> origin/main
 
     .search-panel{padding:.85rem 1rem .75rem;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;gap:.55rem;}
     .panel-label{font-size:.64rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text3);}
     .email-wrap{position:relative;}
+<<<<<<< HEAD
     .email-wrap input{width:100%;background:var(--surf2);border:1px solid var(--bord2);border-radius:var(--radius-sm);padding:.65rem 2.2rem .65rem .9rem;color:var(--text);font-family:'Alexandria',sans-serif;font-size:.88rem;outline:none;transition:border-color .2s,background .2s;}
     [dir="ltr"] .email-wrap input{padding:.65rem .9rem .65rem 2.2rem;}
     .email-wrap input:focus{border-color:rgba(79,142,247,.5);background:var(--surf3);}
@@ -114,6 +141,24 @@
     .email-ico svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
 
     .cat-btn{width:100%;display:flex;align-items:center;gap:.55rem;background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.62rem .85rem;cursor:pointer;color:var(--text2);font-family:'Alexandria',sans-serif;font-size:.86rem;font-weight:500;text-align:right;transition:border-color .2s,background .2s,color .2s;}
+=======
+    .email-wrap input{
+      width:100%;background:var(--surf2);border:1px solid var(--bord2);border-radius:var(--radius-sm);
+      padding:.65rem 2.2rem .65rem .9rem;color:var(--text);font-family:'Alexandria',sans-serif;
+      font-size:.88rem;outline:none;transition:border-color .2s,background .2s;
+    }
+    .email-wrap input:focus{border-color:rgba(79,142,247,.5);background:var(--surf3);}
+    .email-wrap input::placeholder{color:var(--text3);}
+    .email-ico{position:absolute;left:.75rem;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none;display:flex;}
+    .email-ico svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+
+    .cat-btn{
+      width:100%;display:flex;align-items:center;gap:.55rem;
+      background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);
+      padding:.62rem .85rem;cursor:pointer;color:var(--text2);font-family:'Alexandria',sans-serif;
+      font-size:.86rem;font-weight:500;text-align:right;transition:border-color .2s,background .2s,color .2s;
+    }
+>>>>>>> origin/main
     .cat-btn:hover{background:var(--surf3);color:var(--text);}
     .cat-btn.selected{border-color:rgba(79,142,247,.4);color:var(--text);}
     .cat-btn svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
@@ -121,6 +166,7 @@
     .cat-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;display:none;}
     .cat-btn.selected .cat-dot{display:block;}
 
+<<<<<<< HEAD
     .results-head{padding:.6rem 1rem .5rem;border-bottom:1px solid var(--border);flex-shrink:0;}
     .search-wrap{position:relative;}
     .search-wrap input{width:100%;background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.52rem 1.9rem .52rem .85rem;color:var(--text);font-family:'Alexandria',sans-serif;font-size:.82rem;outline:none;transition:border-color .2s;}
@@ -129,6 +175,25 @@
     .search-wrap input::placeholder{color:var(--text3);}
     .search-ico{position:absolute;right:.65rem;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none;display:flex;}
     [dir="ltr"] .search-ico{right:auto;left:.65rem;}
+=======
+    .fetch-btn-full{
+      width:100%;padding:.7rem;border-radius:var(--radius-sm);
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      border:none;cursor:pointer;color:#fff;font-family:'Alexandria',sans-serif;
+      font-size:.88rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:.45rem;
+      transition:opacity .2s;box-shadow:0 4px 16px rgba(79,142,247,.28);
+    }
+    .fetch-btn-full:hover:not(:disabled){opacity:.88;}
+    .fetch-btn-full:disabled{opacity:.45;cursor:not-allowed;}
+    .fetch-btn-full svg{width:14px;height:14px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+
+    .results-head{padding:.6rem 1rem .5rem;border-bottom:1px solid var(--border);flex-shrink:0;}
+    .search-wrap{position:relative;}
+    .search-wrap input{width:100%;background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.52rem 1.9rem .52rem .85rem;color:var(--text);font-family:'Alexandria',sans-serif;font-size:.82rem;outline:none;transition:border-color .2s;}
+    .search-wrap input:focus{border-color:rgba(79,142,247,.4);}
+    .search-wrap input::placeholder{color:var(--text3);}
+    .search-ico{position:absolute;left:.65rem;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none;display:flex;}
+>>>>>>> origin/main
     .search-ico svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
 
     .warn-bar{margin:.3rem .5rem 0;padding:.4rem .75rem;background:rgba(245,158,11,.09);border:1px solid rgba(245,158,11,.22);border-radius:8px;font-size:.73rem;color:var(--amber);line-height:1.4;display:none;}
@@ -137,6 +202,10 @@
     .msg-list{flex:1;overflow-y:auto;padding:.3rem .4rem;}
     .msg-list::-webkit-scrollbar{width:3px;}
     .msg-list::-webkit-scrollbar-thumb{background:var(--bord2);border-radius:3px;}
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
     .msg-row{padding:.78rem .82rem;border-radius:var(--radius);cursor:pointer;border:1px solid transparent;margin-bottom:2px;position:relative;transition:background .15s,border-color .15s;animation:rowIn .28s var(--ease) both;}
     @keyframes rowIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
     .msg-row:hover{background:var(--surf2);}
@@ -215,6 +284,10 @@
     .cat-option-body{flex:1;min-width:0;}
     .cat-option-label{font-size:.9rem;font-weight:700;color:var(--text);}
     .cat-option-desc{font-size:.75rem;color:var(--text3);margin-top:.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+<<<<<<< HEAD
+=======
+    .cat-option.chosen .cat-option-icon{background:rgba(79,142,247,.2);border-color:rgba(79,142,247,.35);}
+>>>>>>> origin/main
     .cat-cancel{width:100%;margin-top:.9rem;padding:.65rem;border-radius:var(--radius-sm);background:var(--surf2);border:1px solid var(--border);cursor:pointer;color:var(--text3);font-family:'Alexandria',sans-serif;font-size:.86rem;font-weight:600;transition:background .15s,color .15s;}
     .cat-cancel:hover{background:var(--surf3);color:var(--text);}
 
@@ -244,7 +317,11 @@
 <header class="topbar">
   <a class="logo" href="#">
     <div class="logo-mark"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg></div>
+<<<<<<< HEAD
     <span class="logo-name">{{ t('app_name') }}</span>
+=======
+    <span class="logo-name">Farouk Account</span>
+>>>>>>> origin/main
   </a>
   <div class="topbar-sep"></div>
   <div class="user-pill">
@@ -253,6 +330,7 @@
   </div>
   <div class="topbar-r">
     <span class="count-pill" id="countPill"></span>
+<<<<<<< HEAD
     <div class="lang-switcher">
       <a class="lang-btn {% if lang == 'ar' %}active{% endif %}" href="{{ url_for('set_language', lang='ar') }}">ع</a>
       <a class="lang-btn {% if lang == 'en' %}active{% endif %}" href="{{ url_for('set_language', lang='en') }}">EN</a>
@@ -263,6 +341,13 @@
       <svg id="iSun" viewBox="0 0 24 24" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg>
     </button>
     <a class="ibtn ibtn-logout" href="/logout" title="{{ t('dash_logout') }}">
+=======
+    <button class="ibtn" id="themeBtn">
+      <svg id="iMoon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg id="iSun" viewBox="0 0 24 24" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg>
+    </button>
+    <a class="ibtn ibtn-logout" href="/logout" title="تسجيل الخروج">
+>>>>>>> origin/main
       <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
     </a>
   </div>
@@ -271,25 +356,42 @@
 <div class="layout" id="layout">
   <aside class="sidebar" id="sidebar">
 
+<<<<<<< HEAD
+=======
+    <!-- My Emails strip -->
+>>>>>>> origin/main
     <div class="my-emails-panel" id="myEmailsPanel" style="display:none">
       <div class="my-emails-header">
         <div class="my-emails-label">
           <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
+<<<<<<< HEAD
           {{ t('dash_my_emails_label') }}
+=======
+          حسابات العميل
+>>>>>>> origin/main
         </div>
         <span class="my-emails-count" id="myEmailsCount"></span>
       </div>
       <div class="my-emails-search" id="myEmailsSearchWrap" style="display:none">
         <div class="my-emails-search-ico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+<<<<<<< HEAD
         <input id="myEmailsFilter" placeholder="{{ t('dash_filter_emails_ph') }}" autocomplete="off"/>
+=======
+        <input id="myEmailsFilter" placeholder="فلترة…" autocomplete="off"/>
+>>>>>>> origin/main
       </div>
       <div class="my-emails-table-wrap" id="myEmailsTableWrap">
         <table class="my-emails-tbl">
           <thead>
             <tr>
               <th>#</th>
+<<<<<<< HEAD
               <th>{{ t('email_label') }}</th>
               <th>{{ t('col_status') }}</th>
+=======
+              <th>البريد الإلكتروني</th>
+              <th>الصلاحية</th>
+>>>>>>> origin/main
               <th></th>
             </tr>
           </thead>
@@ -298,6 +400,7 @@
       </div>
     </div>
 
+<<<<<<< HEAD
     <div class="search-panel">
       <div class="panel-label">{{ t('dash_email_query') }}</div>
       <div class="email-wrap">
@@ -307,12 +410,28 @@
       <button class="cat-btn" id="catBtn">
         <svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
         <span id="catBtnLabel">{{ t('dash_choose_category') }}</span>
+=======
+    <!-- Email input + category selector -->
+    <div class="search-panel">
+      <div class="panel-label">استعلام البريد</div>
+      <div class="email-wrap">
+        <div class="email-ico"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg></div>
+        <input id="emailInput" type="email" placeholder="أدخل عنوان البريد الإلكتروني" autocomplete="off" />
+      </div>
+      <button class="cat-btn" id="catBtn">
+        <svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        <span id="catBtnLabel">اختر نوع الرسائل…</span>
+>>>>>>> origin/main
         <div class="cat-dot"></div>
         <svg class="cat-caret" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       <button class="fetch-btn-full" id="fetchBtn" disabled>
         <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+<<<<<<< HEAD
         <span id="fetchLabel">{{ t('dash_fetch') }}</span>
+=======
+        <span id="fetchLabel">جلب الرسائل</span>
+>>>>>>> origin/main
       </button>
     </div>
 
@@ -321,7 +440,11 @@
     <div id="resultsArea" style="display:flex;flex-direction:column;flex:1;overflow:hidden;min-height:0;">
       <div class="state-box">
         <div class="ei">📬</div>
+<<<<<<< HEAD
         <p>{{ t('dash_enter_email_line1') }}<br/>{{ t('dash_enter_email_line2') }}<br/>{{ t('dash_enter_email_line3') }} <strong>{{ t('dash_fetch_btn_label') }}</strong></p>
+=======
+        <p>أدخل البريد الإلكتروني<br/>واختر نوع الرسائل<br/>ثم اضغط <strong>جلب الرسائل</strong></p>
+>>>>>>> origin/main
       </div>
     </div>
 
@@ -330,19 +453,32 @@
   <main class="viewer" id="viewer">
     <div class="ph" id="ph">
       <div class="ph-ico"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg></div>
+<<<<<<< HEAD
       <h3>{{ t('dash_choose_msg_title') }}</h3>
       <p>{{ t('dash_choose_msg_sub') }}</p>
+=======
+      <h3>اختر رسالة لعرضها</h3>
+      <p>ستظهر تفاصيل الرسالة هنا</p>
+>>>>>>> origin/main
     </div>
   </main>
 </div>
 
 <div class="cat-overlay" id="catOverlay">
   <div class="cat-sheet" id="catSheet">
+<<<<<<< HEAD
     <div class="cat-sheet-title">{{ t('dash_choose_msg_type_title') }}</div>
     <div class="cat-list" id="catList">
       <div class="state-box" style="min-height:80px;"><p>{{ t('dash_loading_categories') }}</p></div>
     </div>
     <button class="cat-cancel" id="catCancelBtn">{{ t('cancel') }}</button>
+=======
+    <div class="cat-sheet-title">اختر نوع الرسائل</div>
+    <div class="cat-list" id="catList">
+      <div class="state-box" style="min-height:80px;"><p>جارٍ تحميل الفئات…</p></div>
+    </div>
+    <button class="cat-cancel" id="catCancelBtn">إلغاء</button>
+>>>>>>> origin/main
   </div>
 </div>
 
@@ -351,7 +487,10 @@
 <script>
 (function(){
 'use strict';
+<<<<<<< HEAD
 const T = {{ translations_json|safe }};
+=======
+>>>>>>> origin/main
 
 /* ── Theme ── */
 const html=document.documentElement;
@@ -401,7 +540,11 @@ function detectCode(raw){
 }
 
 /* ── State ── */
+<<<<<<< HEAD
 let categories=[], selectedCatId=null, selectedCatLabel='';
+=======
+let categories=[], selectedCatId=null, selectedCatLabel='الكل';
+>>>>>>> origin/main
 let allMsgs=[], activeUid=null, fetchBusy=false;
 let myEmails=[];
 
@@ -412,6 +555,7 @@ async function loadMyEmails(){
     const d=await r.json();
     myEmails=d.emails||[];
     renderMyEmails();
+<<<<<<< HEAD
   }catch(e){myEmails=[];}
 }
 
@@ -423,6 +567,24 @@ function emFmtRange(start,end){
   if(start&&end)return`${fmt(start)} → ${fmt(end)}`;
   if(start)return`${fromLabel} ${fmt(start)}`;
   return`${untilLabel} ${fmt(end)}`;
+=======
+  }catch(e){
+    myEmails=[];
+  }
+}
+
+/* Format date range — always English locale */
+function emFmtRange(start,end){
+  if(!start&&!end)return'<span style="color:var(--text3)">—</span>';
+  const fmt=s=>{
+    try{
+      return new Date(s+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'2-digit'});
+    }catch{return s;}
+  };
+  if(start&&end)return`${fmt(start)} ← ${fmt(end)}`;
+  if(start)return`From ${fmt(start)}`;
+  return`Until ${fmt(end)}`;
+>>>>>>> origin/main
 }
 
 function renderMyEmails(){
@@ -433,8 +595,12 @@ function renderMyEmails(){
   panel.style.display='flex';
   const activeCount=myEmails.filter(e=>!e.expired).length;
   const expiredCount=myEmails.filter(e=>e.expired).length;
+<<<<<<< HEAD
   const expiredLabel=T.dash_expired_count_label||'expired';
   countEl.textContent=activeCount+(expiredCount?` (${expiredCount} ${expiredLabel})`:'');
+=======
+  countEl.textContent=activeCount+(expiredCount?` (${expiredCount} منتهي)`:'');
+>>>>>>> origin/main
   searchWrap.style.display=myEmails.length>5?'block':'none';
   renderEmailRows(myEmails);
   const filterInput=document.getElementById('myEmailsFilter');
@@ -449,9 +615,12 @@ function renderMyEmails(){
 function renderEmailRows(list){
   const body=document.getElementById('myEmailsBody');
   const curVal=document.getElementById('emailInput').value.trim().toLowerCase();
+<<<<<<< HEAD
   const expiredLabel=T.dash_expired_badge||'Expired';
   const selectLabel=T.dash_select_btn||'Select';
   const selectedLabel=T.dash_selected_btn||'Selected';
+=======
+>>>>>>> origin/main
   body.innerHTML=list.map((item,i)=>{
     const active=item.email.toLowerCase()===curVal;
     const expired=!!item.expired;
@@ -461,10 +630,17 @@ function renderEmailRows(list){
         <td style="color:var(--text2);word-break:break-all;font-size:.78rem">${esc(item.email)}</td>
         <td class="em-date-range">
           ${emFmtRange(item.start_date,item.end_date)}
+<<<<<<< HEAD
           <span class="expired-badge" style="margin-right:.3rem">${expiredLabel}</span>
         </td>
         <td><button class="em-select-btn em-expired" disabled>
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>${expiredLabel}
+=======
+          <span class="expired-badge" style="margin-right:.3rem">منتهي</span>
+        </td>
+        <td><button class="em-select-btn em-expired" disabled>
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>منتهي
+>>>>>>> origin/main
         </button></td>
       </tr>`;
     }
@@ -473,7 +649,11 @@ function renderEmailRows(list){
       <td style="color:var(--text);font-weight:600;word-break:break-all;font-size:.78rem">${esc(item.email)}</td>
       <td class="em-date-range">${emFmtRange(item.start_date,item.end_date)}</td>
       <td><button class="em-select-btn${active?' em-active':''}" data-email="${esc(item.email)}">
+<<<<<<< HEAD
         <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>${active?selectedLabel:selectLabel}
+=======
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>${active?'محدد':'اختيار'}
+>>>>>>> origin/main
       </button></td>
     </tr>`;
   }).join('');
@@ -481,24 +661,43 @@ function renderEmailRows(list){
     btn.addEventListener('click',()=>{
       const em=btn.dataset.email;
       document.getElementById('emailInput').value=em;
+<<<<<<< HEAD
       body.querySelectorAll('.em-select-btn').forEach(b=>{b.classList.remove('em-active');if(!b.classList.contains('em-expired'))b.innerHTML=`<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>${selectLabel}`;});
       btn.classList.add('em-active');
       btn.innerHTML=`<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>${selectedLabel}`;
+=======
+      body.querySelectorAll('.em-select-btn').forEach(b=>{b.classList.remove('em-active');if(!b.classList.contains('em-expired'))b.innerHTML='<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>اختيار';});
+      btn.classList.add('em-active');
+      btn.innerHTML='<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>محدد';
+>>>>>>> origin/main
       checkFetchReady();
     });
   });
 }
 
+<<<<<<< HEAD
 loadMyEmails();
 
 /* ── Load categories ── */
+=======
+/* ── Load on mount ── */
+loadMyEmails();
+
+/* ── Load categories on mount ── */
+>>>>>>> origin/main
 async function loadCategories(){
   try{
     const r=await fetch('/api/categories');
     const d=await r.json();
     categories=d.categories||[];
     renderCatList();
+<<<<<<< HEAD
   }catch(e){categories=[];}
+=======
+  }catch(e){
+    categories=[];
+  }
+>>>>>>> origin/main
 }
 loadCategories();
 
@@ -511,7 +710,11 @@ catOverlay.addEventListener('click',e=>{if(e.target===catOverlay)catOverlay.clas
 const ICONS=['📬','📩','🔐','✉️','🔔','📋','💬','🏷️','📦','⚡'];
 function renderCatList(){
   const list=document.getElementById('catList');
+<<<<<<< HEAD
   if(!categories.length){list.innerHTML=`<div class="state-box" style="min-height:80px"><p>${T.dash_no_categories||'No categories'}</p></div>`;return;}
+=======
+  if(!categories.length){list.innerHTML='<div class="state-box" style="min-height:80px"><p>لا توجد فئات — أضفها من لوحة المشرف</p></div>';return;}
+>>>>>>> origin/main
   list.innerHTML=categories.map((c,i)=>{
     const chosen=c.id===selectedCatId;
     return`<div class="cat-option${chosen?' chosen':''}" data-id="${esc(c.id)}" data-label="${esc(c.label)}">
@@ -538,12 +741,19 @@ function updateCatBtn(){
 /* ── Enable fetch button ── */
 const emailInput=document.getElementById('emailInput');
 emailInput.addEventListener('input',()=>{
+<<<<<<< HEAD
   const selectLabel=T.dash_select_btn||'Select';
   const selectedLabel=T.dash_selected_btn||'Selected';
   document.getElementById('myEmailsBody')?.querySelectorAll('.em-select-btn:not(.em-expired)').forEach(b=>{
     const isActive=b.dataset.email===emailInput.value.trim().toLowerCase();
     b.classList.toggle('em-active',isActive);
     b.innerHTML=`<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>${isActive?selectedLabel:selectLabel}`;
+=======
+  document.getElementById('myEmailsBody')?.querySelectorAll('.em-select-btn:not(.em-expired)').forEach(b=>{
+    const isActive=b.dataset.email===emailInput.value.trim().toLowerCase();
+    b.classList.toggle('em-active',isActive);
+    b.innerHTML=`<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>${isActive?'محدد':'اختيار'}`;
+>>>>>>> origin/main
   });
   checkFetchReady();
 });
@@ -560,16 +770,27 @@ emailInput.addEventListener('keydown',e=>{if(e.key==='Enter')doFetch();});
 async function doFetch(){
   if(fetchBusy)return;
   const em=emailInput.value.trim().toLowerCase();
+<<<<<<< HEAD
   if(!em.includes('@')){toast(T.dash_invalid_email||'Invalid email',true);return;}
   fetchBusy=true;
   const btn=document.getElementById('fetchBtn'),lbl=document.getElementById('fetchLabel');
   btn.disabled=true;lbl.textContent=T.dash_fetching||'…';
+=======
+  if(!em.includes('@')){toast('أدخل بريد إلكتروني صحيح',true);return;}
+  fetchBusy=true;
+  const btn=document.getElementById('fetchBtn'),lbl=document.getElementById('fetchLabel');
+  btn.disabled=true;lbl.textContent='جارٍ الجلب…';
+>>>>>>> origin/main
   const ico=btn.querySelector('svg');ico.classList.add('spin-ico');
   showSkeleton();
   try{
     const r=await fetch('/api/fetch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:em,category_id:selectedCatId||''})});
     const data=await r.json();
+<<<<<<< HEAD
     if(!r.ok||data.error){throw new Error(data.error||(T.unknown_error||'Error'));}
+=======
+    if(!r.ok||data.error){throw new Error(data.error||'خطأ غير معروف');}
+>>>>>>> origin/main
     allMsgs=data.messages||[];
     renderList(allMsgs);
     updatePill(data.total);
@@ -581,6 +802,7 @@ async function doFetch(){
     document.getElementById('countPill').classList.remove('vis');
   }finally{
     fetchBusy=false;
+<<<<<<< HEAD
     btn.disabled=false;
     lbl.textContent=T.dash_update||'Refresh';
     ico.classList.remove('spin-ico');
@@ -588,6 +810,13 @@ async function doFetch(){
 }
 
 function updatePill(n){const p=document.getElementById('countPill');p.textContent=n+' '+(T.dash_messages_count||'msg(s)');p.classList.toggle('vis',n>0);}
+=======
+    btn.disabled=false;lbl.textContent='تحديث';ico.classList.remove('spin-ico');
+  }
+}
+
+function updatePill(n){const p=document.getElementById('countPill');p.textContent=n+' رسالة';p.classList.toggle('vis',n>0);}
+>>>>>>> origin/main
 
 function showSkeleton(){
   document.getElementById('resultsArea').innerHTML=`
@@ -602,9 +831,15 @@ function showError(msg){
 
 function renderList(msgs){
   const area=document.getElementById('resultsArea');
+<<<<<<< HEAD
   if(!msgs.length){area.innerHTML=`<div class="state-box"><div class="ei">📭</div><p>${T.dash_no_messages||'No messages'}</p></div>`;return;}
   area.innerHTML=`
     <div class="results-head"><div class="search-wrap"><div class="search-ico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><input id="searchInput" placeholder="${T.dash_search_results_ph||'Search…'}" autocomplete="off"/></div></div>
+=======
+  if(!msgs.length){area.innerHTML='<div class="state-box"><div class="ei">📭</div><p>لا توجد رسائل تطابق هذه الفئة</p></div>';return;}
+  area.innerHTML=`
+    <div class="results-head"><div class="search-wrap"><div class="search-ico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><input id="searchInput" placeholder="بحث في النتائج…" autocomplete="off"/></div></div>
+>>>>>>> origin/main
     <div class="msg-list" id="msgList">${renderRows(msgs)}</div>`;
   bindRows();
   document.getElementById('searchInput').addEventListener('input',function(){
@@ -615,7 +850,11 @@ function renderList(msgs){
 }
 
 function renderRows(msgs){
+<<<<<<< HEAD
   if(!msgs.length)return`<div class="state-box" style="min-height:150px"><div class="ei">🔍</div><p>${T.dash_no_results||'No results'}</p></div>`;
+=======
+  if(!msgs.length)return'<div class="state-box" style="min-height:150px"><div class="ei">🔍</div><p>لا نتائج</p></div>';
+>>>>>>> origin/main
   return msgs.map((m,i)=>{
     const av=aInit(m.sender_name,m.sender_addr);
     const col=aColor(m.sender_addr||m.sender_name||m.uid);
@@ -642,16 +881,28 @@ async function openMessage(uid){
   document.querySelectorAll('.msg-row').forEach(r=>r.classList.toggle('active',r.dataset.uid===uid));
   const meta=allMsgs.find(m=>m.uid===uid);
   const viewer=document.getElementById('viewer');
+<<<<<<< HEAD
   if(!meta){viewer.innerHTML=`<div class="ph"><p style="color:var(--danger)">${T.dash_no_results||'Not found'}</p></div>`;return;}
+=======
+  if(!meta){viewer.innerHTML='<div class="ph"><p style="color:var(--danger)">رسالة غير موجودة</p></div>';return;}
+>>>>>>> origin/main
   const av=aInit(meta.sender_name,meta.sender_addr);
   const col=aColor(meta.sender_addr||meta.sender_name||uid);
 
   viewer.innerHTML=`<div class="viewer-inner">
+<<<<<<< HEAD
     <button class="back-btn" id="backBtn"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>${T.dash_back_btn||'Back'}</button>
     <div class="code-banner" id="codeBanner">
       <div class="cb-icon"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M12 12h.01"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg></div>
       <div class="cb-body"><div class="cb-label">🔐 ${T.dash_verify_code||'Code'}</div><div class="cb-code" id="cbCode"></div></div>
       <button class="cb-copy" id="cbCopy"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>${T.dash_copy||'Copy'}</button>
+=======
+    <button class="back-btn" id="backBtn"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>الرسائل</button>
+    <div class="code-banner" id="codeBanner">
+      <div class="cb-icon"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M12 12h.01"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg></div>
+      <div class="cb-body"><div class="cb-label">🔐 رمز تحقق</div><div class="cb-code" id="cbCode"></div></div>
+      <button class="cb-copy" id="cbCopy"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>نسخ</button>
+>>>>>>> origin/main
     </div>
     <div class="hdr-card">
       <div class="hdr-subj">${esc(meta.subject)}</div>
@@ -665,7 +916,11 @@ async function openMessage(uid){
       </div>
     </div>
     <div class="body-card">
+<<<<<<< HEAD
       <div class="body-bar"><div class="view-tog" id="viewTog"><button class="vtog-btn on" id="btnHtml">${T.dash_html_view||'HTML'}</button><button class="vtog-btn" id="btnPlain">${T.dash_plain_view||'Plain'}</button></div></div>
+=======
+      <div class="body-bar"><div class="view-tog" id="viewTog"><button class="vtog-btn on" id="btnHtml">HTML</button><button class="vtog-btn" id="btnPlain">نص عادي</button></div></div>
+>>>>>>> origin/main
       <div id="bc"><div class="body-skel"><div class="sk" style="height:13px;width:55%;margin-bottom:9px"></div><div class="sk" style="height:10px;width:88%;margin-bottom:7px"></div><div class="sk" style="height:10px;width:72%;margin-bottom:7px"></div><div class="sk" style="height:10px;width:80%"></div></div></div>
     </div>
   </div>`;
@@ -676,41 +931,82 @@ async function openMessage(uid){
     const r=await fetch('/api/message/'+encodeURIComponent(uid));
     const body=await r.json();
     if(body.error){document.getElementById('bc').innerHTML=`<div class="inline-err"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>${esc(body.error)}</div>`;return;}
+<<<<<<< HEAD
     const isHtml=body.body_type==='html';
     const rawBody=body.body||'';
+=======
+
+    const isHtml=body.body_type==='html';
+    const rawBody=body.body||'';
+
+>>>>>>> origin/main
     let codeText=null;
     if(isHtml){const tmp=document.createElement('div');tmp.innerHTML=rawBody;codeText=detectCode(tmp.textContent||tmp.innerText||'');}
     else{codeText=detectCode(rawBody);}
     if(codeText){
       const banner=document.getElementById('codeBanner');
       if(banner){banner.classList.add('show');document.getElementById('cbCode').textContent=codeText;
+<<<<<<< HEAD
         document.getElementById('cbCopy').addEventListener('click',()=>{navigator.clipboard?.writeText(codeText).then(()=>toast(T.dash_copied||'Copied ✓')).catch(()=>{});});
       }
     }
     if(isHtml){
       const tog=document.getElementById('viewTog');if(tog)tog.style.display='flex';
+=======
+        document.getElementById('cbCopy').addEventListener('click',()=>{navigator.clipboard?.writeText(codeText).then(()=>toast('تم النسخ ✓')).catch(()=>{});});
+      }
+    }
+
+    if(isHtml){
+      const tog=document.getElementById('viewTog');if(tog)tog.style.display='flex';
+      let showHtml=true;
+>>>>>>> origin/main
       function renderHtml(){
         document.getElementById('bc').innerHTML=`<div class="body-content"><iframe class="body-frame" id="bodyFrame" sandbox="allow-same-origin allow-popups"></iframe></div>`;
         const frame=document.getElementById('bodyFrame');
         const doc=frame.contentDocument||frame.contentWindow.document;
         const tmp=document.createElement('div');
+<<<<<<< HEAD
         tmp.innerHTML=rawBody;
+=======
+        tmp.innerHTML = rawBody;
+>>>>>>> origin/main
         tmp.querySelectorAll('a').forEach(a=>a.setAttribute('target','_blank'));
         tmp.querySelectorAll('form').forEach(f=>f.setAttribute('target','_blank'));
         tmp.querySelectorAll('base').forEach(b=>b.remove());
         doc.open();doc.write(tmp.innerHTML);doc.close();
         try{const bh=doc.documentElement.scrollHeight;if(bh>100)frame.style.minHeight=Math.min(bh+40,1800)+'px';}catch{}
+<<<<<<< HEAD
         try{doc.addEventListener('click',e=>{const a=e.target.closest('a');if(a&&a.href){if(a.target!=='_blank'){e.preventDefault();window.open(a.href,'_blank');}}});}catch{}
       }
       function renderPlain(){const tmp=document.createElement('div');tmp.innerHTML=rawBody;document.getElementById('bc').innerHTML=`<div class="body-content"><div class="body-plain">${esc(tmp.textContent||tmp.innerText||'')}</div></div>`;}
       renderHtml();
       document.getElementById('btnHtml')?.addEventListener('click',()=>{document.getElementById('btnHtml').classList.add('on');document.getElementById('btnPlain').classList.remove('on');renderHtml();});
       document.getElementById('btnPlain')?.addEventListener('click',()=>{document.getElementById('btnPlain').classList.add('on');document.getElementById('btnHtml').classList.remove('on');renderPlain();});
+=======
+        try{
+          doc.addEventListener('click',e=>{
+            const a=e.target.closest('a');
+            if(a && a.href){
+              if(a.target !== '_blank'){e.preventDefault();window.open(a.href,'_blank');}
+            }
+          });
+        }catch{}
+      }
+      function renderPlain(){const tmp=document.createElement('div');tmp.innerHTML=rawBody;document.getElementById('bc').innerHTML=`<div class="body-content"><div class="body-plain">${esc(tmp.textContent||tmp.innerText||'')}</div></div>`;}
+      renderHtml();
+      document.getElementById('btnHtml')?.addEventListener('click',()=>{showHtml=true;document.getElementById('btnHtml').classList.add('on');document.getElementById('btnPlain').classList.remove('on');renderHtml();});
+      document.getElementById('btnPlain')?.addEventListener('click',()=>{showHtml=false;document.getElementById('btnPlain').classList.add('on');document.getElementById('btnHtml').classList.remove('on');renderPlain();});
+>>>>>>> origin/main
     }else{
       document.getElementById('bc').innerHTML=`<div class="body-content"><div class="body-plain">${esc(rawBody)}</div></div>`;
     }
   }catch(e){
+<<<<<<< HEAD
     document.getElementById('bc').innerHTML=`<div class="inline-err"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>${T.dash_loading_error||'Error'}</div>`;
+=======
+    document.getElementById('bc').innerHTML=`<div class="inline-err"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>تعذّر تحميل الرسالة</div>`;
+>>>>>>> origin/main
   }
 }
 
