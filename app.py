@@ -153,11 +153,15 @@ def normalize_assigned_emails(raw_list):
 
 
 def is_email_active(item):
+    """
+    An email is expired ONLY when its end_date has already passed.
+    A future start_date means the subscription hasn't started yet,
+    but the email is still valid for the client (show it, allow selection).
+    The 'قريبا / Soon' badge in the admin panel is purely cosmetic and
+    is computed separately in the frontend (cemDateStatus).
+    """
     today = datetime.now(timezone.utc).date().isoformat()
-    start = item.get("start_date")
-    end   = item.get("end_date")
-    if start and today < start:
-        return False
+    end = item.get("end_date")
     if end and today > end:
         return False
     return True
