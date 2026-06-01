@@ -17,7 +17,7 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-in-production")
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=12)
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
 
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
@@ -347,7 +347,9 @@ def logout():
     user = session.get("client_username", "—")
     if cid:
         log_activity(cid, user, "logout", get_client_ip())
-    session.clear()
+    session.pop("client_id", None)
+    session.pop("client_username", None)
+    session.pop("client_display", None)
     return redirect(url_for("login"))
 
 
