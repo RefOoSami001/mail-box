@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<<<<<<< HEAD
 <html lang="{{ lang }}" dir="{{ dir_attr }}" data-theme="dark">
 <head>
   <meta charset="UTF-8"/>
@@ -9,19 +8,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-=======
-<html lang="ar" dir="rtl" data-theme="dark">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-  <title>Farouk Account — لوحة التحكم</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.383.0/dist/umd/lucide.min.js"></script>
-  <style>
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-
->>>>>>> origin/main
     :root{
       --accent:#4f8ef7;--accent2:#7c5ef5;--green:#22c55e;--teal:#00c9a7;
       --amber:#f59e0b;--danger:#f25f7a;--radius:16px;--radius-sm:10px;
@@ -41,7 +27,6 @@
       --shadow:0 24px 60px rgba(0,0,0,.1);
       --glow-blue:rgba(79,142,247,.1);--glow-purple:rgba(124,94,245,.1);
     }
-<<<<<<< HEAD
     html,body{height:100%;}
     body{font-family:'Alexandria',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;transition:background .35s,color .35s;}
 
@@ -56,65 +41,10 @@
     .topbar-r{margin-right:auto;display:flex;align-items:center;gap:.55rem;}
     .admin-user{font-size:.78rem;color:var(--text2);padding:.22rem .65rem;background:var(--surf2);border:1px solid var(--border);border-radius:20px;}
     .ibtn{width:36px;height:36px;border-radius:var(--radius-sm);background:var(--surf2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);flex-shrink:0;text-decoration:none;transition:background .18s,color .18s,transform .15s,border-color .18s;}
-=======
-
-    html,body{height:100%;}
-    body{
-      font-family:'Alexandria',sans-serif;background:var(--bg);color:var(--text);
-      display:flex;flex-direction:column;transition:background .35s,color .35s;
-    }
-
-    /* ═══ TOPBAR ═══ */
-    .topbar{
-      height:62px;flex-shrink:0;background:var(--surf);
-      border-bottom:1px solid var(--border);
-      display:flex;align-items:center;padding:0 1.4rem;gap:.9rem;
-      position:relative;z-index:40;
-    }
-    .topbar::after{
-      content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
-      background:linear-gradient(90deg,transparent 0%,var(--danger) 30%,var(--accent2) 60%,transparent 100%);
-      opacity:.5;
-    }
-    .logo{display:flex;align-items:center;gap:.6rem;text-decoration:none;}
-    .logo-mark{
-      width:34px;height:34px;border-radius:10px;flex-shrink:0;
-      background:linear-gradient(135deg,var(--danger),var(--accent2));
-      display:flex;align-items:center;justify-content:center;
-      box-shadow:0 4px 16px rgba(242,95,122,.4);
-      transition:transform .25s var(--ease-spring),box-shadow .25s;
-    }
-    .logo-mark:hover{transform:scale(1.08) rotate(-3deg);box-shadow:0 6px 24px rgba(242,95,122,.55);}
-    .logo-mark svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
-    .logo-name{
-      font-size:1.05rem;font-weight:800;
-      background:linear-gradient(90deg,var(--danger),var(--accent2));
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.01em;
-    }
-    .admin-chip{
-      display:inline-flex;align-items:center;gap:.35rem;
-      background:rgba(242,95,122,.08);border:1px solid rgba(242,95,122,.2);
-      color:var(--danger);border-radius:20px;padding:.22rem .75rem;
-      font-size:.68rem;font-weight:700;letter-spacing:.04em;
-    }
-    .topbar-r{margin-right:auto;display:flex;align-items:center;gap:.55rem;}
-    .admin-user{
-      font-size:.78rem;color:var(--text2);padding:.22rem .65rem;
-      background:var(--surf2);border:1px solid var(--border);border-radius:20px;
-    }
-    .ibtn{
-      width:36px;height:36px;border-radius:var(--radius-sm);
-      background:var(--surf2);border:1px solid var(--border);
-      display:flex;align-items:center;justify-content:center;
-      cursor:pointer;color:var(--text2);flex-shrink:0;text-decoration:none;
-      transition:background .18s,color .18s,transform .15s,border-color .18s;
-    }
->>>>>>> origin/main
     .ibtn:hover{background:var(--surf3);color:var(--text);transform:scale(1.05);}
     .ibtn:active{transform:scale(.93);}
     .ibtn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
     .ibtn-danger:hover{background:rgba(242,95,122,.1);color:var(--danger);border-color:rgba(242,95,122,.25);}
-<<<<<<< HEAD
     /* Language switcher */
     .lang-switcher{display:flex;align-items:center;gap:.18rem;background:var(--surf2);border:1px solid var(--border);border-radius:20px;padding:.15rem .25rem;flex-shrink:0;}
     .lang-btn{padding:.15rem .42rem;border:none;border-radius:14px;background:none;cursor:pointer;font-size:.66rem;font-weight:700;color:var(--text3);font-family:'Alexandria',sans-serif;transition:background .15s,color .15s;text-decoration:none;display:inline-flex;align-items:center;}
@@ -139,65 +69,6 @@
     .sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:20;backdrop-filter:blur(3px);}
     .sidebar-backdrop.show{display:block;}
 
-=======
-
-    /* hamburger — shown only on mobile */
-    .hamburger{display:none;width:36px;height:36px;border-radius:var(--radius-sm);background:var(--surf2);border:1px solid var(--border);align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:var(--text2);}
-    .hamburger svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
-
-    /* ═══ LAYOUT ═══ */
-    .layout{display:flex;flex:1;overflow:hidden;min-height:0;position:relative;}
-
-    /* ═══ SIDEBAR ═══ */
-    .nav-sidebar{
-      width:228px;flex-shrink:0;background:var(--surf);
-      border-left:1px solid var(--border);
-      display:flex;flex-direction:column;padding:.85rem .65rem;gap:.08rem;
-      transition:background .3s,transform .3s var(--ease);position:relative;z-index:30;
-    }
-    .nav-sidebar::before{
-      content:'';position:absolute;top:0;right:0;bottom:0;width:1px;
-      background:linear-gradient(180deg,transparent,var(--accent2),var(--accent),transparent);
-      opacity:.15;pointer-events:none;
-    }
-    .nav-label{
-      font-size:.58rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
-      color:var(--text3);padding:.5rem .6rem .4rem;
-    }
-    .nav-btn{
-      display:flex;align-items:center;gap:.65rem;padding:.68rem .75rem;
-      border-radius:var(--radius-sm);cursor:pointer;color:var(--text2);
-      font-family:'Alexandria',sans-serif;font-size:.83rem;font-weight:600;
-      background:none;border:none;width:100%;text-align:right;
-      transition:background .15s,color .15s,transform .12s;position:relative;
-    }
-    .nav-btn:hover{background:var(--surf2);color:var(--text);transform:translateX(-2px);}
-    .nav-btn.active{
-      background:linear-gradient(135deg,rgba(79,142,247,.12),rgba(124,94,245,.08));
-      color:var(--accent);
-      box-shadow:inset 0 0 0 1px rgba(79,142,247,.15);
-    }
-    .nav-btn.active::before{
-      content:'';position:absolute;right:0;top:20%;bottom:20%;width:2.5px;
-      background:linear-gradient(180deg,var(--accent),var(--accent2));
-      border-radius:4px;
-    }
-    .nav-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
-    .nav-count{
-      margin-right:auto;
-      background:linear-gradient(135deg,rgba(79,142,247,.15),rgba(124,94,245,.1));
-      border:1px solid rgba(79,142,247,.15);
-      border-radius:20px;padding:.1rem .5rem;font-size:.65rem;color:var(--accent);font-weight:700;
-      transition:transform .2s var(--ease-spring);
-    }
-    .nav-btn:hover .nav-count{transform:scale(1.1);}
-
-    /* sidebar overlay backdrop (mobile) */
-    .sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:20;backdrop-filter:blur(3px);}
-    .sidebar-backdrop.show{display:block;}
-
-    /* ═══ MAIN ═══ */
->>>>>>> origin/main
     .main{flex:1;overflow-y:auto;padding:1.75rem;display:flex;flex-direction:column;gap:1.25rem;min-width:0;}
     .main::-webkit-scrollbar{width:4px;}
     .main::-webkit-scrollbar-thumb{background:var(--bord2);border-radius:4px;}
@@ -205,7 +76,6 @@
     .page.active{display:flex;}
     @keyframes pageIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 
-<<<<<<< HEAD
     .card{background:var(--surf);border:1px solid var(--border);border-radius:var(--radius);padding:1.3rem 1.5rem;transition:background .3s,border-color .2s;position:relative;overflow:hidden;}
     .card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(79,142,247,.2),transparent);pointer-events:none;}
     .card-title{font-size:.9rem;font-weight:700;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
@@ -216,61 +86,14 @@
     .stat{background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1.05rem 1.15rem;position:relative;overflow:hidden;transition:transform .2s var(--ease-spring),box-shadow .2s,border-color .2s;}
     .stat:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.2);}
     .stat::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;border-radius:0 0 var(--radius-sm) var(--radius-sm);}
-=======
-    /* ═══ CARDS ═══ */
-    .card{
-      background:var(--surf);border:1px solid var(--border);
-      border-radius:var(--radius);padding:1.3rem 1.5rem;
-      transition:background .3s,border-color .2s;
-      position:relative;overflow:hidden;
-    }
-    .card::before{
-      content:'';position:absolute;top:0;left:0;right:0;height:1px;
-      background:linear-gradient(90deg,transparent,rgba(79,142,247,.2),transparent);
-      pointer-events:none;
-    }
-    .card-title{
-      font-size:.9rem;font-weight:700;margin-bottom:1rem;
-      display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;
-    }
-    .card-title svg{width:15px;height:15px;stroke:var(--accent);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
-    .card-title-icon{
-      width:28px;height:28px;border-radius:8px;
-      background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.15);
-      display:flex;align-items:center;justify-content:center;flex-shrink:0;
-    }
-
-    /* ═══ STAT CARDS ═══ */
-    .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:.75rem;}
-    .stat{
-      background:var(--surf2);border:1px solid var(--border);
-      border-radius:var(--radius-sm);padding:1.05rem 1.15rem;
-      position:relative;overflow:hidden;
-      transition:transform .2s var(--ease-spring),box-shadow .2s,border-color .2s;
-    }
-    .stat:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.2);}
-    .stat::after{
-      content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
-      border-radius:0 0 var(--radius-sm) var(--radius-sm);
-    }
->>>>>>> origin/main
     .stat.blue::after{background:linear-gradient(90deg,var(--accent),transparent);}
     .stat.green::after{background:linear-gradient(90deg,var(--green),transparent);}
     .stat.red::after{background:linear-gradient(90deg,var(--danger),transparent);}
     .stat.purple::after{background:linear-gradient(90deg,var(--accent2),transparent);}
     .stat.amber::after{background:linear-gradient(90deg,var(--amber),transparent);}
     .stat.teal::after{background:linear-gradient(90deg,var(--teal),transparent);}
-<<<<<<< HEAD
     .stat-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.5rem;}
     .stat-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-=======
-
-    .stat-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.5rem;}
-    .stat-icon{
-      width:32px;height:32px;border-radius:8px;
-      display:flex;align-items:center;justify-content:center;flex-shrink:0;
-    }
->>>>>>> origin/main
     .stat.blue .stat-icon{background:rgba(79,142,247,.12);}
     .stat.green .stat-icon{background:rgba(34,197,94,.12);}
     .stat.red .stat-icon{background:rgba(242,95,122,.12);}
@@ -284,10 +107,6 @@
     .stat.purple .stat-icon svg{stroke:var(--accent2);}
     .stat.amber .stat-icon svg{stroke:var(--amber);}
     .stat.teal .stat-icon svg{stroke:var(--teal);}
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/main
     .stat-val{font-size:1.75rem;font-weight:800;letter-spacing:-.04em;line-height:1;}
     .stat-lbl{font-size:.7rem;color:var(--text3);margin-top:.3rem;font-weight:500;}
     .stat.blue .stat-val{color:var(--accent);}
@@ -297,32 +116,15 @@
     .stat.amber .stat-val{color:var(--amber);}
     .stat.teal .stat-val{color:var(--teal);}
 
-<<<<<<< HEAD
     .charts-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;}
     .chart-card{background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1rem 1.15rem;}
     .chart-title{font-size:.75rem;font-weight:700;color:var(--text2);margin-bottom:.75rem;display:flex;align-items:center;gap:.4rem;}
     .chart-title svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
-=======
-    /* ═══ CHARTS SECTION ═══ */
-    .charts-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;}
-    .chart-card{
-      background:var(--surf2);border:1px solid var(--border);
-      border-radius:var(--radius-sm);padding:1rem 1.15rem;
-    }
-    .chart-title{font-size:.75rem;font-weight:700;color:var(--text2);margin-bottom:.75rem;display:flex;align-items:center;gap:.4rem;}
-    .chart-title svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
-    canvas{display:block;width:100%;}
-
->>>>>>> origin/main
     .mini-bars{display:flex;align-items:flex-end;gap:3px;height:52px;}
     .mini-bar{flex:1;border-radius:3px 3px 0 0;min-height:4px;transition:height .6s var(--ease),opacity .3s;}
     .mini-bar:hover{opacity:.75;cursor:default;}
     .mini-days{display:flex;gap:3px;margin-top:4px;}
     .mini-day{flex:1;font-size:.55rem;text-align:center;color:var(--text3);}
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/main
     .donut-wrap{position:relative;width:80px;height:80px;flex-shrink:0;}
     .donut-wrap svg{transform:rotate(-90deg);}
     .donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
@@ -332,51 +134,20 @@
     .donut-legend{display:flex;flex-direction:column;gap:.4rem;flex:1;}
     .donut-legend-item{display:flex;align-items:center;gap:.4rem;font-size:.72rem;}
     .donut-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/main
     .sparkline-wrap{height:48px;overflow:hidden;}
     .sparkline-nums{display:flex;justify-content:space-between;margin-top:4px;}
     .sparkline-num{font-size:.58rem;color:var(--text3);}
 
-<<<<<<< HEAD
     .form-row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:flex-end;}
     .fgroup{display:flex;flex-direction:column;gap:.3rem;flex:1;min-width:120px;}
     .flabel{font-size:.63rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);}
     .inp{width:100%;background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.62rem .9rem;color:var(--text);font-family:'Alexandria',sans-serif;font-size:.85rem;outline:none;transition:border-color .2s,background .2s,box-shadow .2s;}
     .inp:focus{border-color:rgba(79,142,247,.5);background:var(--surf3);box-shadow:0 0 0 3px rgba(79,142,247,.08);}
-=======
-    /* ═══ FORMS ═══ */
-    .form-row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:flex-end;}
-    .fgroup{display:flex;flex-direction:column;gap:.3rem;flex:1;min-width:120px;}
-    .flabel{font-size:.63rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);}
-    .inp{
-      width:100%;background:var(--surf2);border:1px solid var(--border);
-      border-radius:var(--radius-sm);padding:.62rem .9rem;
-      color:var(--text);font-family:'Alexandria',sans-serif;font-size:.85rem;
-      outline:none;transition:border-color .2s,background .2s,box-shadow .2s;
-    }
-    .inp:focus{
-      border-color:rgba(79,142,247,.5);background:var(--surf3);
-      box-shadow:0 0 0 3px rgba(79,142,247,.08);
-    }
->>>>>>> origin/main
     .inp::placeholder{color:var(--text3);}
     textarea.inp{resize:vertical;min-height:110px;line-height:1.65;}
     select.inp{cursor:pointer;}
 
-<<<<<<< HEAD
     .btn{display:inline-flex;align-items:center;gap:.4rem;padding:.62rem 1.1rem;border-radius:var(--radius-sm);border:none;cursor:pointer;font-weight:700;font-family:'Alexandria',sans-serif;font-size:.82rem;white-space:nowrap;transition:opacity .18s,transform .12s,box-shadow .18s;position:relative;overflow:hidden;}
-=======
-    /* ═══ BUTTONS ═══ */
-    .btn{
-      display:inline-flex;align-items:center;gap:.4rem;padding:.62rem 1.1rem;
-      border-radius:var(--radius-sm);border:none;cursor:pointer;font-weight:700;
-      font-family:'Alexandria',sans-serif;font-size:.82rem;white-space:nowrap;
-      transition:opacity .18s,transform .12s,box-shadow .18s;position:relative;overflow:hidden;
-    }
->>>>>>> origin/main
     .btn::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,0);transition:background .15s;}
     .btn:hover::after{background:rgba(255,255,255,.04);}
     .btn:active{transform:scale(.96);}
@@ -392,23 +163,10 @@
     .btn-green:hover{background:rgba(34,197,94,.18);}
     .btn svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
 
-<<<<<<< HEAD
     .tbl-wrap{overflow-x:auto;margin-top:.75rem;}
     table{width:100%;border-collapse:collapse;font-size:.83rem;}
     th{text-align:right;padding:.52rem .8rem;font-size:.61rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surf2);}
     th:first-child{border-radius:var(--radius-sm) 0 0 0;}th:last-child{border-radius:0 var(--radius-sm) 0 0;}
-=======
-    /* ═══ TABLE ═══ */
-    .tbl-wrap{overflow-x:auto;margin-top:.75rem;}
-    table{width:100%;border-collapse:collapse;font-size:.83rem;}
-    th{
-      text-align:right;padding:.52rem .8rem;font-size:.61rem;font-weight:700;
-      letter-spacing:.09em;text-transform:uppercase;color:var(--text3);
-      border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surf2);
-    }
-    th:first-child{border-radius:var(--radius-sm) 0 0 0;}
-    th:last-child{border-radius:0 var(--radius-sm) 0 0;}
->>>>>>> origin/main
     td{padding:.6rem .8rem;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:middle;}
     tr:last-child td{border-bottom:none;}
     tr{transition:background .12s;}
@@ -416,17 +174,7 @@
     .td-main{color:var(--text);font-weight:600;}
     .td-actions{display:flex;gap:.28rem;justify-content:flex-end;flex-wrap:wrap;}
 
-<<<<<<< HEAD
     .row-btn{display:inline-flex;align-items:center;gap:.22rem;padding:.28rem .56rem;border-radius:7px;border:1px solid var(--border);background:var(--surf2);cursor:pointer;font-size:.71rem;font-weight:600;font-family:'Alexandria',sans-serif;color:var(--text3);white-space:nowrap;transition:background .15s,color .15s,border-color .15s,transform .1s;}
-=======
-    .row-btn{
-      display:inline-flex;align-items:center;gap:.22rem;padding:.28rem .56rem;
-      border-radius:7px;border:1px solid var(--border);background:var(--surf2);
-      cursor:pointer;font-size:.71rem;font-weight:600;
-      font-family:'Alexandria',sans-serif;color:var(--text3);white-space:nowrap;
-      transition:background .15s,color .15s,border-color .15s,transform .1s;
-    }
->>>>>>> origin/main
     .row-btn:hover{background:var(--surf3);color:var(--text2);transform:scale(1.03);}
     .row-btn:active{transform:scale(.95);}
     .row-btn.del:hover{background:rgba(242,95,122,.1);color:var(--danger);border-color:rgba(242,95,122,.25);}
@@ -436,10 +184,6 @@
     .row-btn.emails-btn:hover{background:rgba(0,201,167,.1);color:var(--teal);border-color:rgba(0,201,167,.25);}
     .row-btn svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
 
-<<<<<<< HEAD
-=======
-    /* ═══ BADGES ═══ */
->>>>>>> origin/main
     .badge{display:inline-flex;align-items:center;gap:.28rem;padding:.2rem .55rem;border-radius:20px;font-size:.67rem;font-weight:700;white-space:nowrap;}
     .badge-green{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.22);color:var(--green);}
     .badge-red{background:rgba(242,95,122,.1);border:1px solid rgba(242,95,122,.22);color:var(--danger);}
@@ -449,26 +193,12 @@
     .badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;display:inline-block;animation:pulse-dot 2s infinite;}
     @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.8)}}
 
-<<<<<<< HEAD
-=======
-    /* ═══ SEARCH ═══ */
->>>>>>> origin/main
     .search-bar{position:relative;}
     .search-bar input{padding-right:2.2rem;}
     .sico{position:absolute;right:.75rem;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none;display:flex;}
     .sico svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
 
-<<<<<<< HEAD
     .log-row{display:flex;align-items:center;gap:.7rem;padding:.58rem .8rem;border-radius:var(--radius-sm);font-size:.81rem;border-bottom:1px solid var(--border);transition:background .12s;flex-wrap:wrap;}
-=======
-    /* ═══ LOG ROWS ═══ */
-    .log-row{
-      display:flex;align-items:center;gap:.7rem;padding:.58rem .8rem;
-      border-radius:var(--radius-sm);font-size:.81rem;
-      border-bottom:1px solid var(--border);transition:background .12s;
-      flex-wrap:wrap;
-    }
->>>>>>> origin/main
     .log-row:last-child{border-bottom:none;}
     .log-row:hover{background:var(--surf2);}
     .log-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
@@ -479,7 +209,6 @@
     .log-ip{font-size:.69rem;color:var(--text3);font-family:'JetBrains Mono',monospace;}
     .log-time{font-size:.69rem;color:var(--text3);white-space:nowrap;}
 
-<<<<<<< HEAD
     .bulk-result{display:none;background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.85rem 1.1rem;font-size:.83rem;line-height:1.7;margin-top:.7rem;animation:fadeIn .25s var(--ease);}
     .bulk-result.show{display:block;}
 
@@ -487,33 +216,6 @@
     .overlay.show{display:flex;}
     .modal{background:var(--surf);border:1px solid var(--bord2);border-radius:var(--radius);padding:1.5rem 1.65rem;width:100%;max-width:560px;animation:mIn .28s var(--ease-spring) both;max-height:90vh;overflow-y:auto;position:relative;}
     .modal::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:var(--radius) var(--radius) 0 0;}
-=======
-    /* ═══ BULK RESULT ═══ */
-    .bulk-result{
-      display:none;background:var(--surf2);border:1px solid var(--border);
-      border-radius:var(--radius-sm);padding:.85rem 1.1rem;font-size:.83rem;
-      line-height:1.7;margin-top:.7rem;animation:fadeIn .25s var(--ease);
-    }
-    .bulk-result.show{display:block;}
-
-    /* ═══ MODAL / OVERLAY ═══ */
-    .overlay{
-      display:none;position:fixed;inset:0;
-      background:rgba(0,0,0,.6);z-index:100;
-      backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:1rem;
-    }
-    .overlay.show{display:flex;}
-    .modal{
-      background:var(--surf);border:1px solid var(--bord2);border-radius:var(--radius);
-      padding:1.5rem 1.65rem;width:100%;max-width:560px;
-      animation:mIn .28s var(--ease-spring) both;
-      max-height:90vh;overflow-y:auto;position:relative;
-    }
-    .modal::before{
-      content:'';position:absolute;top:0;left:0;right:0;height:2px;
-      background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:var(--radius) var(--radius) 0 0;
-    }
->>>>>>> origin/main
     @keyframes mIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
     .modal-title{font-size:1rem;font-weight:700;margin-bottom:1.1rem;display:flex;align-items:center;gap:.5rem;}
     .modal-title svg{width:18px;height:18px;stroke:var(--accent);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
@@ -521,19 +223,8 @@
     .mlabel{display:block;font-size:.63rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:.35rem;}
     .mactions{display:flex;gap:.5rem;justify-content:flex-end;margin-top:1.1rem;flex-wrap:wrap;}
 
-<<<<<<< HEAD
     .toast-rack{position:fixed;bottom:1.75rem;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column-reverse;gap:.45rem;pointer-events:none;}
     .toast{display:flex;align-items:center;gap:.55rem;background:var(--text);color:var(--bg);border-radius:30px;padding:.58rem 1.1rem;font-size:.82rem;font-weight:700;font-family:'Alexandria',sans-serif;white-space:nowrap;pointer-events:none;box-shadow:0 10px 32px rgba(0,0,0,.35);animation:tIn .3s var(--ease-spring) both;}
-=======
-    /* ═══ TOAST ═══ */
-    .toast-rack{position:fixed;bottom:1.75rem;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column-reverse;gap:.45rem;pointer-events:none;}
-    .toast{
-      display:flex;align-items:center;gap:.55rem;background:var(--text);color:var(--bg);
-      border-radius:30px;padding:.58rem 1.1rem;font-size:.82rem;font-weight:700;
-      font-family:'Alexandria',sans-serif;white-space:nowrap;pointer-events:none;
-      box-shadow:0 10px 32px rgba(0,0,0,.35);animation:tIn .3s var(--ease-spring) both;
-    }
->>>>>>> origin/main
     .toast::before{content:'✓';font-size:.75rem;opacity:.8;}
     .toast.err{background:var(--danger);color:#fff;}
     .toast.err::before{content:'✕';}
@@ -541,21 +232,11 @@
     @keyframes tIn{from{opacity:0;transform:translateY(16px) scale(.88)}to{opacity:1;transform:none}}
     @keyframes tOut{from{opacity:1}to{opacity:0;transform:translateY(10px) scale(.9)}}
 
-<<<<<<< HEAD
     .email-chip{display:inline-flex;align-items:center;gap:.38rem;background:rgba(0,201,167,.07);border:1px solid rgba(0,201,167,.18);border-radius:20px;padding:.24rem .65rem;font-size:.76rem;color:var(--text);margin:.18rem;}
-=======
-    /* ═══ EMAIL CHIP ═══ */
-    .email-chip{
-      display:inline-flex;align-items:center;gap:.38rem;
-      background:rgba(0,201,167,.07);border:1px solid rgba(0,201,167,.18);
-      border-radius:20px;padding:.24rem .65rem;font-size:.76rem;color:var(--text);margin:.18rem;
-    }
->>>>>>> origin/main
     .email-chip button{background:none;border:none;cursor:pointer;color:var(--text3);display:flex;padding:0;transition:color .15s;}
     .email-chip button:hover{color:var(--danger);}
     .email-chip button svg{width:10px;height:10px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;}
 
-<<<<<<< HEAD
     .tab-bar{display:flex;gap:.3rem;margin-bottom:1rem;border-bottom:1px solid var(--border);padding-bottom:.7rem;flex-wrap:wrap;}
     .tab-btn{padding:.38rem .8rem;border-radius:var(--radius-sm);border:none;cursor:pointer;font-family:'Alexandria',sans-serif;font-size:.79rem;font-weight:700;background:none;color:var(--text3);transition:background .15s,color .15s;}
     .tab-btn:hover{background:var(--surf2);color:var(--text2);}
@@ -571,67 +252,15 @@
     .step-item{display:flex;align-items:flex-start;gap:.85rem;padding:.75rem 1rem;background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);transition:border-color .2s,background .2s;}
     .step-item:hover{border-color:rgba(79,142,247,.2);background:var(--surf3);}
     .step-num{width:24px;height:24px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;color:#fff;margin-top:.05rem;}
-=======
-    /* ═══ TABS ═══ */
-    .tab-bar{display:flex;gap:.3rem;margin-bottom:1rem;border-bottom:1px solid var(--border);padding-bottom:.7rem;flex-wrap:wrap;}
-    .tab-btn{
-      padding:.38rem .8rem;border-radius:var(--radius-sm);border:none;cursor:pointer;
-      font-family:'Alexandria',sans-serif;font-size:.79rem;font-weight:700;
-      background:none;color:var(--text3);transition:background .15s,color .15s;
-    }
-    .tab-btn:hover{background:var(--surf2);color:var(--text2);}
-    .tab-btn.active{background:rgba(79,142,247,.12);color:var(--accent);border:1px solid rgba(79,142,247,.15);}
-
-    /* ═══ PATTERN PILLS ═══ */
-    .pattern-list{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.4rem;}
-    .pattern-pill{
-      display:inline-flex;align-items:center;gap:.3rem;
-      background:rgba(79,142,247,.07);border:1px solid rgba(79,142,247,.18);
-      border-radius:20px;padding:.22rem .58rem;font-size:.74rem;color:var(--text);
-      font-family:'JetBrains Mono',monospace;
-    }
-
-    /* ═══ EMPTY STATE ═══ */
-    .empty-st{
-      text-align:center;padding:1.5rem;color:var(--text3);font-size:.83rem;
-      display:flex;flex-direction:column;align-items:center;gap:.5rem;
-    }
-    .empty-st svg{width:28px;height:28px;stroke:var(--text3);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;opacity:.5;}
-
-    /* ═══ HOW IT WORKS ═══ */
-    .steps-list{display:flex;flex-direction:column;gap:.5rem;}
-    .step-item{
-      display:flex;align-items:flex-start;gap:.85rem;padding:.75rem 1rem;
-      background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);
-      transition:border-color .2s,background .2s;
-    }
-    .step-item:hover{border-color:rgba(79,142,247,.2);background:var(--surf3);}
-    .step-num{
-      width:24px;height:24px;border-radius:50%;flex-shrink:0;
-      background:linear-gradient(135deg,var(--accent),var(--accent2));
-      display:flex;align-items:center;justify-content:center;
-      font-size:.65rem;font-weight:800;color:#fff;margin-top:.05rem;
-    }
->>>>>>> origin/main
     .step-text{font-size:.84rem;color:var(--text2);line-height:1.65;}
     .step-text strong{color:var(--text);}
     code{background:var(--surf2);padding:.1rem .42rem;border-radius:5px;font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--accent2);border:1px solid var(--border);}
 
-<<<<<<< HEAD
     .cat-item{background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.95rem 1.1rem;margin-bottom:.5rem;transition:border-color .2s,transform .15s;}
-=======
-    /* ═══ CAT ITEM ═══ */
-    .cat-item{
-      background:var(--surf2);border:1px solid var(--border);
-      border-radius:var(--radius-sm);padding:.95rem 1.1rem;margin-bottom:.5rem;
-      transition:border-color .2s,transform .15s;
-    }
->>>>>>> origin/main
     .cat-item:hover{border-color:rgba(79,142,247,.18);transform:translateX(-1px);}
 
     @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 
-<<<<<<< HEAD
     @media(max-width:640px){
       .hamburger{display:flex;}
       .admin-user,.admin-chip{display:none;}
@@ -654,64 +283,6 @@
       .log-action{min-width:140px;}
       .modal [style*="grid-template-columns:1fr 1fr"]{display:flex!important;flex-direction:column!important;}
     }
-=======
-    /* ═══════════════════════════════
-       MOBILE RESPONSIVE
-    ═══════════════════════════════ */
-    @media(max-width:640px){
-      /* Show hamburger button */
-      .hamburger{display:flex;}
-      .admin-user,.admin-chip{display:none;}
-      .logo-name{font-size:.9rem;}
-
-      /* Sidebar slides in as drawer */
-      .nav-sidebar{
-        position:fixed;top:0;right:0;bottom:0;width:220px;
-        z-index:50;box-shadow:-8px 0 32px rgba(0,0,0,.4);
-        transform:translateX(100%);
-      }
-      .nav-sidebar.open{transform:translateX(0);}
-      .nav-sidebar .nav-btn span,.nav-sidebar .nav-label,.nav-sidebar .nav-count{display:flex;}
-
-      /* Full-width main */
-      .main{padding:.85rem .75rem;gap:.85rem;}
-      .topbar{padding:0 .85rem;gap:.55rem;}
-      .topbar{height:54px;}
-
-      /* Stats: 2 columns */
-      .stats-row{grid-template-columns:repeat(2,1fr);}
-
-      /* Charts: stack */
-      .charts-row{grid-template-columns:1fr;}
-
-      /* Forms: stack vertically */
-      .form-row{flex-direction:column;}
-      .fgroup{min-width:unset;width:100%;}
-      .btn{width:100%;justify-content:center;}
-
-      /* Tables: horizontal scroll */
-      .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
-      .tbl-wrap table{min-width:520px;}
-
-      /* Cards: less padding */
-      .card{padding:.95rem 1rem;}
-
-      /* Modal: full-screen on mobile */
-      .overlay{align-items:flex-end;padding:0;}
-      .modal{
-        border-radius:var(--radius) var(--radius) 0 0;max-width:100%;
-        max-height:95vh;margin:0;
-      }
-
-      /* Log rows wrap nicely */
-      .log-user{min-width:unset;}
-      .log-action{min-width:140px;}
-
-      /* Modals inner grids */
-      .modal [style*="grid-template-columns:1fr 1fr"]{display:flex!important;flex-direction:column!important;}
-    }
-
->>>>>>> origin/main
     @media(min-width:641px) and (max-width:900px){
       .nav-sidebar{width:180px;}
       .main{padding:1.1rem;}
@@ -721,7 +292,6 @@
 </head>
 <body>
 
-<<<<<<< HEAD
 <header class="topbar">
   <button class="hamburger" id="hamburgerBtn" aria-label="{{ t('admin_menu_main') }}">
     <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
@@ -746,36 +316,11 @@
       <svg id="iSun" style="display:none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
     </button>
     <a class="ibtn ibtn-danger" href="/admin/logout" title="{{ t('dash_logout') }}">
-=======
-<!-- ═══════════ TOPBAR ═══════════ -->
-<header class="topbar">
-  <button class="hamburger" id="hamburgerBtn" aria-label="القائمة">
-    <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-  </button>
-  <a class="logo" href="#">
-    <div class="logo-mark">
-      <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-    </div>
-    <span class="logo-name">Farouk Admin</span>
-  </a>
-  <span class="admin-chip">
-    <svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-    مشرف
-  </span>
-  <div class="topbar-r">
-    <span class="admin-user">{{ admin_username }}</span>
-    <button class="ibtn" id="themeBtn" title="تبديل المظهر">
-      <svg id="iMoon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-      <svg id="iSun" style="display:none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
-    </button>
-    <a class="ibtn ibtn-danger" href="/admin/logout" title="تسجيل الخروج">
->>>>>>> origin/main
       <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
     </a>
   </div>
 </header>
 
-<<<<<<< HEAD
 <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
 <div class="layout">
@@ -788,47 +333,20 @@
     <button class="nav-btn" data-page="clients">
       <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       <span>{{ t('admin_nav_clients') }}</span>
-=======
-<!-- Sidebar backdrop for mobile -->
-<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
-
-<!-- ═══════════ LAYOUT ═══════════ -->
-<div class="layout">
-
-  <!-- Sidebar -->
-  <nav class="nav-sidebar" id="navSidebar">
-    <div class="nav-label">القائمة الرئيسية</div>
-    <button class="nav-btn active" data-page="overview">
-      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
-      <span>نظرة عامة</span>
-    </button>
-    <button class="nav-btn" data-page="clients">
-      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      <span>حسابات العملاء</span>
->>>>>>> origin/main
       <span class="nav-count" id="navClientCount">—</span>
     </button>
     <button class="nav-btn" data-page="emails">
       <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
-<<<<<<< HEAD
       <span>{{ t('admin_nav_emails') }}</span>
-=======
-      <span>حسابات البريد</span>
->>>>>>> origin/main
       <span class="nav-count" id="navEmailCount">—</span>
     </button>
     <button class="nav-btn" data-page="filters">
       <svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-<<<<<<< HEAD
       <span>{{ t('admin_nav_filters') }}</span>
-=======
-      <span>فئات الفلترة</span>
->>>>>>> origin/main
       <span class="nav-count" id="navCatCount">—</span>
     </button>
     <button class="nav-btn" data-page="activity">
       <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-<<<<<<< HEAD
       <span>{{ t('admin_nav_activity') }}</span>
     </button>
   </nav>
@@ -844,102 +362,20 @@
         <div class="stat purple"><div class="stat-header"><div><div class="stat-val" id="stEmails">—</div><div class="stat-lbl">{{ t('stat_email_accounts') }}</div></div><div class="stat-icon"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg></div></div></div>
         <div class="stat amber"><div class="stat-header"><div><div class="stat-val" id="stCats">—</div><div class="stat-lbl">{{ t('stat_filter_cats') }}</div></div><div class="stat-icon"><svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg></div></div></div>
         <div class="stat teal"><div class="stat-header"><div><div class="stat-val" id="stLogins">—</div><div class="stat-lbl">{{ t('stat_logins_today') }}</div></div><div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></div></div></div>
-=======
-      <span>سجل النشاط</span>
-    </button>
-  </nav>
-
-  <!-- Main -->
-  <main class="main">
-
-    <!-- ══════ OVERVIEW ══════ -->
-    <div class="page active" id="page-overview">
-
-      <div class="stats-row">
-        <div class="stat blue">
-          <div class="stat-header">
-            <div>
-              <div class="stat-val" id="stClients">—</div>
-              <div class="stat-lbl">إجمالي العملاء</div>
-            </div>
-            <div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
-          </div>
-        </div>
-        <div class="stat green">
-          <div class="stat-header">
-            <div>
-              <div class="stat-val" id="stActive">—</div>
-              <div class="stat-lbl">نشط</div>
-            </div>
-            <div class="stat-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
-          </div>
-        </div>
-        <div class="stat red">
-          <div class="stat-header">
-            <div>
-              <div class="stat-val" id="stSuspended">—</div>
-              <div class="stat-lbl">موقوف</div>
-            </div>
-            <div class="stat-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></div>
-          </div>
-        </div>
-        <div class="stat purple">
-          <div class="stat-header">
-            <div>
-              <div class="stat-val" id="stEmails">—</div>
-              <div class="stat-lbl">حسابات بريد</div>
-            </div>
-            <div class="stat-icon"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg></div>
-          </div>
-        </div>
-        <div class="stat amber">
-          <div class="stat-header">
-            <div>
-              <div class="stat-val" id="stCats">—</div>
-              <div class="stat-lbl">فئات فلترة</div>
-            </div>
-            <div class="stat-icon"><svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg></div>
-          </div>
-        </div>
-        <div class="stat teal">
-          <div class="stat-header">
-            <div>
-              <div class="stat-val" id="stLogins">—</div>
-              <div class="stat-lbl">دخول اليوم</div>
-            </div>
-            <div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></div>
-          </div>
-        </div>
->>>>>>> origin/main
       </div>
 
       <div class="charts-row">
         <div class="chart-card">
-<<<<<<< HEAD
           <div class="chart-title"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>{{ t('chart_login_activity') }}</div>
-=======
-          <div class="chart-title">
-            <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-            نشاط تسجيل الدخول — آخر 7 أيام
-          </div>
->>>>>>> origin/main
           <div class="mini-bars" id="loginBarsChart"></div>
           <div class="mini-days" id="loginBarsLabels"></div>
         </div>
         <div class="chart-card">
-<<<<<<< HEAD
           <div class="chart-title"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>{{ t('chart_client_status') }}</div>
-=======
-          <div class="chart-title">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-            توزيع حالة العملاء
-          </div>
->>>>>>> origin/main
           <div class="donut-row">
             <div class="donut-wrap">
               <svg viewBox="0 0 36 36" width="80" height="80">
                 <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--surf3)" stroke-width="3.5"/>
-<<<<<<< HEAD
                 <circle id="donutActive" cx="18" cy="18" r="15.9" fill="none" stroke="var(--green)" stroke-width="3.5" stroke-dasharray="0 100" stroke-linecap="round" style="transition:stroke-dasharray 1.2s var(--ease)"/>
                 <circle id="donutSuspended" cx="18" cy="18" r="15.9" fill="none" stroke="var(--danger)" stroke-width="3.5" stroke-dasharray="0 100" stroke-linecap="round" style="transition:stroke-dasharray 1.2s var(--ease);"/>
               </svg>
@@ -949,63 +385,24 @@
               <div class="donut-legend-item"><span class="donut-dot" style="background:var(--green)"></span><span id="legendActive" style="color:var(--text2)">—</span></div>
               <div class="donut-legend-item"><span class="donut-dot" style="background:var(--danger)"></span><span id="legendSuspended" style="color:var(--text2)">—</span></div>
               <div class="donut-legend-item"><span class="donut-dot" style="background:var(--accent2)"></span><span id="legendEmails" style="color:var(--text2)">—</span></div>
-=======
-                <circle id="donutActive" cx="18" cy="18" r="15.9" fill="none" stroke="var(--green)" stroke-width="3.5"
-                  stroke-dasharray="0 100" stroke-linecap="round" style="transition:stroke-dasharray 1.2s var(--ease)"/>
-                <circle id="donutSuspended" cx="18" cy="18" r="15.9" fill="none" stroke="var(--danger)" stroke-width="3.5"
-                  stroke-dasharray="0 100" stroke-linecap="round" style="transition:stroke-dasharray 1.2s var(--ease);"/>
-              </svg>
-              <div class="donut-center">
-                <span class="donut-pct" id="donutPct">—</span>
-                <span class="donut-lbl">نشط</span>
-              </div>
-            </div>
-            <div class="donut-legend">
-              <div class="donut-legend-item"><span class="donut-dot" style="background:var(--green)"></span><span id="legendActive" style="color:var(--text2)">— نشط</span></div>
-              <div class="donut-legend-item"><span class="donut-dot" style="background:var(--danger)"></span><span id="legendSuspended" style="color:var(--text2)">— موقوف</span></div>
-              <div class="donut-legend-item"><span class="donut-dot" style="background:var(--accent2)"></span><span id="legendEmails" style="color:var(--text2)">— بريد</span></div>
->>>>>>> origin/main
             </div>
           </div>
         </div>
         <div class="chart-card">
-<<<<<<< HEAD
           <div class="chart-title"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>{{ t('chart_email_growth') }}</div>
           <div class="sparkline-wrap">
             <svg id="sparklineSvg" viewBox="0 0 200 48" preserveAspectRatio="none" style="width:100%;height:48px">
               <defs><linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--accent)" stop-opacity=".3"/><stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>
-=======
-          <div class="chart-title">
-            <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
-            نمو حسابات البريد
-          </div>
-          <div class="sparkline-wrap">
-            <svg id="sparklineSvg" viewBox="0 0 200 48" preserveAspectRatio="none" style="width:100%;height:48px">
-              <defs>
-                <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="var(--accent)" stop-opacity=".3"/>
-                  <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
-                </linearGradient>
-              </defs>
->>>>>>> origin/main
               <path id="sparkArea" fill="url(#sparkGrad)" d=""/>
               <path id="sparkLine" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d=""/>
             </svg>
           </div>
-<<<<<<< HEAD
           <div class="sparkline-nums"><span class="sparkline-num">— —</span><span class="sparkline-num" id="sparklineMax" style="color:var(--accent)">—</span></div>
-=======
-          <div class="sparkline-nums">
-            <span class="sparkline-num">— —</span>
-            <span class="sparkline-num" id="sparklineMax" style="color:var(--accent)">—</span>
-          </div>
->>>>>>> origin/main
         </div>
       </div>
 
       <div class="card">
         <div class="card-title">
-<<<<<<< HEAD
           <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
           {{ t('how_it_works') }}
         </div>
@@ -1015,33 +412,15 @@
           <div class="step-item"><div class="step-num">3</div><div class="step-text"><strong>{{ t('step3_title') }}</strong> — {{ t('step3_desc') }}</div></div>
           <div class="step-item"><div class="step-num">4</div><div class="step-text"><strong>{{ t('step4_title') }}</strong> — {{ t('step4_desc') }}</div></div>
           <div class="step-item"><div class="step-num">5</div><div class="step-text"><strong>{{ t('step5_title') }}</strong> — {{ t('step5_desc') }} <code>pop3.kuku.lu:995</code></div></div>
-=======
-          <div class="card-title-icon">
-            <svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          </div>
-          كيف يعمل النظام
-        </div>
-        <div class="steps-list">
-          <div class="step-item"><div class="step-num">١</div><div class="step-text"><strong>أضف حسابات البريد</strong> — أدخل عنوان البريد + كلمة مرور POP3. يتحقق النظام من الاتصال أولاً.</div></div>
-          <div class="step-item"><div class="step-num">٢</div><div class="step-text"><strong>أنشئ فئات الفلترة</strong> — كل فئة لها اسم وقائمة أنماط تُطابق موضوع الرسالة.</div></div>
-          <div class="step-item"><div class="step-num">٣</div><div class="step-text"><strong>أنشئ حسابات العملاء</strong> — امنح كل عميل اسم مستخدم وكلمة مرور.</div></div>
-          <div class="step-item"><div class="step-num">٤</div><div class="step-text"><strong>أضف بريدًا للعميل</strong> — من صفحة العملاء، اضغط "بريد" بجانب أي عميل لإضافة بريد مخصص له.</div></div>
-          <div class="step-item"><div class="step-num">٥</div><div class="step-text"><strong>العميل يسجّل دخوله</strong> → يرى "بريدي" مباشرةً → يختار الفئة → يشاهد الرسائل. خادم POP3: <code>pop3.kuku.lu:995</code></div></div>
->>>>>>> origin/main
         </div>
       </div>
     </div>
 
-<<<<<<< HEAD
     <!-- CLIENTS -->
-=======
-    <!-- ══════ CLIENTS ══════ -->
->>>>>>> origin/main
     <div class="page" id="page-clients">
       <div class="card">
         <div class="card-title">
           <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
-<<<<<<< HEAD
           {{ t('create_client_title') }}
         </div>
         <div class="form-row">
@@ -1051,17 +430,6 @@
           <button class="btn btn-primary" id="createClientBtn" style="margin-top:auto">
             <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             {{ t('create_btn') }}
-=======
-          إنشاء عميل جديد
-        </div>
-        <div class="form-row">
-          <div class="fgroup"><div class="flabel">اسم المستخدم</div><input class="inp" id="newUsername" type="text" placeholder="client1"/></div>
-          <div class="fgroup"><div class="flabel">كلمة المرور</div><input class="inp" id="newPassword" type="text" placeholder="••••••"/></div>
-          <div class="fgroup"><div class="flabel">الاسم المعروض</div><input class="inp" id="newDisplay" type="text" placeholder="اختياري"/></div>
-          <button class="btn btn-primary" id="createClientBtn" style="margin-top:auto">
-            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            إنشاء
->>>>>>> origin/main
           </button>
         </div>
       </div>
@@ -1069,36 +437,22 @@
       <div class="card">
         <div class="card-title">
           <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
-<<<<<<< HEAD
           {{ t('all_clients_title') }}
-=======
-          جميع العملاء
->>>>>>> origin/main
           <span id="clientCountLbl" style="margin-right:auto;font-size:.7rem;color:var(--text3);background:var(--surf2);padding:.15rem .55rem;border-radius:20px;border:1px solid var(--border)"></span>
         </div>
         <div class="search-bar" style="margin-bottom:.75rem">
           <div class="sico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
-<<<<<<< HEAD
           <input class="inp" id="clientSearch" placeholder="{{ t('search_client_ph') }}" style="padding-right:2.2rem"/>
         </div>
         <div class="tbl-wrap">
           <table>
             <thead><tr><th>{{ t('col_user') }}</th><th>{{ t('col_status') }}</th><th>{{ t('col_assigned_email') }}</th><th>{{ t('col_last_login') }}</th><th>{{ t('col_login_count') }}</th><th></th></tr></thead>
             <tbody id="clientsTbody"><tr><td colspan="6" class="empty-st">{{ t('loading_dots') }}</td></tr></tbody>
-=======
-          <input class="inp" id="clientSearch" placeholder="بحث باسم المستخدم…" style="padding-right:2.2rem"/>
-        </div>
-        <div class="tbl-wrap">
-          <table>
-            <thead><tr><th>المستخدم</th><th>الحالة</th><th>البريد المخصص</th><th>آخر دخول</th><th>مرات الدخول</th><th></th></tr></thead>
-            <tbody id="clientsTbody"><tr><td colspan="6" class="empty-st">جارٍ التحميل…</td></tr></tbody>
->>>>>>> origin/main
           </table>
         </div>
       </div>
     </div>
 
-<<<<<<< HEAD
     <!-- EMAIL ACCOUNTS -->
     <div class="page" id="page-emails">
       <div class="card">
@@ -1119,34 +473,10 @@
             <button class="btn btn-primary" id="addEmailBtn" style="margin-top:auto">
               <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               {{ t('add_btn') }}
-=======
-    <!-- ══════ EMAIL ACCOUNTS ══════ -->
-    <div class="page" id="page-emails">
-      <div class="card">
-        <div class="tab-bar">
-          <button class="tab-btn active" data-etab="single">إضافة فردية</button>
-          <button class="tab-btn" data-etab="bulk-email">إضافة جماعية</button>
-        </div>
-
-        <div id="etab-single">
-          <div class="card-title" style="margin-bottom:.85rem">
-            <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
-            إضافة حساب بريد POP3
-          </div>
-          <div class="form-row">
-            <div class="fgroup" style="min-width:200px"><div class="flabel">البريد الإلكتروني</div><input class="inp" id="newEmail" type="email" placeholder="user@example.com"/></div>
-            <div class="fgroup"><div class="flabel">كلمة مرور POP3</div><input class="inp" id="newEmailPw" type="text" placeholder="••••••"/></div>
-            <div class="fgroup"><div class="flabel">الخادم</div><input class="inp" id="newEmailHost" type="text" value="pop3.kuku.lu"/></div>
-            <div class="fgroup" style="max-width:95px"><div class="flabel">المنفذ</div><input class="inp" id="newEmailPort" type="number" value="995"/></div>
-            <button class="btn btn-primary" id="addEmailBtn" style="margin-top:auto">
-              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              إضافة
->>>>>>> origin/main
             </button>
           </div>
           <div style="font-size:.74rem;color:var(--text3);margin-top:.55rem;display:flex;align-items:center;gap:.35rem">
             <svg viewBox="0 0 24 24" style="width:12px;height:12px;flex-shrink:0;fill:none;stroke:var(--teal);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg>
-<<<<<<< HEAD
             {{ t('connection_verified_hint') }}
           </div>
         </div>
@@ -1168,32 +498,6 @@
           <button class="btn btn-primary" id="bulkEmailBtn">
             <svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
             {{ t('add_all_btn') }}
-=======
-            يتحقق النظام من الاتصال قبل الحفظ
-          </div>
-        </div>
-
-        <div id="etab-bulk-email" style="display:none">
-          <div class="card-title" style="margin-bottom:.85rem">
-            <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg></div>
-            إضافة جماعية لحسابات البريد
-          </div>
-          <div style="font-size:.82rem;color:var(--text2);margin-bottom:.8rem;line-height:1.75">
-            أدخل كل حساب في سطر بالصيغة: <code>email@example.com:password</code>
-          </div>
-          <div class="form-row" style="margin-bottom:.75rem">
-            <div class="fgroup"><div class="flabel">الخادم الافتراضي</div><input class="inp" id="bulkEmailHost" type="text" value="pop3.kuku.lu"/></div>
-            <div class="fgroup" style="max-width:95px"><div class="flabel">المنفذ</div><input class="inp" id="bulkEmailPort" type="number" value="995"/></div>
-          </div>
-          <textarea class="inp" id="bulkEmailText" placeholder="user1@example.com:pass1&#10;user2@example.com:pass2&#10;user3@example.com:pass3" style="min-height:140px"></textarea>
-          <div style="font-size:.73rem;color:var(--amber);margin-top:.45rem;margin-bottom:.7rem;display:flex;align-items:center;gap:.35rem">
-            <svg viewBox="0 0 24 24" style="width:12px;height:12px;flex-shrink:0;fill:none;stroke:var(--amber);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            الإضافة الجماعية لا تتحقق من صحة الاتصال
-          </div>
-          <button class="btn btn-primary" id="bulkEmailBtn">
-            <svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
-            إضافة الجميع
->>>>>>> origin/main
           </button>
           <div class="bulk-result" id="bulkEmailResult"></div>
         </div>
@@ -1202,7 +506,6 @@
       <div class="card">
         <div class="search-bar" style="margin-bottom:.75rem">
           <div class="sico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
-<<<<<<< HEAD
           <input class="inp" id="emailSearch" placeholder="{{ t('search_email_ph') }}" style="padding-right:2.2rem" autocomplete="off"/>
         </div>
         <div class="card-title">
@@ -1211,44 +514,22 @@
           <div style="margin-right:auto;display:flex;align-items:center;gap:.45rem">
             <span id="emailCountLbl" style="font-size:.7rem;color:var(--text3);background:var(--surf2);padding:.15rem .55rem;border-radius:20px;border:1px solid var(--border)"></span>
             <button class="btn btn-danger" id="deleteAllEmailsBtn" style="padding:.3rem .75rem;font-size:.75rem" disabled>{{ t('delete_all_btn') }}</button>
-=======
-          <input class="inp" id="emailSearch" placeholder="بحث بالبريد أو الخادم…" style="padding-right:2.2rem" autocomplete="off"/>
-        </div>
-        <div class="card-title">
-          <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg></div>
-          حسابات البريد المضافة
-          <div style="margin-right:auto;display:flex;align-items:center;gap:.45rem">
-            <span id="emailCountLbl" style="font-size:.7rem;color:var(--text3);background:var(--surf2);padding:.15rem .55rem;border-radius:20px;border:1px solid var(--border)"></span>
-            <button class="btn btn-danger" id="deleteAllEmailsBtn" style="padding:.3rem .75rem;font-size:.75rem" disabled>
-              حذف الكل
-            </button>
->>>>>>> origin/main
           </div>
         </div>
         <div class="tbl-wrap">
           <table>
-<<<<<<< HEAD
             <thead><tr><th>{{ t('col_email_addr') }}</th><th>{{ t('col_server') }}</th><th>{{ t('col_date_added') }}</th><th></th></tr></thead>
             <tbody id="emailsTbody"><tr><td colspan="4" class="empty-st">{{ t('loading_dots') }}</td></tr></tbody>
-=======
-            <thead><tr><th>البريد الإلكتروني</th><th>الخادم</th><th>تاريخ الإضافة</th><th></th></tr></thead>
-            <tbody id="emailsTbody"><tr><td colspan="4" class="empty-st">جارٍ التحميل…</td></tr></tbody>
->>>>>>> origin/main
           </table>
         </div>
       </div>
     </div>
 
-<<<<<<< HEAD
     <!-- FILTER CATEGORIES -->
-=======
-    <!-- ══════ FILTER CATEGORIES ══════ -->
->>>>>>> origin/main
     <div class="page" id="page-filters">
       <div class="card">
         <div class="card-title">
           <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg></div>
-<<<<<<< HEAD
           {{ t('create_filter_title') }}
         </div>
         <div class="form-row">
@@ -1263,28 +544,11 @@
         <button class="btn btn-primary" id="createCatBtn">
           <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           {{ t('create_cat_btn') }}
-=======
-          إنشاء فئة فلترة جديدة
-        </div>
-        <div class="form-row">
-          <div class="fgroup" style="min-width:180px"><div class="flabel">اسم الفئة (يظهر للعميل)</div><input class="inp" id="newCatLabel" type="text" placeholder="مثال: كود تسجيل دخول"/></div>
-          <div class="fgroup"><div class="flabel">وصف مختصر (اختياري)</div><input class="inp" id="newCatDesc" type="text" placeholder="رموز المصادقة الثنائية…"/></div>
-        </div>
-        <div class="mrow" style="margin-top:.75rem">
-          <label class="mlabel">الأنماط (كل نمط في سطر — يُطابق موضوع الرسالة)</label>
-          <textarea class="inp" id="newCatPatterns" placeholder="Netflix: Your sign-in code&#10;Netflix : Votre code d'identification"></textarea>
-          <div style="font-size:.73rem;color:var(--text3);margin-top:.35rem">الرسالة تظهر إذا كان موضوعها يحتوي على أي نمط من القائمة (بغض النظر عن حالة الأحرف)</div>
-        </div>
-        <button class="btn btn-primary" id="createCatBtn">
-          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          إنشاء الفئة
->>>>>>> origin/main
         </button>
       </div>
       <div class="card">
         <div class="card-title">
           <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg></div>
-<<<<<<< HEAD
           {{ t('current_cats_title') }}
           <span id="catCountLbl" style="margin-right:auto;font-size:.7rem;color:var(--text3);background:var(--surf2);padding:.15rem .55rem;border-radius:20px;border:1px solid var(--border)"></span>
         </div>
@@ -1293,21 +557,10 @@
     </div>
 
     <!-- ACTIVITY -->
-=======
-          الفئات الحالية
-          <span id="catCountLbl" style="margin-right:auto;font-size:.7rem;color:var(--text3);background:var(--surf2);padding:.15rem .55rem;border-radius:20px;border:1px solid var(--border)"></span>
-        </div>
-        <div id="catListAdmin"><div class="empty-st">جارٍ التحميل…</div></div>
-      </div>
-    </div>
-
-    <!-- ══════ ACTIVITY ══════ -->
->>>>>>> origin/main
     <div class="page" id="page-activity">
       <div class="card">
         <div class="card-title">
           <div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
-<<<<<<< HEAD
           {{ t('activity_log_title') }}
           <div style="margin-right:auto;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
             <button class="btn btn-ghost" id="refreshActivityBtn" style="padding:.32rem .75rem;font-size:.75rem">
@@ -1321,28 +574,12 @@
           </div>
         </div>
         <div id="activityLog"><div class="empty-st">{{ t('loading_dots') }}</div></div>
-=======
-          سجل النشاط الأخير
-          <div style="margin-right:auto;display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
-            <button class="btn btn-ghost" id="refreshActivityBtn" style="padding:.32rem .75rem;font-size:.75rem">
-              <svg viewBox="0 0 24 24" style="width:12px;height:12px"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-              تحديث
-            </button>
-            <button class="btn btn-danger" id="clearActivityBtn" style="padding:.32rem .75rem;font-size:.75rem">
-              <svg viewBox="0 0 24 24" style="width:12px;height:12px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
-              مسح النشاط
-            </button>
-          </div>
-        </div>
-        <div id="activityLog"><div class="empty-st">جارٍ التحميل…</div></div>
->>>>>>> origin/main
       </div>
     </div>
 
   </main>
 </div>
 
-<<<<<<< HEAD
 <!-- Edit Client Modal -->
 <div class="overlay" id="editClientOverlay">
   <div class="modal">
@@ -1358,23 +595,6 @@
       </select>
     </div>
     <div class="mactions"><button class="btn btn-ghost" id="editClientCancel">{{ t('cancel') }}</button><button class="btn btn-primary" id="editClientSave">{{ t('save_edits_btn') }}</button></div>
-=======
-<!-- ═══════════ MODALS ═══════════ -->
-
-<!-- Edit Client Modal -->
-<div class="overlay" id="editClientOverlay">
-  <div class="modal">
-    <div class="modal-title">
-      <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-      تعديل عميل
-    </div>
-    <input type="hidden" id="editClientId"/>
-    <div class="mrow"><label class="mlabel">اسم المستخدم</label><input class="inp" id="editUsername" type="text" style="width:100%"/></div>
-    <div class="mrow"><label class="mlabel">الاسم المعروض</label><input class="inp" id="editDisplay" type="text" style="width:100%"/></div>
-    <div class="mrow"><label class="mlabel">كلمة مرور جديدة (اتركها فارغة للإبقاء)</label><input class="inp" id="editPassword" type="text" placeholder="اتركها فارغة" style="width:100%"/></div>
-    <div class="mrow"><label class="mlabel">الحالة</label><select class="inp" id="editStatus" style="width:100%"><option value="active">نشط</option><option value="suspended">موقوف</option></select></div>
-    <div class="mactions"><button class="btn btn-ghost" id="editClientCancel">إلغاء</button><button class="btn btn-primary" id="editClientSave">حفظ التعديلات</button></div>
->>>>>>> origin/main
   </div>
 </div>
 
@@ -1383,27 +603,16 @@
   <div class="modal" style="max-width:760px">
     <div class="modal-title">
       <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
-<<<<<<< HEAD
       {{ t('manage_email_title') }}: <span id="cemClientName" style="color:var(--accent);margin-right:.3rem"></span>
-=======
-      إدارة بريد العميل: <span id="cemClientName" style="color:var(--accent);margin-right:.3rem"></span>
->>>>>>> origin/main
     </div>
     <input type="hidden" id="cemClientId"/>
 
     <div class="mrow">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:.45rem">
-<<<<<<< HEAD
         <label class="mlabel" style="margin-bottom:0">{{ t('assigned_email_label') }} <span id="cemAssignedCount" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--text3)"></span></label>
         <button class="btn btn-green" id="cemRenewAllBtn" style="padding:.28rem .7rem;font-size:.74rem">
           <svg viewBox="0 0 24 24" style="width:12px;height:12px"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
           {{ t('renew_all_btn') }}
-=======
-        <label class="mlabel" style="margin-bottom:0">البريد المخصص حاليًا <span id="cemAssignedCount" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--text3)"></span></label>
-        <button class="btn btn-green" id="cemRenewAllBtn" style="padding:.28rem .7rem;font-size:.74rem">
-          <svg viewBox="0 0 24 24" style="width:12px;height:12px"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-          تجديد الكل
->>>>>>> origin/main
         </button>
       </div>
       <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-sm)">
@@ -1411,33 +620,21 @@
           <table id="cemAssignedTable" style="width:100%;border-collapse:collapse;font-size:.82rem">
             <thead style="position:sticky;top:0;background:var(--surf);z-index:1">
               <tr>
-<<<<<<< HEAD
                 <th style="padding:.42rem .8rem;text-align:right;font-size:.61rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surf2)">{{ t('col_email_addr') }}</th>
                 <th style="padding:.42rem .8rem;text-align:right;font-size:.61rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surf2)">{{ t('col_from_date') }}</th>
                 <th style="padding:.42rem .8rem;text-align:right;font-size:.61rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surf2)">{{ t('col_to_date') }}</th>
                 <th style="padding:.42rem .8rem;text-align:right;font-size:.61rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surf2)">{{ t('col_status') }}</th>
-=======
-                <th style="padding:.42rem .8rem;text-align:right;font-size:.61rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surf2)">البريد الإلكتروني</th>
-                <th style="padding:.42rem .8rem;text-align:right;font-size:.61rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surf2)">من تاريخ</th>
-                <th style="padding:.42rem .8rem;text-align:right;font-size:.61rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surf2)">إلى تاريخ</th>
-                <th style="padding:.42rem .8rem;text-align:right;font-size:.61rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surf2)">الحالة</th>
->>>>>>> origin/main
                 <th style="padding:.42rem .8rem;border-bottom:1px solid var(--border);background:var(--surf2)"></th>
               </tr>
             </thead>
             <tbody id="cemAssignedBody"></tbody>
           </table>
-<<<<<<< HEAD
           <div id="cemEmptyMsg" style="display:none;padding:1.2rem;text-align:center;font-size:.8rem;color:var(--text3)">{{ t('no_assigned_email') }}</div>
-=======
-          <div id="cemEmptyMsg" style="display:none;padding:1.2rem;text-align:center;font-size:.8rem;color:var(--text3)">لا يوجد بريد مخصص حتى الآن</div>
->>>>>>> origin/main
         </div>
       </div>
     </div>
 
     <div id="cemEditPanel" style="display:none;background:var(--surf2);border:1px solid var(--bord2);border-radius:var(--radius-sm);padding:.8rem 1.1rem;margin-top:-.3rem;margin-bottom:.85rem">
-<<<<<<< HEAD
       <div style="font-size:.8rem;font-weight:700;margin-bottom:.65rem;color:var(--text2)">{{ t('edit_dates_label') }}: <span id="cemEditEmailLabel" style="color:var(--accent)"></span></div>
       <input type="hidden" id="cemEditEmailHidden"/>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.55rem">
@@ -1447,38 +644,19 @@
       <div style="display:flex;gap:.4rem;margin-top:.65rem">
         <button class="btn btn-primary" id="cemEditSaveBtn">{{ t('save_dates_btn') }}</button>
         <button class="btn btn-ghost" id="cemEditCancelBtn">{{ t('cancel') }}</button>
-=======
-      <div style="font-size:.8rem;font-weight:700;margin-bottom:.65rem;color:var(--text2)">تعديل تواريخ: <span id="cemEditEmailLabel" style="color:var(--accent)"></span></div>
-      <input type="hidden" id="cemEditEmailHidden"/>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.55rem">
-        <div><label class="mlabel">من تاريخ (اختياري)</label><input type="date" class="inp" id="cemEditStart" style="width:100%"/></div>
-        <div><label class="mlabel">إلى تاريخ (اختياري)</label><input type="date" class="inp" id="cemEditEnd" style="width:100%"/></div>
-      </div>
-      <div style="display:flex;gap:.4rem;margin-top:.65rem">
-        <button class="btn btn-primary" id="cemEditSaveBtn">حفظ التواريخ</button>
-        <button class="btn btn-ghost" id="cemEditCancelBtn">إلغاء</button>
->>>>>>> origin/main
       </div>
     </div>
 
     <div class="mrow" style="margin-top:.1rem">
-<<<<<<< HEAD
       <label class="mlabel">{{ t('add_email_label') }}</label>
       <div style="display:flex;gap:.3rem;margin-bottom:.65rem">
         <button class="tab-btn active" data-cemtab="search" style="font-size:.76rem;padding:.3rem .7rem">{{ t('tab_search_add') }}</button>
         <button class="tab-btn" data-cemtab="paste" style="font-size:.76rem;padding:.3rem .7rem">{{ t('tab_paste_bulk') }}</button>
-=======
-      <label class="mlabel">إضافة بريد</label>
-      <div style="display:flex;gap:.3rem;margin-bottom:.65rem">
-        <button class="tab-btn active" data-cemtab="search" style="font-size:.76rem;padding:.3rem .7rem">بحث وإضافة</button>
-        <button class="tab-btn" data-cemtab="paste" style="font-size:.76rem;padding:.3rem .7rem">لصق جماعي</button>
->>>>>>> origin/main
       </div>
 
       <div id="cemTab-search">
         <div class="search-bar" style="margin-bottom:.45rem">
           <div class="sico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
-<<<<<<< HEAD
           <input class="inp" id="cemSearchInput" placeholder="{{ t('search_email_input_ph') }}" style="padding-right:2.2rem" autocomplete="off"/>
         </div>
         <div id="cemSearchResults" style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);display:none;margin-bottom:.45rem"></div>
@@ -1510,80 +688,30 @@
         <button class="btn btn-primary" id="cemPasteAddBtn" style="margin-top:.6rem">
           <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           {{ t('add_all_btn') }}
-=======
-          <input class="inp" id="cemSearchInput" placeholder="ابحث باسم البريد…" style="padding-right:2.2rem" autocomplete="off"/>
-        </div>
-        <div id="cemSearchResults" style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);display:none;margin-bottom:.45rem"></div>
-        <div id="cemPendingForm" style="display:none;background:var(--surf2);border:1px solid var(--bord2);border-radius:var(--radius-sm);padding:.8rem 1.1rem">
-          <div style="font-size:.8rem;font-weight:700;margin-bottom:.65rem;color:var(--text2)">إضافة: <span id="cemPendingEmailLabel" style="color:var(--teal)"></span></div>
-          <input type="hidden" id="cemPendingEmailHidden"/>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.55rem">
-            <div><label class="mlabel">من تاريخ (اختياري)</label><input type="date" class="inp" id="cemAddStart" style="width:100%"/></div>
-            <div><label class="mlabel">إلى تاريخ (اختياري)</label><input type="date" class="inp" id="cemAddEnd" style="width:100%"/></div>
-          </div>
-          <div style="display:flex;gap:.4rem;margin-top:.65rem">
-            <button class="btn btn-primary" id="cemConfirmAddBtn"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>إضافة</button>
-            <button class="btn btn-ghost" id="cemCancelPendingBtn">إلغاء</button>
-          </div>
-        </div>
-        <div style="font-size:.71rem;color:var(--text3);margin-top:.38rem" id="cemSearchHint">اكتب جزءاً من البريد للبحث، ثم اختره لتحديد التواريخ قبل الإضافة</div>
-      </div>
-
-      <div id="cemTab-paste" style="display:none">
-        <textarea class="inp" id="cemPasteArea" placeholder="الصق عناوين البريد، بريد في كل سطر:&#10;user1@example.com&#10;user2@example.com" style="min-height:110px;font-size:.82rem;font-family:'JetBrains Mono',monospace"></textarea>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.55rem;margin-top:.6rem">
-          <div><label class="mlabel">من تاريخ للجميع (اختياري)</label><input type="date" class="inp" id="cemPasteStart" style="width:100%"/></div>
-          <div><label class="mlabel">إلى تاريخ للجميع (اختياري)</label><input type="date" class="inp" id="cemPasteEnd" style="width:100%"/></div>
-        </div>
-        <div style="font-size:.72rem;color:var(--amber);margin-top:.45rem;display:flex;align-items:center;gap:.35rem">
-          <svg viewBox="0 0 24 24" style="width:12px;height:12px;flex-shrink:0;fill:none;stroke:var(--amber);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          فقط البريد الموجود في "حسابات البريد" سيُضاف
-        </div>
-        <button class="btn btn-primary" id="cemPasteAddBtn" style="margin-top:.6rem">
-          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          إضافة الجميع
->>>>>>> origin/main
         </button>
         <div id="cemPasteResult" style="display:none;margin-top:.55rem;font-size:.8rem;line-height:1.7;background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.65rem 1rem"></div>
       </div>
     </div>
 
-<<<<<<< HEAD
     <div class="mactions"><button class="btn btn-ghost" id="cemClose">{{ t('close') }}</button></div>
-=======
-    <div class="mactions"><button class="btn btn-ghost" id="cemClose">إغلاق</button></div>
->>>>>>> origin/main
   </div>
 </div>
 
 <!-- Edit Email Modal -->
 <div class="overlay" id="editEmailOverlay">
   <div class="modal">
-<<<<<<< HEAD
     <div class="modal-title"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>{{ t('edit_email_account_title') }}</div>
     <input type="hidden" id="editEmailId"/>
     <div class="mrow"><label class="mlabel">{{ t('new_pop3_pw_label') }}</label><input class="inp" id="editEmailPw" type="text" style="width:100%" placeholder="{{ t('leave_empty_ph') }}"/></div>
     <div class="mrow"><label class="mlabel">{{ t('server_label') }}</label><input class="inp" id="editEmailHost" type="text" style="width:100%"/></div>
     <div class="mrow"><label class="mlabel">{{ t('port_label') }}</label><input class="inp" id="editEmailPort" type="number" style="width:100%"/></div>
     <div class="mactions"><button class="btn btn-ghost" id="editEmailCancel">{{ t('cancel') }}</button><button class="btn btn-primary" id="editEmailSave">{{ t('save') }}</button></div>
-=======
-    <div class="modal-title">
-      <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-      تعديل حساب البريد
-    </div>
-    <input type="hidden" id="editEmailId"/>
-    <div class="mrow"><label class="mlabel">كلمة مرور POP3 الجديدة</label><input class="inp" id="editEmailPw" type="text" style="width:100%" placeholder="اتركها فارغة للإبقاء"/></div>
-    <div class="mrow"><label class="mlabel">الخادم</label><input class="inp" id="editEmailHost" type="text" style="width:100%"/></div>
-    <div class="mrow"><label class="mlabel">المنفذ</label><input class="inp" id="editEmailPort" type="number" style="width:100%"/></div>
-    <div class="mactions"><button class="btn btn-ghost" id="editEmailCancel">إلغاء</button><button class="btn btn-primary" id="editEmailSave">حفظ</button></div>
->>>>>>> origin/main
   </div>
 </div>
 
 <!-- Edit Category Modal -->
 <div class="overlay" id="editCatOverlay">
   <div class="modal">
-<<<<<<< HEAD
     <div class="modal-title"><svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>{{ t('edit_cat_title') }}</div>
     <input type="hidden" id="editCatId"/>
     <div class="mrow"><label class="mlabel">{{ t('cat_name_label') }}</label><input class="inp" id="editCatLabel" type="text" style="width:100%"/></div>
@@ -1605,28 +733,6 @@
 (function(){
 'use strict';
 const T = {{ translations_json|safe }};
-=======
-    <div class="modal-title">
-      <svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-      تعديل فئة الفلترة
-    </div>
-    <input type="hidden" id="editCatId"/>
-    <div class="mrow"><label class="mlabel">اسم الفئة</label><input class="inp" id="editCatLabel" type="text" style="width:100%"/></div>
-    <div class="mrow"><label class="mlabel">الوصف</label><input class="inp" id="editCatDesc" type="text" style="width:100%"/></div>
-    <div class="mrow"><label class="mlabel">الأنماط (كل نمط في سطر)</label><textarea class="inp" id="editCatPatterns" style="width:100%"></textarea></div>
-    <div class="mrow"><label class="mlabel">الحالة</label><select class="inp" id="editCatEnabled" style="width:100%"><option value="true">مفعّلة</option><option value="false">معطّلة</option></select></div>
-    <div class="mactions"><button class="btn btn-ghost" id="editCatCancel">إلغاء</button><button class="btn btn-primary" id="editCatSave">حفظ</button></div>
-  </div>
-</div>
-
-<!-- Toasts -->
-<div class="toast-rack" id="toastRack"></div>
-
-<!-- ═══════════════════ SCRIPT ═══════════════════ -->
-<script>
-(function(){
-'use strict';
->>>>>>> origin/main
 
 /* ── Hamburger / mobile sidebar ── */
 const hamburgerBtn=document.getElementById('hamburgerBtn');
@@ -1648,11 +754,7 @@ function toast(msg,isErr=false){const rack=document.getElementById('toastRack');
 function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 async function api(url,method='GET',body=null){const opts={method,headers:{'Content-Type':'application/json'}};if(body)opts.body=JSON.stringify(body);const r=await fetch(url,opts);return r.json();}
 
-<<<<<<< HEAD
 /* ── Date formatters ── */
-=======
-/* ── Date formatters — English locale ── */
->>>>>>> origin/main
 function fmtDate(s){if(!s||s==='—')return'—';try{return new Date(s).toLocaleString('en-GB',{dateStyle:'short',timeStyle:'short'});}catch{return s;}}
 function fmtD(s){if(!s)return'<span style="color:var(--text3)">—</span>';try{return new Date(s+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}catch{return s;}}
 
@@ -1669,7 +771,6 @@ document.querySelectorAll('.nav-btn').forEach(btn=>{
   });
 });
 
-<<<<<<< HEAD
 /* ── Charts ── */
 function renderCharts(total,active,suspended,emails){
   const activePct=total>0?active/total:0;
@@ -1715,86 +816,13 @@ function renderCharts(total,active,suspended,emails){
   const smx=document.getElementById('sparklineMax');
   const accountsUnit=T.accounts_unit||'account(s)';
   if(smx)smx.textContent=emailBase+' '+accountsUnit;
-=======
-/* ── Analytics Charts ── */
-function renderCharts(total, active, suspended, emails){
-  const circumference = 2 * Math.PI * 15.9;
-  const activePct = total > 0 ? active / total : 0;
-  const suspendedPct = total > 0 ? suspended / total : 0;
-  const activeArc = activePct * 100;
-
-  const dActive = document.getElementById('donutActive');
-  const dSuspended = document.getElementById('donutSuspended');
-  if(dActive){
-    dActive.style.strokeDasharray = `${activeArc} ${100 - activeArc}`;
-    dActive.style.strokeDashoffset = '0';
-  }
-  if(dSuspended){
-    const sArc = suspendedPct * 100;
-    dSuspended.style.strokeDasharray = `${sArc} ${100 - sArc}`;
-    dSuspended.style.strokeDashoffset = `-${activeArc}`;
-  }
-  const pct = total > 0 ? Math.round(activePct*100) : 0;
-  const dp = document.getElementById('donutPct');
-  if(dp) dp.textContent = pct + '%';
-  const la = document.getElementById('legendActive');
-  const ls = document.getElementById('legendSuspended');
-  const le = document.getElementById('legendEmails');
-  if(la) la.textContent = active + ' نشط';
-  if(ls) ls.textContent = suspended + ' موقوف';
-  if(le) le.textContent = emails + ' بريد';
-
-  const days = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
-  const today = new Date().getDay();
-  const labels = Array.from({length:7},(_,i)=>days[(today-6+i+7)%7]);
-  const base = Math.max(1, Math.floor((active||1)/2));
-  const vals = labels.map(()=> Math.floor(base * (0.4 + Math.random()*1.2)));
-  const maxVal = Math.max(...vals,1);
-
-  const barsEl = document.getElementById('loginBarsChart');
-  const lblsEl = document.getElementById('loginBarsLabels');
-  if(barsEl){
-    barsEl.innerHTML = vals.map((v,i)=>{
-      const h = Math.max(4, Math.round((v/maxVal)*52));
-      const isToday = i===6;
-      const col = isToday ? 'var(--accent)' : 'var(--surf4)';
-      return`<div class="mini-bar" style="height:${h}px;background:${col};transition:height .7s var(--ease) ${i*60}ms" title="${labels[i]}: ${v}"></div>`;
-    }).join('');
-  }
-  if(lblsEl){
-    lblsEl.innerHTML = labels.map((l,i)=>`<div class="mini-day" style="color:${i===6?'var(--accent)':'var(--text3)'};font-weight:${i===6?700:400}">${l.slice(0,2)}</div>`).join('');
-  }
-
-  const emailBase = emails||1;
-  const sparkVals = Array.from({length:10},(_,i)=> Math.max(1, Math.round(emailBase*(0.4 + i*0.07 + Math.random()*0.08))));
-  sparkVals[sparkVals.length-1] = emailBase;
-  const sparkMax = Math.max(...sparkVals);
-  const svgW=200, svgH=48;
-  const pts = sparkVals.map((v,i)=>{
-    const x = (i/(sparkVals.length-1))*svgW;
-    const y = svgH - (v/sparkMax)*(svgH-6) - 3;
-    return{x,y};
-  });
-  const lineD = pts.map((p,i)=>(i===0?`M${p.x},${p.y}`:`L${p.x},${p.y}`)).join(' ');
-  const areaD = lineD + ` L${pts[pts.length-1].x},${svgH} L0,${svgH} Z`;
-  const sl = document.getElementById('sparkLine');
-  const sa = document.getElementById('sparkArea');
-  if(sl) sl.setAttribute('d', lineD);
-  if(sa) sa.setAttribute('d', areaD);
-  const smx = document.getElementById('sparklineMax');
-  if(smx) smx.textContent = emailBase + ' حساب';
->>>>>>> origin/main
 }
 
 /* ── Stats ── */
 let allClients=[];
 async function loadStats(){
   const d=await api('/admin/api/stats');
-<<<<<<< HEAD
   const total=d.total_clients??0,active=d.active_clients??0,suspended=d.suspended_clients??0,emails=d.email_accounts??0;
-=======
-  const total=d.total_clients??0, active=d.active_clients??0, suspended=d.suspended_clients??0, emails=d.email_accounts??0;
->>>>>>> origin/main
   document.getElementById('stClients').textContent=d.total_clients??'—';
   document.getElementById('stActive').textContent=d.active_clients??'—';
   document.getElementById('stSuspended').textContent=d.suspended_clients??'—';
@@ -1804,11 +832,7 @@ async function loadStats(){
   document.getElementById('navClientCount').textContent=d.total_clients??'—';
   document.getElementById('navEmailCount').textContent=d.email_accounts??'—';
   document.getElementById('navCatCount').textContent=d.filter_categories??'—';
-<<<<<<< HEAD
   renderCharts(total,active,suspended,emails);
-=======
-  renderCharts(total, active, suspended, emails);
->>>>>>> origin/main
 }
 loadStats();
 
@@ -1820,7 +844,6 @@ async function loadClients(){
 }
 function renderClients(cs){
   const tb=document.getElementById('clientsTbody');
-<<<<<<< HEAD
   const clientsUnit=T.accounts_unit||'';
   document.getElementById('clientCountLbl').textContent=cs.length+' '+clientsUnit;
   if(!cs.length){tb.innerHTML='<tr><td colspan="6"><div class="empty-st"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div></td></tr>';return;}
@@ -1838,23 +861,11 @@ function renderClients(cs){
     return`<tr>
       <td><div class="td-main">${esc(c.username)}</div>${c.display_name&&c.display_name!==c.username?`<div style="font-size:.72rem;color:var(--text3)">${esc(c.display_name)}</div>`:''}</td>
       <td><span class="badge ${sus?'badge-red':'badge-green'}">${sus?suspendedLabel:activeLabel}</span></td>
-=======
-  document.getElementById('clientCountLbl').textContent=cs.length+' عميل';
-  if(!cs.length){tb.innerHTML='<tr><td colspan="6"><div class="empty-st"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>لا يوجد عملاء</div></td></tr>';return;}
-  tb.innerHTML=cs.map(c=>{
-    const sus=c.status==='suspended';
-    const emails=c.assigned_emails||[];
-    const emailBadge=emails.length?`<span class="badge badge-teal">${emails.length} بريد</span>`:`<span style="font-size:.72rem;color:var(--text3)">—</span>`;
-    return`<tr>
-      <td><div class="td-main">${esc(c.username)}</div>${c.display_name&&c.display_name!==c.username?`<div style="font-size:.72rem;color:var(--text3)">${esc(c.display_name)}</div>`:''}</td>
-      <td><span class="badge ${sus?'badge-red':'badge-green'}">${sus?'موقوف':'نشط'}</span></td>
->>>>>>> origin/main
       <td>${emailBadge}</td>
       <td style="font-size:.77rem">${fmtDate(c.last_login)}</td>
       <td style="font-family:'JetBrains Mono',monospace;font-size:.8rem">${c.login_count}</td>
       <td><div class="td-actions">
         <button class="row-btn emails-btn" onclick="openClientEmails('${esc(c.id)}','${esc(c.username)}')">
-<<<<<<< HEAD
           <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>${emailsLabel}
         </button>
         <button class="row-btn edit" onclick="openEditClient('${esc(c.id)}','${esc(c.username)}','${esc(c.display_name||'')}','${esc(c.status)}')">
@@ -1868,37 +879,15 @@ function renderClients(cs){
   }).join('');
   tb.querySelectorAll('.row-btn.sus,.row-btn.act').forEach(btn=>{btn.addEventListener('click',async()=>{const sus=btn.dataset.sus==='true';const d=await api('/admin/api/clients/'+btn.dataset.id,'PUT',{status:sus?'active':'suspended'});if(d.ok){toast(T.toast_edited||'✓');loadClients();loadStats();}else toast(d.error||(T.error_generic||'Error'),true);});});
   tb.querySelectorAll('.row-btn.del').forEach(btn=>{btn.addEventListener('click',async()=>{if(!confirm(T.confirm_delete_email_account||'Delete?'))return;const d=await api('/admin/api/clients/'+btn.dataset.id,'DELETE');if(d.ok){toast(T.toast_deleted||'Deleted');loadClients();loadStats();}else toast(d.error||(T.error_generic||'Error'),true);});});
-=======
-          <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>بريد
-        </button>
-        <button class="row-btn edit" onclick="openEditClient('${esc(c.id)}','${esc(c.username)}','${esc(c.display_name||'')}','${esc(c.status)}')">
-          <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>تعديل
-        </button>
-        <button class="row-btn sus${sus?' act':''}" data-id="${esc(c.id)}" data-sus="${sus}">${sus?'تفعيل':'إيقاف'}</button>
-        <button class="row-btn del" data-id="${esc(c.id)}">
-          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>حذف
-        </button>
-      </div></td></tr>`;
-  }).join('');
-  tb.querySelectorAll('.row-btn.sus,.row-btn.act').forEach(btn=>{btn.addEventListener('click',async()=>{const sus=btn.dataset.sus==='true';const d=await api('/admin/api/clients/'+btn.dataset.id,'PUT',{status:sus?'active':'suspended'});if(d.ok){toast(sus?'تم تفعيل الحساب':'تم إيقاف الحساب');loadClients();loadStats();}else toast(d.error||'خطأ',true);});});
-  tb.querySelectorAll('.row-btn.del').forEach(btn=>{btn.addEventListener('click',async()=>{if(!confirm('حذف هذا العميل؟'))return;const d=await api('/admin/api/clients/'+btn.dataset.id,'DELETE');if(d.ok){toast('تم الحذف');loadClients();loadStats();}else toast(d.error||'خطأ',true);});});
->>>>>>> origin/main
 }
 document.getElementById('clientSearch').addEventListener('input',function(){const q=this.value.toLowerCase();renderClients(q?allClients.filter(c=>c.username.toLowerCase().includes(q)||(c.display_name||'').toLowerCase().includes(q)):allClients);});
 document.getElementById('emailSearch').addEventListener('input',function(){const q=this.value.toLowerCase();renderEmails(q?allEmails.filter(e=>e.email.toLowerCase().includes(q)||e.pop3_host.toLowerCase().includes(q)):allEmails);});
 document.getElementById('createClientBtn').addEventListener('click',async()=>{
   const u=document.getElementById('newUsername').value.trim(),p=document.getElementById('newPassword').value.trim(),dn=document.getElementById('newDisplay').value.trim();
-<<<<<<< HEAD
   if(!u||!p){toast(T.toast_enter_email_pw||(T.error_generic||'Error'),true);return;}
   const d=await api('/admin/api/clients','POST',{username:u,password:p,display_name:dn||u});
   if(d.ok){toast(T.toast_added||'Added ✓');document.getElementById('newUsername').value='';document.getElementById('newPassword').value='';document.getElementById('newDisplay').value='';loadClients();loadStats();}
   else toast(d.error||(T.error_generic||'Error'),true);
-=======
-  if(!u||!p){toast('أدخل اسم المستخدم وكلمة المرور',true);return;}
-  const d=await api('/admin/api/clients','POST',{username:u,password:p,display_name:dn||u});
-  if(d.ok){toast('تم إنشاء الحساب ✓');document.getElementById('newUsername').value='';document.getElementById('newPassword').value='';document.getElementById('newDisplay').value='';loadClients();loadStats();}
-  else toast(d.error||'خطأ',true);
->>>>>>> origin/main
 });
 
 /* ── Edit Client ── */
@@ -1912,11 +901,7 @@ document.getElementById('editClientSave').addEventListener('click',async()=>{
   const u={username:document.getElementById('editUsername').value.trim(),display_name:document.getElementById('editDisplay').value.trim(),status:document.getElementById('editStatus').value};
   const pw=document.getElementById('editPassword').value.trim();if(pw)u.password=pw;
   const d=await api('/admin/api/clients/'+id,'PUT',u);
-<<<<<<< HEAD
   if(d.ok){toast(T.toast_edited||'Updated ✓');document.getElementById('editClientOverlay').classList.remove('show');loadClients();}else toast(d.error||(T.error_generic||'Error'),true);
-=======
-  if(d.ok){toast('تم التعديل ✓');document.getElementById('editClientOverlay').classList.remove('show');loadClients();}else toast(d.error||'خطأ',true);
->>>>>>> origin/main
 });
 
 /* ── Client Emails Modal ── */
@@ -1925,15 +910,9 @@ let cemAllEmails=[];
 
 function cemDateStatus(start,end){
   const today=new Date().toISOString().slice(0,10);
-<<<<<<< HEAD
   if(start&&today<start)return{label:T.status_soon||'Soon',cls:'badge-blue'};
   if(end&&today>end)return{label:T.status_expired||'Expired',cls:'badge-red'};
   return{label:T.status_active||'Active',cls:'badge-green'};
-=======
-  if(start&&today<start)return{label:'قريبًا',cls:'badge-blue'};
-  if(end&&today>end)return{label:'منتهي',cls:'badge-red'};
-  return{label:'نشط',cls:'badge-green'};
->>>>>>> origin/main
 }
 
 window.openClientEmails=async function(id,name){
@@ -1966,11 +945,8 @@ async function refreshCemList(){
   countEl.textContent=emails.length?`(${emails.length})`:'';
   if(!emails.length){body.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
-<<<<<<< HEAD
   const datesLabel=T.btn_dates||'Dates';
   const removeLabel=T.btn_remove||'Remove';
-=======
->>>>>>> origin/main
   body.innerHTML=emails.map(item=>{
     const em=item.email||item;
     const start=item.start_date||null;
@@ -1984,17 +960,10 @@ async function refreshCemList(){
       <td style="padding:.55rem .8rem">
         <div style="display:flex;gap:.25rem;justify-content:flex-end">
           <button class="row-btn edit cem-edit-btn" data-em="${esc(em)}" data-start="${esc(start||'')}" data-end="${esc(end||'')}">
-<<<<<<< HEAD
             <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>${datesLabel}
           </button>
           <button class="row-btn del cem-del-btn" data-em="${esc(em)}">
             <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>${removeLabel}
-=======
-            <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>تواريخ
-          </button>
-          <button class="row-btn del cem-del-btn" data-em="${esc(em)}">
-            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>إزالة
->>>>>>> origin/main
           </button>
         </div>
       </td>
@@ -2003,18 +972,11 @@ async function refreshCemList(){
   body.querySelectorAll('.cem-del-btn').forEach(btn=>{
     btn.addEventListener('click',async()=>{
       const em=btn.dataset.em;
-<<<<<<< HEAD
       const confirmMsg=(T.confirm_remove_email||'Remove {email}?').replace('{email}',em);
       if(!confirm(confirmMsg))return;
       const r=await api('/admin/api/clients/'+cemClientIdVal+'/emails/'+encodeURIComponent(em),'DELETE');
       if(r.ok){toast(T.toast_removed||'Removed');document.getElementById('cemEditPanel').style.display='none';refreshCemList();loadClients();}
       else toast(r.error||(T.error_generic||'Error'),true);
-=======
-      if(!confirm(`إزالة ${em} من هذا العميل؟`))return;
-      const r=await api('/admin/api/clients/'+cemClientIdVal+'/emails/'+encodeURIComponent(em),'DELETE');
-      if(r.ok){toast('تمت الإزالة');document.getElementById('cemEditPanel').style.display='none';refreshCemList();loadClients();}
-      else toast(r.error||'خطأ',true);
->>>>>>> origin/main
     });
   });
   body.querySelectorAll('.cem-edit-btn').forEach(btn=>{
@@ -2029,24 +991,12 @@ async function refreshCemList(){
   });
 }
 
-<<<<<<< HEAD
 document.getElementById('cemRenewAllBtn').addEventListener('click',async()=>{
   const d=await api('/admin/api/clients/'+cemClientIdVal+'/emails/renew-all','POST');
   if(d.ok){
     const msg=(T.toast_renewed_n||'Renewed {n} ✓').replace('{n}',d.updated);
     toast(msg);refreshCemList();
   }else{toast(d.error||(T.error_generic||'Error'),true);}
-=======
-/* ── Renew All button ── */
-document.getElementById('cemRenewAllBtn').addEventListener('click',async()=>{
-  const d=await api('/admin/api/clients/'+cemClientIdVal+'/emails/renew-all','POST');
-  if(d.ok){
-    toast(`تم تجديد ${d.updated} بريد ✓`);
-    refreshCemList();
-  } else {
-    toast(d.error||'خطأ',true);
-  }
->>>>>>> origin/main
 });
 
 document.getElementById('cemEditSaveBtn').addEventListener('click',async()=>{
@@ -2054,13 +1004,8 @@ document.getElementById('cemEditSaveBtn').addEventListener('click',async()=>{
   const start=document.getElementById('cemEditStart').value||null;
   const end=document.getElementById('cemEditEnd').value||null;
   const r=await api('/admin/api/clients/'+cemClientIdVal+'/emails/'+encodeURIComponent(em),'PUT',{start_date:start,end_date:end});
-<<<<<<< HEAD
   if(r.ok){toast(T.toast_dates_saved||'Dates saved ✓');document.getElementById('cemEditPanel').style.display='none';refreshCemList();}
   else toast(r.error||(T.error_generic||'Error'),true);
-=======
-  if(r.ok){toast('تم تعديل التواريخ ✓');document.getElementById('cemEditPanel').style.display='none';refreshCemList();}
-  else toast(r.error||'خطأ',true);
->>>>>>> origin/main
 });
 document.getElementById('cemEditCancelBtn').addEventListener('click',()=>document.getElementById('cemEditPanel').style.display='none');
 
@@ -2075,11 +1020,7 @@ function renderCemSearch(q){
   const filtered=q?cemAllEmails.filter(e=>e.toLowerCase().includes(q.toLowerCase())):cemAllEmails;
   if(!q&&!filtered.length){res.style.display='none';return;}
   res.style.display='block';
-<<<<<<< HEAD
   if(!filtered.length){res.innerHTML=`<div style="padding:.6rem .85rem;font-size:.8rem;color:var(--text3)">${T.no_results||'No results'}</div>`;return;}
-=======
-  if(!filtered.length){res.innerHTML='<div style="padding:.6rem .85rem;font-size:.8rem;color:var(--text3)">لا نتائج</div>';return;}
->>>>>>> origin/main
   res.innerHTML=filtered.slice(0,80).map(em=>`<div class="cem-result-row" data-em="${esc(em)}" style="padding:.45rem .8rem;font-size:.82rem;cursor:pointer;border-bottom:1px solid var(--border);color:var(--text2);transition:background .12s">${esc(em)}</div>`).join('');
   res.querySelectorAll('.cem-result-row').forEach(row=>{
     row.addEventListener('mouseenter',()=>row.style.background='var(--surf2)');
@@ -2088,12 +1029,7 @@ function renderCemSearch(q){
       const em=row.dataset.em;
       document.getElementById('cemPendingEmailLabel').textContent=em;
       document.getElementById('cemPendingEmailHidden').value=em;
-<<<<<<< HEAD
       document.getElementById('cemAddStart').value='';document.getElementById('cemAddEnd').value='';
-=======
-      document.getElementById('cemAddStart').value='';
-      document.getElementById('cemAddEnd').value='';
->>>>>>> origin/main
       document.getElementById('cemPendingForm').style.display='block';
       document.getElementById('cemSearchResults').style.display='none';
       document.getElementById('cemSearchInput').value=em;
@@ -2111,29 +1047,19 @@ document.getElementById('cemConfirmAddBtn').addEventListener('click',async()=>{
   const start=document.getElementById('cemAddStart').value||null;
   const end=document.getElementById('cemAddEnd').value||null;
   const d=await api('/admin/api/clients/'+cemClientIdVal+'/emails','POST',{email:em,start_date:start,end_date:end});
-<<<<<<< HEAD
   if(d.ok){toast(T.toast_added||'Added ✓');document.getElementById('cemPendingForm').style.display='none';document.getElementById('cemSearchInput').value='';document.getElementById('cemSearchResults').style.display='none';refreshCemList();loadClients();}
   else toast(d.error||(T.error_generic||'Error'),true);
-=======
-  if(d.ok){toast('تمت الإضافة ✓');document.getElementById('cemPendingForm').style.display='none';document.getElementById('cemSearchInput').value='';document.getElementById('cemSearchResults').style.display='none';refreshCemList();loadClients();}
-  else toast(d.error||'خطأ',true);
->>>>>>> origin/main
 });
 document.getElementById('cemCancelPendingBtn').addEventListener('click',()=>{document.getElementById('cemPendingForm').style.display='none';document.getElementById('cemSearchInput').value='';document.getElementById('cemSearchResults').style.display='none';});
 
 document.getElementById('cemPasteAddBtn').addEventListener('click',async()=>{
   const lines=document.getElementById('cemPasteArea').value.split(/[\r\n]+/).map(l=>l.trim()).filter(Boolean);
-<<<<<<< HEAD
   if(!lines.length){toast(T.toast_enter_addresses||(T.error_generic||'Error'),true);return;}
-=======
-  if(!lines.length){toast('أدخل عناوين بريد',true);return;}
->>>>>>> origin/main
   const start=document.getElementById('cemPasteStart').value||null;
   const end=document.getElementById('cemPasteEnd').value||null;
   let added=0,skipped=0,errors=0;
   for(const em of lines){
     const d=await api('/admin/api/clients/'+cemClientIdVal+'/emails','POST',{email:em,start_date:start,end_date:end});
-<<<<<<< HEAD
     if(d.ok)added++;else if(d.error&&(d.error.includes('not found')||d.error.includes('غير موجود')))errors++;else skipped++;
   }
   const resEl=document.getElementById('cemPasteResult');
@@ -2142,13 +1068,6 @@ document.getElementById('cemPasteAddBtn').addEventListener('click',async()=>{
   const dupL=T.bulk_duplicate_label||'Duplicate';
   const nfL=T.bulk_not_found_label||'Not found';
   resEl.innerHTML=`✅ ${addedL}: <strong>${added}</strong> &nbsp;|&nbsp; ⚠️ ${dupL}: <strong>${skipped}</strong> &nbsp;|&nbsp; ❌ ${nfL}: <strong>${errors}</strong>`;
-=======
-    if(d.ok)added++;else if(d.error&&(d.error.includes('غير موجود')||d.error.includes('not found')))errors++;else skipped++;
-  }
-  const resEl=document.getElementById('cemPasteResult');
-  resEl.style.display='block';
-  resEl.innerHTML=`✅ أُضيف: <strong>${added}</strong> &nbsp;|&nbsp; ⚠️ مكرر: <strong>${skipped}</strong> &nbsp;|&nbsp; ❌ غير موجود: <strong>${errors}</strong>`;
->>>>>>> origin/main
   if(added>0){refreshCemList();loadClients();}
 });
 
@@ -2173,25 +1092,18 @@ async function loadEmails(){
 }
 function renderEmails(accs){
   const tb=document.getElementById('emailsTbody');
-<<<<<<< HEAD
   const accountsUnit=T.accounts_unit||'';
   document.getElementById('emailCountLbl').textContent=accs.length+' '+accountsUnit;
   document.getElementById('deleteAllEmailsBtn').disabled=!accs.length;
   if(!accs.length){tb.innerHTML=`<tr><td colspan="4"><div class="empty-st"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>${T.no_email_accounts||'No emails'}</div></td></tr>`;return;}
   const editL=T.edit||'Edit';
   const deleteL=T.delete||'Delete';
-=======
-  document.getElementById('emailCountLbl').textContent=accs.length+' حساب';
-  document.getElementById('deleteAllEmailsBtn').disabled = !accs.length;
-  if(!accs.length){tb.innerHTML='<tr><td colspan="4"><div class="empty-st"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>لا توجد حسابات بريد</div></td></tr>';return;}
->>>>>>> origin/main
   tb.innerHTML=accs.map(a=>`<tr>
     <td class="td-main">${esc(a.email)}</td>
     <td style="font-size:.77rem;color:var(--text3);font-family:'JetBrains Mono',monospace">${esc(a.pop3_host)}:${esc(String(a.pop3_port))}</td>
     <td style="font-size:.77rem">${fmtDate(a.added_at)}</td>
     <td><div class="td-actions">
       <button class="row-btn edit" data-id="${esc(a._id)}" data-host="${esc(a.pop3_host)}" data-port="${esc(String(a.pop3_port))}">
-<<<<<<< HEAD
         <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>${editL}
       </button>
       <button class="row-btn del" data-id="${esc(a._id)}">
@@ -2200,16 +1112,6 @@ function renderEmails(accs){
     </div></td></tr>`).join('');
   tb.querySelectorAll('.row-btn.edit').forEach(btn=>{btn.addEventListener('click',()=>{document.getElementById('editEmailId').value=btn.dataset.id;document.getElementById('editEmailPw').value='';document.getElementById('editEmailHost').value=btn.dataset.host;document.getElementById('editEmailPort').value=btn.dataset.port;document.getElementById('editEmailOverlay').classList.add('show');});});
   tb.querySelectorAll('.row-btn.del').forEach(btn=>{btn.addEventListener('click',async()=>{if(!confirm(T.confirm_delete_email_account||'Delete?'))return;const d=await api('/admin/api/email-accounts/'+btn.dataset.id,'DELETE');if(d.ok){toast(T.toast_deleted||'Deleted');loadEmails();loadStats();}else toast(d.error||(T.error_generic||'Error'),true);});});
-=======
-        <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>تعديل
-      </button>
-      <button class="row-btn del" data-id="${esc(a._id)}">
-        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>حذف
-      </button>
-    </div></td></tr>`).join('');
-  tb.querySelectorAll('.row-btn.edit').forEach(btn=>{btn.addEventListener('click',()=>{document.getElementById('editEmailId').value=btn.dataset.id;document.getElementById('editEmailPw').value='';document.getElementById('editEmailHost').value=btn.dataset.host;document.getElementById('editEmailPort').value=btn.dataset.port;document.getElementById('editEmailOverlay').classList.add('show');});});
-  tb.querySelectorAll('.row-btn.del').forEach(btn=>{btn.addEventListener('click',async()=>{if(!confirm('حذف هذا الحساب؟'))return;const d=await api('/admin/api/email-accounts/'+btn.dataset.id,'DELETE');if(d.ok){toast('تم الحذف');loadEmails();loadStats();}else toast(d.error||'خطأ',true);});});
->>>>>>> origin/main
 }
 
 document.querySelectorAll('.tab-btn[data-etab]').forEach(btn=>{
@@ -2221,43 +1123,25 @@ document.querySelectorAll('.tab-btn[data-etab]').forEach(btn=>{
   });
 });
 document.getElementById('deleteAllEmailsBtn').addEventListener('click',async()=>{
-<<<<<<< HEAD
   if(!confirm(T.confirm_delete_all_emails||'Delete all?'))return;
   const btn=document.getElementById('deleteAllEmailsBtn');
   btn.disabled=true;const orig=btn.innerHTML;btn.textContent=T.toast_deleting||'Deleting…';
   const d=await api('/admin/api/email-accounts/bulk-delete','DELETE');
   btn.innerHTML=orig;
   if(d.ok){toast(T.toast_all_emails_deleted||'All deleted');loadEmails();loadStats();}else{toast(d.error||(T.error_generic||'Error'),true);btn.disabled=false;}
-=======
-  if(!confirm('حذف جميع حسابات البريد؟ هذا الإجراء لا يمكن التراجع عنه.'))return;
-  const btn=document.getElementById('deleteAllEmailsBtn');
-  btn.disabled=true;const originalText=btn.innerHTML;btn.textContent='جارٍ الحذف…';
-  const d=await api('/admin/api/email-accounts/bulk-delete','DELETE');
-  btn.innerHTML=originalText;
-  if(d.ok){toast('تم حذف جميع حسابات البريد');loadEmails();loadStats();}else{toast(d.error||'خطأ',true);btn.disabled=false;}
->>>>>>> origin/main
 });
 
 document.getElementById('addEmailBtn').addEventListener('click',async()=>{
   const em=document.getElementById('newEmail').value.trim(),pw=document.getElementById('newEmailPw').value.trim(),host=document.getElementById('newEmailHost').value.trim()||'pop3.kuku.lu',port=parseInt(document.getElementById('newEmailPort').value)||995;
-<<<<<<< HEAD
   if(!em||!pw){toast(T.toast_enter_email_pw||(T.error_generic||'Error'),true);return;}
   const btn=document.getElementById('addEmailBtn');btn.disabled=true;btn.textContent=T.toast_verifying||'…';
   const d=await api('/admin/api/email-accounts','POST',{email:em,password:pw,host,port});
   btn.disabled=false;btn.innerHTML=`<svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>${T.add_btn||'Add'}`;
   if(d.ok){toast(T.toast_added||'Added ✓');document.getElementById('newEmail').value='';document.getElementById('newEmailPw').value='';loadEmails();loadStats();}else toast(d.error||(T.error_generic||'Error'),true);
-=======
-  if(!em||!pw){toast('أدخل البريد وكلمة المرور',true);return;}
-  const btn=document.getElementById('addEmailBtn');btn.disabled=true;btn.textContent='جارٍ التحقق…';
-  const d=await api('/admin/api/email-accounts','POST',{email:em,password:pw,host,port});
-  btn.disabled=false;btn.innerHTML='<svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>إضافة';
-  if(d.ok){toast('تمت الإضافة ✓');document.getElementById('newEmail').value='';document.getElementById('newEmailPw').value='';loadEmails();loadStats();}else toast(d.error||'خطأ',true);
->>>>>>> origin/main
 });
 
 document.getElementById('bulkEmailBtn').addEventListener('click',async()=>{
   const text=document.getElementById('bulkEmailText').value;
-<<<<<<< HEAD
   if(!text.trim()){toast(T.toast_enter_email_data||(T.error_generic||'Error'),true);return;}
   const host=document.getElementById('bulkEmailHost').value.trim()||'pop3.kuku.lu';
   const port=parseInt(document.getElementById('bulkEmailPort').value)||995;
@@ -2267,16 +1151,6 @@ document.getElementById('bulkEmailBtn').addEventListener('click',async()=>{
   const res=document.getElementById('bulkEmailResult');res.classList.add('show');
   const addedL=T.bulk_added_label||'Added';const dupL=T.bulk_duplicate_label||'Dup';const errL=T.bulk_errors_label||'Errors';
   res.innerHTML=`✅ ${addedL}: <strong>${d.added}</strong> &nbsp;|&nbsp; ⚠️ ${dupL}: <strong>${d.skipped}</strong> &nbsp;|&nbsp; ❌ ${errL}: <strong>${d.errors}</strong>${d.error_details?.length?'<br/><span style="font-size:.77rem;color:var(--danger)">'+d.error_details.map(e=>esc(e)).join('<br/>')+'</span>':''}`;
-=======
-  if(!text.trim()){toast('أدخل بيانات البريد',true);return;}
-  const host=document.getElementById('bulkEmailHost').value.trim()||'pop3.kuku.lu';
-  const port=parseInt(document.getElementById('bulkEmailPort').value)||995;
-  const btn=document.getElementById('bulkEmailBtn');btn.disabled=true;btn.textContent='جارٍ الإضافة…';
-  const d=await api('/admin/api/email-accounts/bulk','POST',{text,host,port});
-  btn.disabled=false;btn.innerHTML='إضافة الجميع';
-  const res=document.getElementById('bulkEmailResult');res.classList.add('show');
-  res.innerHTML=`✅ تمت: <strong>${d.added}</strong> &nbsp;|&nbsp; ⚠️ مكرر: <strong>${d.skipped}</strong> &nbsp;|&nbsp; ❌ أخطاء: <strong>${d.errors}</strong>${d.error_details?.length?'<br/><span style="font-size:.77rem;color:var(--danger)">'+d.error_details.map(e=>esc(e)).join('<br/>')+'</span>':''}`;
->>>>>>> origin/main
   if(d.added>0){loadEmails();loadStats();}
 });
 
@@ -2286,11 +1160,7 @@ document.getElementById('editEmailSave').addEventListener('click',async()=>{
   const id=document.getElementById('editEmailId').value,u={host:document.getElementById('editEmailHost').value.trim(),port:parseInt(document.getElementById('editEmailPort').value)||995};
   const pw=document.getElementById('editEmailPw').value.trim();if(pw)u.password=pw;
   const d=await api('/admin/api/email-accounts/'+id,'PUT',u);
-<<<<<<< HEAD
   if(d.ok){toast(T.toast_edited||'Updated ✓');document.getElementById('editEmailOverlay').classList.remove('show');loadEmails();}else toast(d.error||(T.error_generic||'Error'),true);
-=======
-  if(d.ok){toast('تم التعديل ✓');document.getElementById('editEmailOverlay').classList.remove('show');loadEmails();}else toast(d.error||'خطأ',true);
->>>>>>> origin/main
 });
 
 /* ── Filter Categories ── */
@@ -2298,24 +1168,17 @@ let catsCache=[];
 async function loadCategories(){
   const d=await api('/admin/api/filter-categories');
   catsCache=d.categories||[];
-<<<<<<< HEAD
   const catsUnit=T.categories_unit||'';
   document.getElementById('catCountLbl').textContent=catsCache.length+' '+catsUnit;
   const el=document.getElementById('catListAdmin');
   if(!catsCache.length){el.innerHTML=`<div class="empty-st"><svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>${T.no_categories_admin||'No categories'}</div>`;return;}
   const enabledL=T.cat_enabled||'Enabled';const disabledL=T.cat_disabled||'Disabled';const noPatsL=T.no_patterns||'No patterns';const editL=T.edit||'Edit';const deleteL=T.delete||'Delete';
-=======
-  document.getElementById('catCountLbl').textContent=catsCache.length+' فئة';
-  const el=document.getElementById('catListAdmin');
-  if(!catsCache.length){el.innerHTML='<div class="empty-st"><svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>لا توجد فئات — أضف فئة أعلاه</div>';return;}
->>>>>>> origin/main
   el.innerHTML=catsCache.map(c=>`
     <div class="cat-item" data-id="${esc(c.id)}">
       <div style="display:flex;align-items:flex-start;gap:.65rem;flex-wrap:wrap;">
         <div style="flex:1;min-width:0;">
           <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem;flex-wrap:wrap;">
             <span style="font-weight:700;color:var(--text)">${esc(c.label)}</span>
-<<<<<<< HEAD
             <span class="badge ${c.enabled?'badge-green':'badge-gray'}">${c.enabled?enabledL:disabledL}</span>
           </div>
           ${c.description?`<div style="font-size:.75rem;color:var(--text3);margin-bottom:.4rem">${esc(c.description)}</div>`:''}
@@ -2327,19 +1190,6 @@ async function loadCategories(){
           </button>
           <button class="row-btn del" data-id="${esc(c.id)}">
             <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>${deleteL}
-=======
-            <span class="badge ${c.enabled?'badge-green':'badge-gray'}">${c.enabled?'مفعّلة':'معطّلة'}</span>
-          </div>
-          ${c.description?`<div style="font-size:.75rem;color:var(--text3);margin-bottom:.4rem">${esc(c.description)}</div>`:''}
-          <div class="pattern-list">${c.patterns.map(p=>`<span class="pattern-pill">${esc(p)}</span>`).join('')||'<span style="font-size:.74rem;color:var(--text3)">لا توجد أنماط</span>'}</div>
-        </div>
-        <div style="display:flex;gap:.3rem;flex-shrink:0;">
-          <button class="row-btn edit" data-cat-id="${esc(c.id)}">
-            <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>تعديل
-          </button>
-          <button class="row-btn del" data-id="${esc(c.id)}">
-            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>حذف
->>>>>>> origin/main
           </button>
         </div>
       </div>
@@ -2350,7 +1200,6 @@ async function loadCategories(){
       if(cat)openEditCat(cat.id,cat.label,cat.description||'',cat.patterns,cat.enabled);
     });
   });
-<<<<<<< HEAD
   el.querySelectorAll('.row-btn.del').forEach(btn=>{btn.addEventListener('click',async()=>{if(!confirm(T.confirm_delete_cat||'Delete?'))return;const d=await api('/admin/api/filter-categories/'+btn.dataset.id,'DELETE');if(d.ok){toast(T.toast_deleted||'Deleted');loadCategories();loadStats();}else toast(d.error||(T.error_generic||'Error'),true);});});
 }
 document.getElementById('createCatBtn').addEventListener('click',async()=>{
@@ -2358,15 +1207,6 @@ document.getElementById('createCatBtn').addEventListener('click',async()=>{
   if(!label){toast(T.toast_enter_cat_name||(T.error_generic||'Error'),true);return;}
   const d=await api('/admin/api/filter-categories','POST',{label,description:desc,patterns});
   if(d.ok){toast(T.toast_cat_created||'Created ✓');document.getElementById('newCatLabel').value='';document.getElementById('newCatDesc').value='';document.getElementById('newCatPatterns').value='';loadCategories();loadStats();}else toast(d.error||(T.error_generic||'Error'),true);
-=======
-  el.querySelectorAll('.row-btn.del').forEach(btn=>{btn.addEventListener('click',async()=>{if(!confirm('حذف هذه الفئة؟'))return;const d=await api('/admin/api/filter-categories/'+btn.dataset.id,'DELETE');if(d.ok){toast('تم الحذف');loadCategories();loadStats();}else toast(d.error||'خطأ',true);});});
-}
-document.getElementById('createCatBtn').addEventListener('click',async()=>{
-  const label=document.getElementById('newCatLabel').value.trim(),desc=document.getElementById('newCatDesc').value.trim(),patterns=document.getElementById('newCatPatterns').value;
-  if(!label){toast('أدخل اسم الفئة',true);return;}
-  const d=await api('/admin/api/filter-categories','POST',{label,description:desc,patterns});
-  if(d.ok){toast('تم إنشاء الفئة ✓');document.getElementById('newCatLabel').value='';document.getElementById('newCatDesc').value='';document.getElementById('newCatPatterns').value='';loadCategories();loadStats();}else toast(d.error||'خطأ',true);
->>>>>>> origin/main
 });
 window.openEditCat=function(id,label,desc,patterns,enabled){
   document.getElementById('editCatId').value=id;document.getElementById('editCatLabel').value=label;document.getElementById('editCatDesc').value=desc;document.getElementById('editCatPatterns').value=patterns.join('\n');document.getElementById('editCatEnabled').value=String(enabled);document.getElementById('editCatOverlay').classList.add('show');
@@ -2376,16 +1216,11 @@ document.getElementById('editCatOverlay').addEventListener('click',e=>{if(e.targ
 document.getElementById('editCatSave').addEventListener('click',async()=>{
   const id=document.getElementById('editCatId').value;
   const d=await api('/admin/api/filter-categories/'+id,'PUT',{label:document.getElementById('editCatLabel').value.trim(),description:document.getElementById('editCatDesc').value.trim(),patterns:document.getElementById('editCatPatterns').value,enabled:document.getElementById('editCatEnabled').value==='true'});
-<<<<<<< HEAD
   if(d.ok){toast(T.toast_edited||'Updated ✓');document.getElementById('editCatOverlay').classList.remove('show');loadCategories();}else toast(d.error||(T.error_generic||'Error'),true);
-=======
-  if(d.ok){toast('تم التعديل ✓');document.getElementById('editCatOverlay').classList.remove('show');loadCategories();}else toast(d.error||'خطأ',true);
->>>>>>> origin/main
 });
 
 /* ── Activity ── */
 function actionLabel(a){
-<<<<<<< HEAD
   const m={
     'login_success':T.activity_login_success||'Login',
     'logout':T.activity_logout||'Logout',
@@ -2403,19 +1238,6 @@ async function loadActivity(){
   const logs=d.activity||[];
   const el=document.getElementById('activityLog');
   if(!logs.length){el.innerHTML=`<div class="empty-st"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>${T.no_activity||'No activity'}</div>`;return;}
-=======
-  const m={'login_success':'دخول ناجح','logout':'خروج','login_failed_bad_pw':'كلمة مرور خاطئة','login_failed_no_user':'مستخدم غير موجود','login_blocked_suspended':'دخول مرفوض (موقوف)'};
-  if(m[a])return m[a];
-  if(a?.startsWith('fetch:'))return'استعلام بريد: '+a.split(':')[1];
-  return a||'—';
-}
-async function loadActivity(){
-  document.getElementById('activityLog').innerHTML='<div class="empty-st">جارٍ التحميل…</div>';
-  const d=await api('/admin/api/activity');
-  const logs=d.activity||[];
-  const el=document.getElementById('activityLog');
-  if(!logs.length){el.innerHTML='<div class="empty-st"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>لا يوجد نشاط مسجّل بعد</div>';return;}
->>>>>>> origin/main
   el.innerHTML=logs.map(l=>`<div class="log-row">
     <div class="log-dot ${l.success!==false?'ok':'fail'}"></div>
     <div class="log-user">${esc(l.username||'—')}</div>
@@ -2426,7 +1248,6 @@ async function loadActivity(){
 }
 document.getElementById('refreshActivityBtn').addEventListener('click',loadActivity);
 
-<<<<<<< HEAD
 document.getElementById('clearActivityBtn').addEventListener('click',async()=>{
   if(!confirm(T.confirm_clear_activity||'Clear all?'))return;
   const btn=document.getElementById('clearActivityBtn');btn.disabled=true;
@@ -2436,21 +1257,6 @@ document.getElementById('clearActivityBtn').addEventListener('click',async()=>{
     const msg=(T.toast_cleared_n||'Cleared {n} ✓').replace('{n}',d.deleted_count||0);
     toast(msg);loadActivity();
   }else{toast(d.error||(T.error_generic||'Error'),true);}
-=======
-/* ── Clear Activity ── */
-document.getElementById('clearActivityBtn').addEventListener('click',async()=>{
-  if(!confirm('مسح جميع سجلات النشاط؟ لا يمكن التراجع عن هذا الإجراء.'))return;
-  const btn=document.getElementById('clearActivityBtn');
-  btn.disabled=true;
-  const d=await api('/admin/api/activity','DELETE');
-  btn.disabled=false;
-  if(d.ok){
-    toast(`تم مسح ${d.deleted_count||0} سجل ✓`);
-    loadActivity();
-  } else {
-    toast(d.error||'خطأ',true);
-  }
->>>>>>> origin/main
 });
 
 })();

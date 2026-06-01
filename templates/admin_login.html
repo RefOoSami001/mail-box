@@ -1,17 +1,9 @@
 <!DOCTYPE html>
-<<<<<<< HEAD
 <html lang="{{ lang }}" dir="{{ dir_attr }}" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{{ t('admin_login_page_title') }}</title>
-=======
-<html lang="ar" dir="rtl" data-theme="dark">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Farouk Account — دخول المشرف</title>
->>>>>>> origin/main
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
@@ -51,7 +43,6 @@
     }
     .theme-toggle:hover { color:var(--text); }
     .theme-toggle svg { width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round; }
-<<<<<<< HEAD
     .lang-switcher {
       position:fixed; top:1rem; right:1rem; z-index:20;
       display:flex; align-items:center; gap:.2rem;
@@ -66,8 +57,6 @@
     }
     .lang-btn:hover { background:var(--border2); color:var(--text2); }
     .lang-btn.active { background:var(--accent); color:#fff; }
-=======
->>>>>>> origin/main
     .card {
       position:relative; z-index:1; width:100%; max-width:420px; margin:1rem;
       background:var(--surface); border:1px solid var(--border); border-radius:24px;
@@ -102,10 +91,7 @@
     label { display:block; font-size:.71rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin-bottom:.45rem; }
     .inp-wrap { position:relative; }
     .inp-icon { position:absolute; right:.9rem; top:50%; transform:translateY(-50%); color:var(--muted); pointer-events:none; display:flex; }
-<<<<<<< HEAD
     [dir="ltr"] .inp-icon { right:auto; left:.9rem; }
-=======
->>>>>>> origin/main
     .inp-icon svg { width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round; }
     input {
       width:100%; background:rgba(242,95,122,.04); border:1px solid var(--border2);
@@ -113,10 +99,7 @@
       color:var(--text); font-family:'Alexandria',sans-serif; font-size:.93rem; outline:none;
       transition:border-color .2s,box-shadow .2s,background .2s;
     }
-<<<<<<< HEAD
     [dir="ltr"] input { padding:.82rem 1rem .82rem 2.5rem; }
-=======
->>>>>>> origin/main
     input:focus { border-color:rgba(242,95,122,.45); box-shadow:0 0 0 3px rgba(242,95,122,.1); background:rgba(242,95,122,.06); }
     input::placeholder { color:var(--muted); }
     button[type="submit"] {
@@ -136,7 +119,6 @@
 <body>
   <div class="glow g1"></div>
   <div class="glow g2"></div>
-<<<<<<< HEAD
 
   <button class="theme-toggle" id="themeBtn" title="{{ t('toggle_theme') }}">
     <svg id="iconMoon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -157,26 +139,11 @@
     <div class="admin-badge">{{ t('admin_login_badge') }}</div>
     <h1>{{ t('admin_login_heading') }}</h1>
     <p class="subtitle">{{ t('admin_login_subtitle') }}</p>
-=======
-  <button class="theme-toggle" id="themeBtn">
-    <svg id="iconMoon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-    <svg id="iconSun" viewBox="0 0 24 24" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg>
-  </button>
-  <div class="card">
-    <div class="logo">
-      <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-      <span class="logo-name">Farouk Account</span>
-    </div>
-    <div class="admin-badge">🔐 صلاحية المشرف</div>
-    <h1>دخول المشرف</h1>
-    <p class="subtitle">هذه الصفحة مخصصة للمشرفين فقط</p>
->>>>>>> origin/main
     {% if error %}
     <div class="error-box">⚠️ <span>{{ error }}</span></div>
     {% endif %}
     <form method="POST">
       <div class="field">
-<<<<<<< HEAD
         <label>{{ t('admin_login_username') }}</label>
         <div class="inp-wrap">
           <div class="inp-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
@@ -185,33 +152,16 @@
       </div>
       <div class="field">
         <label>{{ t('admin_login_password') }}</label>
-=======
-        <label>اسم المستخدم</label>
-        <div class="inp-wrap">
-          <div class="inp-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-          <input name="username" type="text" placeholder="admin" autocomplete="username" required />
-        </div>
-      </div>
-      <div class="field">
-        <label>كلمة المرور</label>
->>>>>>> origin/main
         <div class="inp-wrap">
           <div class="inp-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
           <input type="password" name="password" placeholder="••••••••" autocomplete="current-password" required />
         </div>
       </div>
-<<<<<<< HEAD
       <button type="submit">{{ t('admin_login_submit') }}</button>
     </form>
     <a class="back-link" href="/">{{ t('admin_login_back') }}</a>
   </div>
 
-=======
-      <button type="submit">دخول لوحة التحكم</button>
-    </form>
-    <a class="back-link" href="/">← عودة لدخول العملاء</a>
-  </div>
->>>>>>> origin/main
   <script>
     const html=document.documentElement,moon=document.getElementById('iconMoon'),sun=document.getElementById('iconSun');
     function applyTheme(t){html.setAttribute('data-theme',t);localStorage.setItem('mb-theme',t);moon.style.display=t==='dark'?'block':'none';sun.style.display=t==='light'?'block':'none';}
