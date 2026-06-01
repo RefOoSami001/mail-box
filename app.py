@@ -1,10 +1,7 @@
 import poplib
 import email as email_lib
 import os
-<<<<<<< HEAD
 import json
-=======
->>>>>>> origin/main
 import calendar
 import functools
 from email.header import decode_header
@@ -44,24 +41,17 @@ client_accounts_col   = db["client_accounts"]
 email_accounts_col    = db["email_accounts"]
 filter_categories_col = db["filter_categories"]
 login_activity_col    = db["login_activity"]
-<<<<<<< HEAD
 email_bodies_col      = db["email_bodies"]
-=======
->>>>>>> origin/main
 
 client_accounts_col.create_index("username", unique=True)
 email_accounts_col.create_index("email", unique=True)
 login_activity_col.create_index([("client_id", 1), ("timestamp", DESCENDING)])
 login_activity_col.create_index([("timestamp", DESCENDING)])
-<<<<<<< HEAD
 email_bodies_col.create_index("uid", unique=True)
-=======
->>>>>>> origin/main
 
 _cache: dict = {}
 FETCH_LIMIT = 60
 
-<<<<<<< HEAD
 # ─── i18n ────────────────────────────────────────────────────────
 
 SUPPORTED_LANGS = ["ar", "en", "fr"]
@@ -126,11 +116,6 @@ def inject_i18n():
 # ─── Helpers ─────────────────────────────────────────────────────
 
 def dt_iso(dt):
-=======
-
-def dt_iso(dt):
-    """Serialize a datetime to ISO string, always with UTC timezone info."""
->>>>>>> origin/main
     if not dt:
         return "—"
     if isinstance(dt, str):
@@ -141,10 +126,6 @@ def dt_iso(dt):
 
 
 def add_one_month(date_str):
-<<<<<<< HEAD
-=======
-    """Return date_str + 1 month as YYYY-MM-DD, or None if date_str is falsy."""
->>>>>>> origin/main
     if not date_str:
         return None
     try:
@@ -162,10 +143,6 @@ def add_one_month(date_str):
 
 
 def normalize_assigned_emails(raw_list):
-<<<<<<< HEAD
-=======
-    """Normalize assigned_emails to list of dicts (backward compat with old string format)."""
->>>>>>> origin/main
     result = []
     for item in (raw_list or []):
         if isinstance(item, str):
@@ -176,10 +153,6 @@ def normalize_assigned_emails(raw_list):
 
 
 def is_email_active(item):
-<<<<<<< HEAD
-=======
-    """Return True if today falls within the item's date range (or no dates set)."""
->>>>>>> origin/main
     today = datetime.now(timezone.utc).date().isoformat()
     start = item.get("start_date")
     end   = item.get("end_date")
@@ -274,11 +247,7 @@ def extract_body(msg):
                 plain = text
     if html:
         return html, "html"
-<<<<<<< HEAD
     return plain or tr("no_content"), "plain"
-=======
-    return plain or "(لا يوجد محتوى)", "plain"
->>>>>>> origin/main
 
 
 def format_date(date_str):
@@ -352,11 +321,7 @@ def fetch_email_messages(email_addr, pop3_password, pop3_host, pop3_port, limit=
             raw       = b"\n".join(raw_lines)
             msg       = email_lib.message_from_bytes(raw)
 
-<<<<<<< HEAD
             subject     = decode_str(msg.get("Subject", "")) or tr("no_content")
-=======
-            subject     = decode_str(msg.get("Subject", "")) or "(بدون موضوع)"
->>>>>>> origin/main
             sender_raw  = msg.get("From", "")
             sender_name, sender_addr = parseaddr(decode_str(sender_raw))
             body, body_type = extract_body(msg)
@@ -386,7 +351,6 @@ def fetch_email_messages(email_addr, pop3_password, pop3_host, pop3_port, limit=
 
     conn.quit()
 
-<<<<<<< HEAD
     # Persist bodies to MongoDB so all Gunicorn workers can read them
     for uid, body_doc in new_bodies.items():
         try:
@@ -400,8 +364,6 @@ def fetch_email_messages(email_addr, pop3_password, pop3_host, pop3_port, limit=
         except Exception:
             pass
 
-=======
->>>>>>> origin/main
     merged_summaries = new_summaries + existing["summaries"]
     merged_bodies    = {**existing["bodies"], **new_bodies}
     _cache[email_addr] = {"summaries": merged_summaries, "bodies": merged_bodies}
@@ -419,7 +381,6 @@ def login():
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "").strip()
         if not username or not password:
-<<<<<<< HEAD
             error = tr("err_enter_credentials")
         else:
             doc = client_accounts_col.find_one({"username": username})
@@ -431,19 +392,6 @@ def login():
                 log_activity(str(doc["_id"]), username, "login_blocked_suspended", get_client_ip(), False)
             elif not check_password_hash(doc["password_hash"], password):
                 error = tr("err_wrong_password")
-=======
-            error = "أدخل اسم المستخدم وكلمة المرور"
-        else:
-            doc = client_accounts_col.find_one({"username": username})
-            if not doc:
-                error = "اسم المستخدم غير موجود"
-                log_activity(None, username, "login_failed_no_user", get_client_ip(), False)
-            elif doc.get("status") == "suspended":
-                error = "تم تعليق هذا الحساب. تواصل مع المشرف."
-                log_activity(str(doc["_id"]), username, "login_blocked_suspended", get_client_ip(), False)
-            elif not check_password_hash(doc["password_hash"], password):
-                error = "كلمة المرور غير صحيحة"
->>>>>>> origin/main
                 log_activity(str(doc["_id"]), username, "login_failed_bad_pw", get_client_ip(), False)
             else:
                 session.permanent = True
@@ -473,10 +421,7 @@ def logout():
     user = session.get("client_username", "—")
     if cid:
         log_activity(cid, user, "logout", get_client_ip())
-<<<<<<< HEAD
     # Only remove client keys — preserves admin session in same browser
-=======
->>>>>>> origin/main
     session.pop("client_id", None)
     session.pop("client_username", None)
     session.pop("client_display", None)
@@ -498,11 +443,6 @@ def api_categories():
 @app.route("/api/my-emails")
 @client_required
 def api_my_emails():
-<<<<<<< HEAD
-=======
-    """Return ALL emails assigned to the client, with an 'expired' flag.
-    Expired emails are still returned so the dashboard can show them as expired."""
->>>>>>> origin/main
     doc = client_accounts_col.find_one({"_id": ObjectId(session["client_id"])})
     if not doc:
         return jsonify({"emails": []})
@@ -528,7 +468,6 @@ def api_fetch():
     category_id = (data.get("category_id") or "").strip()
 
     if not email_addr:
-<<<<<<< HEAD
         return jsonify({"error": tr("dash_invalid_email")}), 400
 
     acc = email_accounts_col.find_one({"email": email_addr})
@@ -537,27 +476,12 @@ def api_fetch():
 
     patterns = []
     category_label = tr("stat_active") if False else "الكل"
-=======
-        return jsonify({"error": "أدخل البريد الإلكتروني"}), 400
-
-    acc = email_accounts_col.find_one({"email": email_addr})
-    if not acc:
-        return jsonify({"error": "هذا البريد غير مسجّل في النظام. تواصل مع المشرف."}), 404
-
-    patterns = []
-    category_label = "الكل"
->>>>>>> origin/main
     if category_id:
         try:
             cat = filter_categories_col.find_one({"_id": ObjectId(category_id)})
             if cat:
-<<<<<<< HEAD
                 patterns       = cat.get("patterns", [])
                 category_label = cat["label"]
-=======
-                patterns      = cat.get("patterns", [])
-                category_label= cat["label"]
->>>>>>> origin/main
         except Exception:
             pass
 
@@ -571,15 +495,9 @@ def api_fetch():
     except Exception as e:
         cached = _cache.get(email_addr, {}).get("summaries", [])
         if not cached:
-<<<<<<< HEAD
             return jsonify({"error": f"{tr('error_generic')}: {str(e)[:120]}"}), 503
         summaries = cached
         warning = tr("dash_cached_warning")
-=======
-            return jsonify({"error": f"فشل الاتصال بالبريد: {str(e)[:120]}"}), 503
-        summaries = cached
-        warning = "تعذّر تحديث الرسائل — يتم عرض نسخة محفوظة مؤقتاً"
->>>>>>> origin/main
         if patterns:
             summaries = [m for m in summaries if any(p.lower() in m["subject"].lower() for p in patterns)]
         cutoff = datetime.now(timezone.utc) - timedelta(minutes=20)
@@ -610,23 +528,16 @@ def api_fetch():
 @app.route("/api/message/<uid>")
 @client_required
 def api_message(uid):
-<<<<<<< HEAD
     # 1. Try in-memory cache first (fast path)
-=======
->>>>>>> origin/main
     for email_addr, cached in _cache.items():
         bodies = cached.get("bodies", {})
         if uid in bodies:
             return jsonify(bodies[uid])
-<<<<<<< HEAD
     # 2. Fall back to MongoDB (works across all Gunicorn workers)
     doc = email_bodies_col.find_one({"uid": uid}, {"_id": 0, "body": 1, "body_type": 1})
     if doc:
         return jsonify({"body": doc["body"], "body_type": doc["body_type"]})
     return jsonify({"error": tr("dash_msg_not_in_cache")}), 404
-=======
-    return jsonify({"error": "الرسالة غير موجودة في الذاكرة المؤقتة"}), 404
->>>>>>> origin/main
 
 
 # ─── Admin Routes ─────────────────────────────────────────────────
@@ -644,11 +555,7 @@ def admin_login():
             session["admin_logged_in"] = True
             session["admin_username"]  = u
             return redirect(url_for("admin_panel"))
-<<<<<<< HEAD
         error = tr("err_admin_wrong_credentials")
-=======
-        error = "بيانات الدخول غير صحيحة"
->>>>>>> origin/main
     return render_template("admin_login.html", error=error)
 
 
@@ -734,11 +641,7 @@ def admin_create_client():
         })
         return jsonify({"ok": True, "id": str(result.inserted_id)})
     except DuplicateKeyError:
-<<<<<<< HEAD
         return jsonify({"error": f"Username '{username}' already taken"}), 409
-=======
-        return jsonify({"error": f"اسم المستخدم '{username}' مستخدم مسبقاً"}), 409
->>>>>>> origin/main
 
 
 @app.route("/admin/api/clients/<client_id>", methods=["PUT"])
@@ -759,11 +662,7 @@ def admin_edit_client(client_id):
     try:
         result = client_accounts_col.update_one({"_id": ObjectId(client_id)}, {"$set": update})
     except DuplicateKeyError:
-<<<<<<< HEAD
         return jsonify({"error": "Username already taken"}), 409
-=======
-        return jsonify({"error": "اسم المستخدم مستخدم مسبقاً"}), 409
->>>>>>> origin/main
     except Exception:
         return jsonify({"error": "Invalid id"}), 400
     if result.matched_count == 0:
@@ -797,22 +696,14 @@ def admin_bulk_clients():
         if not line:
             continue
         if ":" not in line:
-<<<<<<< HEAD
             error_list.append(f"Bad format: {line[:50]}")
-=======
-            error_list.append(f"تنسيق خاطئ: {line[:50]}")
->>>>>>> origin/main
             errors += 1
             continue
         parts    = line.split(":", 1)
         username = parts[0].strip().lower()
         password = parts[1].strip()
         if not username or not password:
-<<<<<<< HEAD
             error_list.append(f"Empty field: {line[:50]}")
-=======
-            error_list.append(f"حقل فارغ: {line[:50]}")
->>>>>>> origin/main
             errors += 1
             continue
         try:
@@ -853,10 +744,6 @@ def admin_client_activity(client_id):
 @app.route("/admin/api/clients/<client_id>/emails", methods=["GET"])
 @admin_required
 def admin_get_client_emails(client_id):
-<<<<<<< HEAD
-=======
-    """Get the list of emails assigned to a client (with dates)."""
->>>>>>> origin/main
     try:
         doc = client_accounts_col.find_one({"_id": ObjectId(client_id)})
     except Exception:
@@ -870,10 +757,6 @@ def admin_get_client_emails(client_id):
 @app.route("/admin/api/clients/<client_id>/emails", methods=["POST"])
 @admin_required
 def admin_assign_client_email(client_id):
-<<<<<<< HEAD
-=======
-    """Assign an email to a client, optionally with start/end dates."""
->>>>>>> origin/main
     data       = request.json or {}
     email      = (data.get("email") or "").strip().lower()
     start_date = (data.get("start_date") or "").strip() or None
@@ -882,11 +765,7 @@ def admin_assign_client_email(client_id):
         return jsonify({"error": "email required"}), 400
     acc = email_accounts_col.find_one({"email": email})
     if not acc:
-<<<<<<< HEAD
         return jsonify({"error": f"Email '{email}' not found in email accounts"}), 404
-=======
-        return jsonify({"error": f"البريد '{email}' غير موجود في قائمة حسابات البريد"}), 404
->>>>>>> origin/main
     try:
         doc = client_accounts_col.find_one({"_id": ObjectId(client_id)})
     except Exception:
@@ -895,11 +774,7 @@ def admin_assign_client_email(client_id):
         return jsonify({"error": "Client not found"}), 404
     assigned = normalize_assigned_emails(doc.get("assigned_emails", []))
     if any(item["email"] == email for item in assigned):
-<<<<<<< HEAD
         return jsonify({"error": f"Email '{email}' already assigned to this client"}), 409
-=======
-        return jsonify({"error": f"البريد '{email}' مخصص مسبقاً لهذا العميل"}), 409
->>>>>>> origin/main
     assigned.append({
         "email":       email,
         "start_date":  start_date,
@@ -916,10 +791,6 @@ def admin_assign_client_email(client_id):
 @app.route("/admin/api/clients/<client_id>/emails/<path:email>", methods=["PUT"])
 @admin_required
 def admin_edit_client_email_dates(client_id, email):
-<<<<<<< HEAD
-=======
-    """Edit start/end dates for an assigned email."""
->>>>>>> origin/main
     data       = request.json or {}
     start_date = (data.get("start_date") or "").strip() or None
     end_date   = (data.get("end_date") or "").strip() or None
@@ -950,10 +821,6 @@ def admin_edit_client_email_dates(client_id, email):
 @app.route("/admin/api/clients/<client_id>/emails/<path:email>", methods=["DELETE"])
 @admin_required
 def admin_remove_client_email(client_id, email):
-<<<<<<< HEAD
-=======
-    """Remove an email assignment from a client."""
->>>>>>> origin/main
     email = email.strip().lower()
     try:
         doc = client_accounts_col.find_one({"_id": ObjectId(client_id)})
@@ -973,12 +840,6 @@ def admin_remove_client_email(client_id, email):
 @app.route("/admin/api/clients/<client_id>/emails/renew-all", methods=["POST"])
 @admin_required
 def admin_renew_all_client_emails(client_id):
-<<<<<<< HEAD
-=======
-    """Renew all assigned emails for a client by shifting dates +1 month.
-    New start_date = old end_date; new end_date = old end_date + 1 month.
-    For emails without an end_date the dates are left unchanged."""
->>>>>>> origin/main
     try:
         doc = client_accounts_col.find_one({"_id": ObjectId(client_id)})
     except Exception:
@@ -1003,11 +864,7 @@ def admin_renew_all_client_emails(client_id):
     return jsonify({"ok": True, "updated": updated})
 
 
-<<<<<<< HEAD
 # ── Admin API: Email Accounts ──────────────────────────────────────
-=======
-# ── Admin API: Email Accounts (admin-managed) ─────────────────────
->>>>>>> origin/main
 
 @app.route("/admin/api/email-accounts")
 @admin_required
@@ -1033,7 +890,6 @@ def admin_add_email():
         conn = connect_pop3(host, port, em, pw)
         conn.quit()
     except Exception as e:
-<<<<<<< HEAD
         return jsonify({"error": f"Connection failed: {str(e)[:120]}"}), 400
     try:
         result = email_accounts_col.insert_one({
@@ -1043,98 +899,51 @@ def admin_add_email():
             "pop3_port":     port,
             "added_at":      datetime.now(timezone.utc),
             "added_by":      session.get("admin_username", "admin"),
-=======
-        return jsonify({"error": f"فشل الاتصال بالخادم: {str(e)[:120]}"}), 400
-    try:
-        result = email_accounts_col.insert_one({
-            "email":        em,
-            "pop3_password": pw,
-            "pop3_host":    host,
-            "pop3_port":    port,
-            "added_at":     datetime.now(timezone.utc),
-            "added_by":     session.get("admin_username", "admin"),
->>>>>>> origin/main
         })
         _cache.pop(em, None)
         return jsonify({"ok": True, "id": str(result.inserted_id)})
     except DuplicateKeyError:
-<<<<<<< HEAD
         return jsonify({"error": f"Email '{em}' already added"}), 409
-=======
-        return jsonify({"error": f"البريد '{em}' مضاف مسبقاً"}), 409
->>>>>>> origin/main
 
 
 @app.route("/admin/api/email-accounts/bulk", methods=["POST"])
 @admin_required
 def admin_bulk_emails():
-<<<<<<< HEAD
-=======
-    """Bulk-add email accounts in email:password format, one per line."""
->>>>>>> origin/main
     data = request.json or {}
     raw  = (data.get("text") or "").strip()
     host = (data.get("host") or DEFAULT_HOST).strip() or DEFAULT_HOST
     port = int(data.get("port") or DEFAULT_PORT)
     if not raw:
         return jsonify({"error": "No text provided"}), 400
-<<<<<<< HEAD
     added = skipped = errors = 0
     error_list = []
-=======
-
-    added = skipped = errors = 0
-    error_list = []
-
->>>>>>> origin/main
     for line in raw.splitlines():
         line = line.strip()
         if not line:
             continue
         if ":" not in line:
-<<<<<<< HEAD
             error_list.append(f"Bad format: {line[:60]}")
-=======
-            error_list.append(f"تنسيق خاطئ: {line[:60]}")
->>>>>>> origin/main
             errors += 1
             continue
         parts = line.split(":", 1)
         em = parts[0].strip().lower()
         pw = parts[1].strip()
         if not em or not pw:
-<<<<<<< HEAD
             error_list.append(f"Empty field: {line[:60]}")
             errors += 1
             continue
         if "@" not in em:
             error_list.append(f"Invalid email: {em[:60]}")
-=======
-            error_list.append(f"حقل فارغ: {line[:60]}")
-            errors += 1
-            continue
-        if "@" not in em:
-            error_list.append(f"بريد غير صالح: {em[:60]}")
->>>>>>> origin/main
             errors += 1
             continue
         try:
             email_accounts_col.insert_one({
-<<<<<<< HEAD
                 "email":         em,
                 "pop3_password": pw,
                 "pop3_host":     host,
                 "pop3_port":     port,
                 "added_at":      datetime.now(timezone.utc),
                 "added_by":      session.get("admin_username", "admin"),
-=======
-                "email":        em,
-                "pop3_password": pw,
-                "pop3_host":    host,
-                "pop3_port":    port,
-                "added_at":     datetime.now(timezone.utc),
-                "added_by":     session.get("admin_username", "admin"),
->>>>>>> origin/main
             })
             _cache.pop(em, None)
             added += 1
@@ -1143,10 +952,6 @@ def admin_bulk_emails():
         except Exception as exc:
             error_list.append(f"{em}: {exc}")
             errors += 1
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/main
     return jsonify({"added": added, "skipped": skipped, "errors": errors, "error_details": error_list[:20]})
 
 
@@ -1222,18 +1027,9 @@ def admin_create_category():
     raw_pats = (data.get("patterns") or "")
     if not label:
         return jsonify({"error": "label required"}), 400
-<<<<<<< HEAD
     patterns = [p.strip() for p in raw_pats.splitlines() if p.strip()]
     count    = filter_categories_col.count_documents({})
     filter_categories_col.insert_one({
-=======
-    if isinstance(raw_pats, list):
-        patterns = [p.strip() for p in raw_pats if p.strip()]
-    else:
-        patterns = [p.strip() for p in raw_pats.splitlines() if p.strip()]
-    count = filter_categories_col.count_documents({})
-    result = filter_categories_col.insert_one({
->>>>>>> origin/main
         "label":       label,
         "description": desc,
         "patterns":    patterns,
@@ -1241,17 +1037,12 @@ def admin_create_category():
         "order":       count,
         "created_at":  datetime.now(timezone.utc),
     })
-<<<<<<< HEAD
     return jsonify({"ok": True})
-=======
-    return jsonify({"ok": True, "id": str(result.inserted_id)})
->>>>>>> origin/main
 
 
 @app.route("/admin/api/filter-categories/<cat_id>", methods=["PUT"])
 @admin_required
 def admin_edit_category(cat_id):
-<<<<<<< HEAD
     data     = request.json or {}
     label    = (data.get("label") or "").strip()
     desc     = (data.get("description") or "").strip()
@@ -1265,26 +1056,6 @@ def admin_edit_category(cat_id):
             {"_id": ObjectId(cat_id)},
             {"$set": {"label": label, "description": desc, "patterns": patterns, "enabled": bool(enabled)}}
         )
-=======
-    data   = request.json or {}
-    update = {}
-    if "label" in data and data["label"].strip():
-        update["label"] = data["label"].strip()
-    if "description" in data:
-        update["description"] = data["description"].strip()
-    if "patterns" in data:
-        raw = data["patterns"]
-        if isinstance(raw, list):
-            update["patterns"] = [p.strip() for p in raw if p.strip()]
-        else:
-            update["patterns"] = [p.strip() for p in raw.splitlines() if p.strip()]
-    if "enabled" in data:
-        update["enabled"] = bool(data["enabled"])
-    if not update:
-        return jsonify({"error": "nothing to update"}), 400
-    try:
-        filter_categories_col.update_one({"_id": ObjectId(cat_id)}, {"$set": update})
->>>>>>> origin/main
     except Exception:
         return jsonify({"error": "Invalid id"}), 400
     return jsonify({"ok": True})
@@ -1304,13 +1075,8 @@ def admin_delete_category(cat_id):
 
 @app.route("/admin/api/activity")
 @admin_required
-<<<<<<< HEAD
 def admin_activity():
     logs = list(login_activity_col.find({}, {"_id": 0}).sort("timestamp", DESCENDING).limit(100))
-=======
-def admin_all_activity():
-    logs = list(login_activity_col.find({}, {"_id": 0}).sort("timestamp", DESCENDING).limit(200))
->>>>>>> origin/main
     for l in logs:
         if l.get("timestamp"):
             l["timestamp"] = dt_iso(l["timestamp"])
@@ -1320,21 +1086,9 @@ def admin_all_activity():
 @app.route("/admin/api/activity", methods=["DELETE"])
 @admin_required
 def admin_clear_activity():
-<<<<<<< HEAD
-=======
-    """Delete all activity logs from the database."""
->>>>>>> origin/main
     result = login_activity_col.delete_many({})
     return jsonify({"ok": True, "deleted_count": result.deleted_count})
 
 
 if __name__ == "__main__":
-<<<<<<< HEAD
     app.run(debug=True)
-=======
-    app.run(
-        host="0.0.0.0",
-        port=int(os.environ.get("PORT", 5000)),
-        debug=os.environ.get("FLASK_DEBUG", "0") == "1",
-    )
->>>>>>> origin/main
