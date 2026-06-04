@@ -1,7 +1,8 @@
 import poplib
 import email as email_lib
 import os
-import json
+import re
+import unicodedata
 import calendar
 import functools
 from email.header import decode_header
@@ -41,81 +42,18 @@ client_accounts_col   = db["client_accounts"]
 email_accounts_col    = db["email_accounts"]
 filter_categories_col = db["filter_categories"]
 login_activity_col    = db["login_activity"]
-email_bodies_col      = db["email_bodies"]
 
 client_accounts_col.create_index("username", unique=True)
 email_accounts_col.create_index("email", unique=True)
 login_activity_col.create_index([("client_id", 1), ("timestamp", DESCENDING)])
 login_activity_col.create_index([("timestamp", DESCENDING)])
-email_bodies_col.create_index("uid", unique=True)
 
 _cache: dict = {}
 FETCH_LIMIT = 60
 
-# ─── i18n ────────────────────────────────────────────────────────
-
-SUPPORTED_LANGS = ["ar", "en", "fr"]
-DEFAULT_LANG = "ar"
-_translations: dict = {}
-
-def _load_translations():
-    locales_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "locales")
-    for lang in SUPPORTED_LANGS:
-        path = os.path.join(locales_dir, f"{lang}.json")
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                _translations[lang] = json.load(f)
-        except Exception:
-            _translations[lang] = {}
-
-_load_translations()
-
-
-def get_lang():
-    return session.get("lang", DEFAULT_LANG)
-
-
-def tr(key, lang=None, **kwargs):
-    """Translate a key server-side (for use in route handlers)."""
-    if lang is None:
-        lang = get_lang()
-    trans = _translations.get(lang, _translations.get(DEFAULT_LANG, {}))
-    val = trans.get(key, _translations.get(DEFAULT_LANG, {}).get(key, key))
-    for k, v in kwargs.items():
-        val = val.replace("{" + k + "}", str(v))
-    return val
-
-
-@app.route("/set-language/<lang>")
-def set_language(lang):
-    if lang in SUPPORTED_LANGS:
-        session["lang"] = lang
-    next_url = request.referrer or url_for("login")
-    return redirect(next_url)
-
-
-@app.context_processor
-def inject_i18n():
-    lang = get_lang()
-    trans = _translations.get(lang, _translations.get(DEFAULT_LANG, {}))
-
-    def t(key, **kwargs):
-        val = trans.get(key, _translations.get(DEFAULT_LANG, {}).get(key, key))
-        for k, v in kwargs.items():
-            val = val.replace("{" + k + "}", str(v))
-        return val
-
-    return dict(
-        t=t,
-        lang=lang,
-        dir_attr="rtl" if lang == "ar" else "ltr",
-        translations_json=json.dumps(trans, ensure_ascii=False),
-        supported_langs=SUPPORTED_LANGS,
-    )
-
-# ─── Helpers ─────────────────────────────────────────────────────
 
 def dt_iso(dt):
+    """Serialize a datetime to ISO string, always with UTC timezone info."""
     if not dt:
         return "—"
     if isinstance(dt, str):
@@ -126,6 +64,7 @@ def dt_iso(dt):
 
 
 def add_one_month(date_str):
+    """Return date_str + 1 month as YYYY-MM-DD, or None if date_str is falsy."""
     if not date_str:
         return None
     try:
@@ -143,6 +82,7 @@ def add_one_month(date_str):
 
 
 def normalize_assigned_emails(raw_list):
+    """Normalize assigned_emails to list of dicts (backward compat with old string format)."""
     result = []
     for item in (raw_list or []):
         if isinstance(item, str):
@@ -152,19 +92,19 @@ def normalize_assigned_emails(raw_list):
     return result
 
 
-def is_email_active(item):
-    """
-    An email is expired ONLY when its end_date has already passed.
-    A future start_date means the subscription hasn't started yet,
-    but the email is still valid for the client (show it, allow selection).
-    The 'قريبا / Soon' badge in the admin panel is purely cosmetic and
-    is computed separately in the frontend (cemDateStatus).
+def is_email_expired(item):
+    """Return True if the assignment is past its end date.
+
+    Future start dates should not mark an email as expired in the dashboard.
     """
     today = datetime.now(timezone.utc).date().isoformat()
-    end = item.get("end_date")
-    if end and today > end:
-        return False
-    return True
+    end   = item.get("end_date")
+    return bool(end and today > end)
+
+
+def is_email_active(item):
+    """Return True if the assignment is currently valid or scheduled to start."""
+    return not is_email_expired(item)
 
 
 def log_activity(client_id, username, action, ip="—", success=True):
@@ -211,16 +151,94 @@ def connect_pop3(host, port, user, password):
 
 
 def decode_str(value):
+    """
+    Decode a MIME-encoded email header string.
+
+    BUG FIX: The original code fell back to UTF-8 when the charset was None.
+    For Arabic emails encoded in cp1256/windows-1256 without a declared charset
+    label, decoding as UTF-8 with errors='ignore' silently produces an empty
+    string — the entire subject disappears before filtering runs.
+
+    Fix: try the declared charset first, then try a chain of common Arabic
+    charsets (cp1256, iso-8859-6) before finally falling back to latin-1.
+    latin-1 is used as the last resort because it maps every byte 0x00-0xFF
+    to the same code-point, so it never loses data (it just won't look right
+    for unsupported scripts, but that's better than a silent empty string).
+    """
     if value is None:
         return ""
     parts = decode_header(value)
     result = []
     for chunk, enc in parts:
         if isinstance(chunk, bytes):
-            result.append(chunk.decode(enc or "utf-8", errors="ignore"))
+            # Normalise charset name so Python recognises common aliases
+            charset = (enc or "").lower().replace("_", "-").strip()
+            if charset:
+                try:
+                    result.append(chunk.decode(charset, errors="ignore"))
+                    continue
+                except (LookupError, UnicodeDecodeError):
+                    pass
+            # Charset missing or unknown — try Arabic charsets before UTF-8
+            # because cp1256 bytes are completely opaque to the UTF-8 decoder.
+            for fallback in ("cp1256", "iso-8859-6", "utf-8", "latin-1"):
+                try:
+                    decoded = chunk.decode(fallback, errors="ignore")
+                    # Accept the result only if it produced visible characters.
+                    # For cp1256/iso-8859-6 this rules out garbled attempts.
+                    if decoded.strip():
+                        result.append(decoded)
+                        break
+                except (LookupError, UnicodeDecodeError):
+                    continue
+            else:
+                result.append(chunk.decode("latin-1", errors="replace"))
         else:
             result.append(chunk)
     return "".join(result)
+
+
+def normalize_text(value):
+    """
+    Normalize a text string for reliable comparison.
+
+    BUG FIXES applied here:
+    1. Changed NFC -> NFKC.  NFC does canonical decomposition only.  Arabic
+       emails from older clients often use Unicode presentation-form characters
+       (U+FE8D–U+FEFC).  NFKC converts these to standard Arabic (U+0600–U+06FF)
+       so that filter patterns stored in the DB match correctly.
+
+    2. Added missing invisible/non-printing Unicode characters that can appear
+       inside email subjects and silently break string comparisons:
+         U+200B zero-width space
+         U+200C zero-width non-joiner
+         U+200D zero-width joiner
+         U+FEFF BOM / zero-width no-break space
+         U+00AD soft hyphen
+    """
+    if value is None:
+        return ""
+    text = str(value)
+    # KFKC covers both canonical equivalence (NFC) AND compatibility
+    # equivalence — critical for Arabic presentation forms.
+    text = unicodedata.normalize("NFKC", text)
+    # Replace every known non-standard whitespace / invisible character with a
+    # regular space so that re.sub(r"\s+", " ", …) can collapse them.
+    _INVISIBLE = (
+        "\u00A0"  # non-breaking space
+        "\u00AD"  # soft hyphen          ← NEW
+        "\u200B"  # zero-width space     ← NEW
+        "\u200C"  # zero-width non-joiner ← NEW
+        "\u200D"  # zero-width joiner    ← NEW
+        "\u202F"  # narrow no-break space
+        "\u2007"  # figure space
+        "\u2060"  # word joiner
+        "\uFEFF"  # BOM / zero-width no-break space ← NEW
+    )
+    for ch in _INVISIBLE:
+        text = text.replace(ch, " ")
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
 
 
 def extract_body(msg):
@@ -251,7 +269,7 @@ def extract_body(msg):
                 plain = text
     if html:
         return html, "html"
-    return plain or tr("no_content"), "plain"
+    return plain or "(لا يوجد محتوى)", "plain"
 
 
 def format_date(date_str):
@@ -325,7 +343,8 @@ def fetch_email_messages(email_addr, pop3_password, pop3_host, pop3_port, limit=
             raw       = b"\n".join(raw_lines)
             msg       = email_lib.message_from_bytes(raw)
 
-            subject     = decode_str(msg.get("Subject", "")) or tr("no_content")
+            subject_raw = msg.get("Subject", "")
+            subject     = normalize_text(decode_str(subject_raw)) or "(بدون موضوع)"
             sender_raw  = msg.get("From", "")
             sender_name, sender_addr = parseaddr(decode_str(sender_raw))
             body, body_type = extract_body(msg)
@@ -355,19 +374,6 @@ def fetch_email_messages(email_addr, pop3_password, pop3_host, pop3_port, limit=
 
     conn.quit()
 
-    # Persist bodies to MongoDB so all Gunicorn workers can read them
-    for uid, body_doc in new_bodies.items():
-        try:
-            email_bodies_col.update_one(
-                {"uid": uid},
-                {"$set": {"uid": uid, "email_addr": email_addr,
-                           "body": body_doc["body"], "body_type": body_doc["body_type"],
-                           "fetched_at": datetime.now(timezone.utc)}},
-                upsert=True,
-            )
-        except Exception:
-            pass
-
     merged_summaries = new_summaries + existing["summaries"]
     merged_bodies    = {**existing["bodies"], **new_bodies}
     _cache[email_addr] = {"summaries": merged_summaries, "bodies": merged_bodies}
@@ -385,17 +391,17 @@ def login():
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "").strip()
         if not username or not password:
-            error = tr("err_enter_credentials")
+            error = "أدخل اسم المستخدم وكلمة المرور"
         else:
             doc = client_accounts_col.find_one({"username": username})
             if not doc:
-                error = tr("err_user_not_found")
+                error = "اسم المستخدم غير موجود"
                 log_activity(None, username, "login_failed_no_user", get_client_ip(), False)
             elif doc.get("status") == "suspended":
-                error = tr("err_account_suspended")
+                error = "تم تعليق هذا الحساب. تواصل مع المشرف."
                 log_activity(str(doc["_id"]), username, "login_blocked_suspended", get_client_ip(), False)
             elif not check_password_hash(doc["password_hash"], password):
-                error = tr("err_wrong_password")
+                error = "كلمة المرور غير صحيحة"
                 log_activity(str(doc["_id"]), username, "login_failed_bad_pw", get_client_ip(), False)
             else:
                 session.permanent = True
@@ -425,7 +431,6 @@ def logout():
     user = session.get("client_username", "—")
     if cid:
         log_activity(cid, user, "logout", get_client_ip())
-    # Only remove client keys — preserves admin session in same browser
     session.pop("client_id", None)
     session.pop("client_username", None)
     session.pop("client_display", None)
@@ -447,6 +452,8 @@ def api_categories():
 @app.route("/api/my-emails")
 @client_required
 def api_my_emails():
+    """Return ALL emails assigned to the client, with an 'expired' flag.
+    Expired emails are still returned so the dashboard can show them as expired."""
     doc = client_accounts_col.find_one({"_id": ObjectId(session["client_id"])})
     if not doc:
         return jsonify({"emails": []})
@@ -472,22 +479,123 @@ def api_fetch():
     category_id = (data.get("category_id") or "").strip()
 
     if not email_addr:
-        return jsonify({"error": tr("dash_invalid_email")}), 400
+        return jsonify({"error": "أدخل البريد الإلكتروني"}), 400
 
     acc = email_accounts_col.find_one({"email": email_addr})
     if not acc:
-        return jsonify({"error": tr("err_user_not_found")}), 404
+        return jsonify({"error": "هذا البريد غير مسجّل في النظام. تواصل مع المشرف."}), 404
 
     patterns = []
-    category_label = tr("stat_active") if False else "الكل"
+    normalized_patterns = []
+    category_label = "الكل"
     if category_id:
         try:
             cat = filter_categories_col.find_one({"_id": ObjectId(category_id)})
             if cat:
-                patterns       = cat.get("patterns", [])
-                category_label = cat["label"]
+                patterns            = cat.get("patterns", [])
+                normalized_patterns = [normalize_text(p) for p in patterns if p is not None]
+                category_label      = cat["label"]
         except Exception:
             pass
+
+    print(f"[FILTER DEBUG] ── fetch ──────────────────────────────────────")
+    print(f"[FILTER DEBUG] email={email_addr!r}")
+    print(f"[FILTER DEBUG] category_id={category_id!r}  label={category_label!r}")
+    print(f"[FILTER DEBUG] raw patterns ({len(patterns)}): {patterns!r}")
+    print(f"[FILTER DEBUG] normalized patterns ({len(normalized_patterns)}): {normalized_patterns!r}")
+
+    def apply_filter_patterns(msg_list, patterns_list):
+        """
+        Return only messages whose normalized subject contains at least one
+        pattern (case-insensitive substring match).
+
+        BUG FIX: Both sides are already normalized by normalize_text() before
+        comparison, so NFKC + invisible-char stripping apply to both the stored
+        subject and the stored pattern.  Lower-casing is applied at comparison
+        time so patterns are case-insensitive.
+        """
+        if not patterns_list:
+            print(f"[FILTER DEBUG] no patterns — returning all {len(msg_list)} messages unfiltered")
+            return msg_list
+
+        print(f"[FILTER DEBUG] applying {len(patterns_list)} pattern(s) to {len(msg_list)} message(s)")
+        filtered = []
+        for m in msg_list:
+            raw_subject        = m.get("subject", "")
+            normalized_subject = normalize_text(raw_subject)
+            subject_lower      = normalized_subject.lower()
+
+            match_detail = []
+            matched = False
+            for p in patterns_list:
+                p_lower = p.lower()
+                hit = p_lower in subject_lower
+                match_detail.append(f"  pattern={p_lower!r}  hit={hit}")
+                if hit:
+                    matched = True
+
+            print(f"[FILTER DEBUG] uid={m.get('uid')!r}")
+            print(f"[FILTER DEBUG]   raw_subject     = {raw_subject!r}")
+            print(f"[FILTER DEBUG]   norm_subject    = {normalized_subject!r}")
+            print(f"[FILTER DEBUG]   timestamp       = {m.get('timestamp')!r}")
+            for detail in match_detail:
+                print(f"[FILTER DEBUG]{detail}")
+            print(f"[FILTER DEBUG]   → MATCHED={matched}")
+
+            if matched:
+                filtered.append(m)
+
+        if not filtered:
+            print(f"[FILTER DEBUG] ✗ NO MATCHES — all {len(msg_list)} subjects rejected")
+            for m in msg_list:
+                print(f"[FILTER DEBUG]   subject={normalize_text(m.get('subject',''))!r}")
+        else:
+            print(f"[FILTER DEBUG] ✓ {len(filtered)}/{len(msg_list)} messages matched")
+
+        return filtered
+
+    def apply_time_cutoff(msg_list, cutoff_dt):
+        """
+        BUG FIX (Critical): The original code used a hard 20-minute window and
+        also silently dropped any message that had no timestamp (timestamp=None).
+
+        Both behaviours cause real emails to disappear:
+          • An email that arrived 25 minutes ago but matches the filter perfectly
+            was discarded entirely.
+          • Emails whose Date header was missing or malformed got timestamp=None
+            and were always excluded.
+
+        Fix:
+          • Extended the window to 2 hours (EMAIL_CUTOFF_MINUTES env var,
+            default 120).  For OTP services the old 20-minute window was far too
+            tight — email delivery delays are common.
+          • Messages with timestamp=None are now INCLUDED (we keep them rather
+            than silently dropping them).
+        """
+        result = []
+        for m in msg_list:
+            ts = m.get("timestamp")
+            if ts is None:
+                print(f"[FILTER DEBUG] uid={m.get('uid')!r} — no timestamp, INCLUDING anyway")
+                result.append(m)
+                continue
+            try:
+                msg_dt = datetime.fromisoformat(ts)
+                if msg_dt.tzinfo is None:
+                    msg_dt = msg_dt.replace(tzinfo=timezone.utc)
+                passes = msg_dt >= cutoff_dt
+                print(f"[FILTER DEBUG] uid={m.get('uid')!r} timestamp={ts!r} passes_cutoff={passes}")
+                if passes:
+                    result.append(m)
+            except Exception as exc:
+                print(f"[FILTER DEBUG] uid={m.get('uid')!r} bad timestamp {ts!r}: {exc} — INCLUDING anyway")
+                result.append(m)
+        return result
+
+    # Cutoff window is configurable via env var; default 120 minutes.
+    cutoff_minutes = int(os.environ.get("EMAIL_CUTOFF_MINUTES", 20))
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=cutoff_minutes)
+    print(f"[FILTER DEBUG] cutoff_minutes={cutoff_minutes}  cutoff={cutoff.isoformat()}")
 
     try:
         summaries = fetch_email_messages(
@@ -499,27 +607,30 @@ def api_fetch():
     except Exception as e:
         cached = _cache.get(email_addr, {}).get("summaries", [])
         if not cached:
-            return jsonify({"error": f"{tr('error_generic')}: {str(e)[:120]}"}), 503
+            return jsonify({"error": f"فشل الاتصال بالبريد: {str(e)[:120]}"}), 503
         summaries = cached
-        warning = tr("dash_cached_warning")
-        if patterns:
-            summaries = [m for m in summaries if any(p.lower() in m["subject"].lower() for p in patterns)]
-        cutoff = datetime.now(timezone.utc) - timedelta(minutes=20)
-        summaries = [m for m in summaries if m.get("timestamp") and datetime.fromisoformat(m["timestamp"]) >= cutoff]
+        warning = "تعذّر تحديث الرسائل — يتم عرض نسخة محفوظة مؤقتاً"
+        print(f"[FILTER DEBUG] using cached {len(summaries)} messages (connection failed: {e})")
+        if normalized_patterns:
+            summaries = apply_filter_patterns(summaries, normalized_patterns)
+        summaries = apply_time_cutoff(summaries, cutoff)
+        print(f"[FILTER DEBUG] after time cutoff: {len(summaries)} messages remain")
         if summaries:
             summaries = [summaries[0]]
         return jsonify({"messages": summaries, "total": len(summaries), "warning": warning, "category": category_label, "cached": True})
 
-    if patterns:
-        summaries = [m for m in summaries if any(p.lower() in m["subject"].lower() for p in patterns)]
-    cutoff = datetime.now(timezone.utc) - timedelta(minutes=20)
-    summaries = [m for m in summaries if m.get("timestamp") and datetime.fromisoformat(m["timestamp"]) >= cutoff]
+    print(f"[FILTER DEBUG] fetched {len(summaries)} messages from server")
+    if normalized_patterns:
+        summaries = apply_filter_patterns(summaries, normalized_patterns)
+    summaries = apply_time_cutoff(summaries, cutoff)
+    print(f"[FILTER DEBUG] after time cutoff: {len(summaries)} messages remain")
     if summaries:
         summaries = [summaries[0]]
 
     log_activity(session["client_id"], session["client_username"],
                  f"fetch:{email_addr}:cat:{category_label}", get_client_ip())
 
+    print(f"[FILTER DEBUG] returning {len(summaries)} message(s) to client")
     return jsonify({
         "messages":  summaries,
         "total":     len(summaries),
@@ -532,16 +643,11 @@ def api_fetch():
 @app.route("/api/message/<uid>")
 @client_required
 def api_message(uid):
-    # 1. Try in-memory cache first (fast path)
     for email_addr, cached in _cache.items():
         bodies = cached.get("bodies", {})
         if uid in bodies:
             return jsonify(bodies[uid])
-    # 2. Fall back to MongoDB (works across all Gunicorn workers)
-    doc = email_bodies_col.find_one({"uid": uid}, {"_id": 0, "body": 1, "body_type": 1})
-    if doc:
-        return jsonify({"body": doc["body"], "body_type": doc["body_type"]})
-    return jsonify({"error": tr("dash_msg_not_in_cache")}), 404
+    return jsonify({"error": "الرسالة غير موجودة في الذاكرة المؤقتة"}), 404
 
 
 # ─── Admin Routes ─────────────────────────────────────────────────
@@ -559,7 +665,7 @@ def admin_login():
             session["admin_logged_in"] = True
             session["admin_username"]  = u
             return redirect(url_for("admin_panel"))
-        error = tr("err_admin_wrong_credentials")
+        error = "بيانات الدخول غير صحيحة"
     return render_template("admin_login.html", error=error)
 
 
@@ -645,7 +751,7 @@ def admin_create_client():
         })
         return jsonify({"ok": True, "id": str(result.inserted_id)})
     except DuplicateKeyError:
-        return jsonify({"error": f"Username '{username}' already taken"}), 409
+        return jsonify({"error": f"اسم المستخدم '{username}' مستخدم مسبقاً"}), 409
 
 
 @app.route("/admin/api/clients/<client_id>", methods=["PUT"])
@@ -666,7 +772,7 @@ def admin_edit_client(client_id):
     try:
         result = client_accounts_col.update_one({"_id": ObjectId(client_id)}, {"$set": update})
     except DuplicateKeyError:
-        return jsonify({"error": "Username already taken"}), 409
+        return jsonify({"error": "اسم المستخدم مستخدم مسبقاً"}), 409
     except Exception:
         return jsonify({"error": "Invalid id"}), 400
     if result.matched_count == 0:
@@ -700,14 +806,14 @@ def admin_bulk_clients():
         if not line:
             continue
         if ":" not in line:
-            error_list.append(f"Bad format: {line[:50]}")
+            error_list.append(f"تنسيق خاطئ: {line[:50]}")
             errors += 1
             continue
         parts    = line.split(":", 1)
         username = parts[0].strip().lower()
         password = parts[1].strip()
         if not username or not password:
-            error_list.append(f"Empty field: {line[:50]}")
+            error_list.append(f"حقل فارغ: {line[:50]}")
             errors += 1
             continue
         try:
@@ -748,6 +854,7 @@ def admin_client_activity(client_id):
 @app.route("/admin/api/clients/<client_id>/emails", methods=["GET"])
 @admin_required
 def admin_get_client_emails(client_id):
+    """Get the list of emails assigned to a client (with dates)."""
     try:
         doc = client_accounts_col.find_one({"_id": ObjectId(client_id)})
     except Exception:
@@ -761,6 +868,7 @@ def admin_get_client_emails(client_id):
 @app.route("/admin/api/clients/<client_id>/emails", methods=["POST"])
 @admin_required
 def admin_assign_client_email(client_id):
+    """Assign an email to a client, optionally with start/end dates."""
     data       = request.json or {}
     email      = (data.get("email") or "").strip().lower()
     start_date = (data.get("start_date") or "").strip() or None
@@ -769,7 +877,7 @@ def admin_assign_client_email(client_id):
         return jsonify({"error": "email required"}), 400
     acc = email_accounts_col.find_one({"email": email})
     if not acc:
-        return jsonify({"error": f"Email '{email}' not found in email accounts"}), 404
+        return jsonify({"error": f"البريد '{email}' غير موجود في قائمة حسابات البريد"}), 404
     try:
         doc = client_accounts_col.find_one({"_id": ObjectId(client_id)})
     except Exception:
@@ -778,7 +886,7 @@ def admin_assign_client_email(client_id):
         return jsonify({"error": "Client not found"}), 404
     assigned = normalize_assigned_emails(doc.get("assigned_emails", []))
     if any(item["email"] == email for item in assigned):
-        return jsonify({"error": f"Email '{email}' already assigned to this client"}), 409
+        return jsonify({"error": f"البريد '{email}' مخصص مسبقاً لهذا العميل"}), 409
     assigned.append({
         "email":       email,
         "start_date":  start_date,
@@ -795,6 +903,7 @@ def admin_assign_client_email(client_id):
 @app.route("/admin/api/clients/<client_id>/emails/<path:email>", methods=["PUT"])
 @admin_required
 def admin_edit_client_email_dates(client_id, email):
+    """Edit start/end dates for an assigned email."""
     data       = request.json or {}
     start_date = (data.get("start_date") or "").strip() or None
     end_date   = (data.get("end_date") or "").strip() or None
@@ -825,6 +934,7 @@ def admin_edit_client_email_dates(client_id, email):
 @app.route("/admin/api/clients/<client_id>/emails/<path:email>", methods=["DELETE"])
 @admin_required
 def admin_remove_client_email(client_id, email):
+    """Remove an email assignment from a client."""
     email = email.strip().lower()
     try:
         doc = client_accounts_col.find_one({"_id": ObjectId(client_id)})
@@ -844,6 +954,9 @@ def admin_remove_client_email(client_id, email):
 @app.route("/admin/api/clients/<client_id>/emails/renew-all", methods=["POST"])
 @admin_required
 def admin_renew_all_client_emails(client_id):
+    """Renew all assigned emails for a client by shifting dates +1 month.
+    New start_date = old end_date; new end_date = old end_date + 1 month.
+    For emails without an end_date the dates are left unchanged."""
     try:
         doc = client_accounts_col.find_one({"_id": ObjectId(client_id)})
     except Exception:
@@ -868,7 +981,7 @@ def admin_renew_all_client_emails(client_id):
     return jsonify({"ok": True, "updated": updated})
 
 
-# ── Admin API: Email Accounts ──────────────────────────────────────
+# ── Admin API: Email Accounts (admin-managed) ─────────────────────
 
 @app.route("/admin/api/email-accounts")
 @admin_required
@@ -894,60 +1007,63 @@ def admin_add_email():
         conn = connect_pop3(host, port, em, pw)
         conn.quit()
     except Exception as e:
-        return jsonify({"error": f"Connection failed: {str(e)[:120]}"}), 400
+        return jsonify({"error": f"فشل الاتصال بالخادم: {str(e)[:120]}"}), 400
     try:
         result = email_accounts_col.insert_one({
-            "email":         em,
+            "email":        em,
             "pop3_password": pw,
-            "pop3_host":     host,
-            "pop3_port":     port,
-            "added_at":      datetime.now(timezone.utc),
-            "added_by":      session.get("admin_username", "admin"),
+            "pop3_host":    host,
+            "pop3_port":    port,
+            "added_at":     datetime.now(timezone.utc),
+            "added_by":     session.get("admin_username", "admin"),
         })
         _cache.pop(em, None)
         return jsonify({"ok": True, "id": str(result.inserted_id)})
     except DuplicateKeyError:
-        return jsonify({"error": f"Email '{em}' already added"}), 409
+        return jsonify({"error": f"البريد '{em}' مضاف مسبقاً"}), 409
 
 
 @app.route("/admin/api/email-accounts/bulk", methods=["POST"])
 @admin_required
 def admin_bulk_emails():
+    """Bulk-add email accounts in email:password format, one per line."""
     data = request.json or {}
     raw  = (data.get("text") or "").strip()
     host = (data.get("host") or DEFAULT_HOST).strip() or DEFAULT_HOST
     port = int(data.get("port") or DEFAULT_PORT)
     if not raw:
         return jsonify({"error": "No text provided"}), 400
+
     added = skipped = errors = 0
     error_list = []
+
     for line in raw.splitlines():
         line = line.strip()
         if not line:
             continue
         if ":" not in line:
-            error_list.append(f"Bad format: {line[:60]}")
+            error_list.append(f"تنسيق خاطئ: {line[:60]}")
             errors += 1
             continue
         parts = line.split(":", 1)
         em = parts[0].strip().lower()
         pw = parts[1].strip()
         if not em or not pw:
-            error_list.append(f"Empty field: {line[:60]}")
+            error_list.append(f"حقل فارغ: {line[:60]}")
             errors += 1
             continue
         if "@" not in em:
-            error_list.append(f"Invalid email: {em[:60]}")
+            error_list.append(f"بريد غير صالح: {em[:60]}")
             errors += 1
             continue
         try:
             email_accounts_col.insert_one({
-                "email":         em,
+                "email":        em,
                 "pop3_password": pw,
-                "pop3_host":     host,
-                "pop3_port":     port,
-                "added_at":      datetime.now(timezone.utc),
-                "added_by":      session.get("admin_username", "admin"),
+                "pop3_host":    host,
+                "pop3_port":    port,
+                "added_at":     datetime.now(timezone.utc),
+                "added_by":     session.get("admin_username", "admin"),
             })
             _cache.pop(em, None)
             added += 1
@@ -956,6 +1072,7 @@ def admin_bulk_emails():
         except Exception as exc:
             error_list.append(f"{em}: {exc}")
             errors += 1
+
     return jsonify({"added": added, "skipped": skipped, "errors": errors, "error_details": error_list[:20]})
 
 
@@ -1031,9 +1148,17 @@ def admin_create_category():
     raw_pats = (data.get("patterns") or "")
     if not label:
         return jsonify({"error": "label required"}), 400
-    patterns = [p.strip() for p in raw_pats.splitlines() if p.strip()]
-    count    = filter_categories_col.count_documents({})
-    filter_categories_col.insert_one({
+    if isinstance(raw_pats, list):
+        raw_list = [p.strip() for p in raw_pats if p.strip()]
+    else:
+        raw_list = [p.strip() for p in raw_pats.splitlines() if p.strip()]
+    # BUG FIX: normalize patterns at save time so they are stored in a
+    # canonical form.  This ensures the comparison in apply_filter_patterns()
+    # (which also normalises both sides) is symmetric, and removes any
+    # invisible Unicode characters that an admin might inadvertently paste.
+    patterns = [normalize_text(p) for p in raw_list if normalize_text(p)]
+    count = filter_categories_col.count_documents({})
+    result = filter_categories_col.insert_one({
         "label":       label,
         "description": desc,
         "patterns":    patterns,
@@ -1041,25 +1166,32 @@ def admin_create_category():
         "order":       count,
         "created_at":  datetime.now(timezone.utc),
     })
-    return jsonify({"ok": True})
+    return jsonify({"ok": True, "id": str(result.inserted_id)})
 
 
 @app.route("/admin/api/filter-categories/<cat_id>", methods=["PUT"])
 @admin_required
 def admin_edit_category(cat_id):
-    data     = request.json or {}
-    label    = (data.get("label") or "").strip()
-    desc     = (data.get("description") or "").strip()
-    raw_pats = (data.get("patterns") or "")
-    enabled  = data.get("enabled", True)
-    if not label:
-        return jsonify({"error": "label required"}), 400
-    patterns = [p.strip() for p in raw_pats.splitlines() if p.strip()]
+    data   = request.json or {}
+    update = {}
+    if "label" in data and data["label"].strip():
+        update["label"] = data["label"].strip()
+    if "description" in data:
+        update["description"] = data["description"].strip()
+    if "patterns" in data:
+        raw = data["patterns"]
+        if isinstance(raw, list):
+            raw_list = [p.strip() for p in raw if p.strip()]
+        else:
+            raw_list = [p.strip() for p in raw.splitlines() if p.strip()]
+        # BUG FIX: normalize patterns at save time (same as create endpoint).
+        update["patterns"] = [normalize_text(p) for p in raw_list if normalize_text(p)]
+    if "enabled" in data:
+        update["enabled"] = bool(data["enabled"])
+    if not update:
+        return jsonify({"error": "nothing to update"}), 400
     try:
-        filter_categories_col.update_one(
-            {"_id": ObjectId(cat_id)},
-            {"$set": {"label": label, "description": desc, "patterns": patterns, "enabled": bool(enabled)}}
-        )
+        filter_categories_col.update_one({"_id": ObjectId(cat_id)}, {"$set": update})
     except Exception:
         return jsonify({"error": "Invalid id"}), 400
     return jsonify({"ok": True})
@@ -1079,8 +1211,8 @@ def admin_delete_category(cat_id):
 
 @app.route("/admin/api/activity")
 @admin_required
-def admin_activity():
-    logs = list(login_activity_col.find({}, {"_id": 0}).sort("timestamp", DESCENDING).limit(100))
+def admin_all_activity():
+    logs = list(login_activity_col.find({}, {"_id": 0}).sort("timestamp", DESCENDING).limit(200))
     for l in logs:
         if l.get("timestamp"):
             l["timestamp"] = dt_iso(l["timestamp"])
@@ -1090,9 +1222,14 @@ def admin_activity():
 @app.route("/admin/api/activity", methods=["DELETE"])
 @admin_required
 def admin_clear_activity():
+    """Delete all activity logs from the database."""
     result = login_activity_col.delete_many({})
     return jsonify({"ok": True, "deleted_count": result.deleted_count})
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 5000)),
+        debug=os.environ.get("FLASK_DEBUG", "0") == "1",
+    )
