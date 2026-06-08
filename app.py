@@ -49,7 +49,7 @@ login_activity_col.create_index([("client_id", 1), ("timestamp", DESCENDING)])
 login_activity_col.create_index([("timestamp", DESCENDING)])
 
 _cache: dict = {}
-FETCH_LIMIT = 60
+FETCH_LIMIT = 250
 
 
 def dt_iso(dt):
@@ -328,7 +328,8 @@ def fetch_email_messages(email_addr, pop3_password, pop3_host, pop3_port, limit=
     new_bodies: dict   = {}
 
     for item in reversed(uidl_list):
-        if len(new_summaries) + len(existing["summaries"]) >= limit:
+        if len(new_summaries) >= limit:
+            print(f"Reached fetch limit of {limit} messages for {email_addr}, stopping fetch")
             break
         try:
             parts = item.decode(errors="ignore").split(" ", 1)
