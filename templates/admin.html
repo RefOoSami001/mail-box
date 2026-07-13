@@ -833,6 +833,9 @@
           حسابات البريد المضافة
           <div style="margin-right:auto;display:flex;align-items:center;gap:.45rem">
             <span id="emailCountLbl" style="font-size:.7rem;color:var(--text3);background:var(--surf2);padding:.15rem .55rem;border-radius:20px;border:1px solid var(--border)"></span>
+            <span id="emailUnassignedBadge" style="display:none;font-size:.7rem;font-weight:700;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);color:var(--amber);padding:.15rem .55rem;border-radius:20px;">
+              ⚠ <span id="emailUnassignedCount">0</span> غير مخصص
+            </span>
             <button class="btn btn-danger" id="deleteAllEmailsBtn" style="padding:.3rem .75rem;font-size:.75rem" disabled>
               حذف الكل
             </button>
@@ -840,7 +843,7 @@
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>البريد الإلكتروني</th><th>الخادم</th><th>تاريخ الإضافة</th><th></th></tr></thead>
+            <thead><tr><th>البريد الإلكتروني</th><th>الخادم</th><th>المخصص لـ</th><th>تاريخ الإضافة</th><th></th></tr></thead>
             <tbody id="emailsTbody"><tr><td colspan="4" class="empty-st">جارٍ التحميل…</td></tr></tbody>
           </table>
         </div>
@@ -977,6 +980,13 @@
       </div>
 
       <div id="cemTab-search">
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.45rem;flex-wrap:wrap;">
+          <span id="cemAvailableCount" style="font-size:.72rem;font-weight:600;color:var(--teal);background:rgba(0,201,167,.08);border:1px solid rgba(0,201,167,.2);border-radius:20px;padding:.22rem .65rem;display:none"></span>
+          <label style="display:flex;align-items:center;gap:.35rem;cursor:pointer;font-size:.78rem;color:var(--text2);margin-right:auto;">
+            <input type="checkbox" id="cemAvailableOnlyChk" style="width:14px;height:14px;accent-color:var(--teal);cursor:pointer;"/>
+            إظهار غير المشترك فقط
+          </label>
+        </div>
         <div class="search-bar" style="margin-bottom:.45rem">
           <div class="sico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
           <input class="inp" id="cemSearchInput" placeholder="ابحث باسم البريد…" style="padding-right:2.2rem" autocomplete="off"/>
@@ -1265,6 +1275,10 @@ window.openClientEmails=async function(id,name){
   document.getElementById('cemPasteStart').value='';
   document.getElementById('cemPasteEnd').value='';
   document.getElementById('cemPasteResult').style.display='none';
+  cemShowAvailableOnly=false;
+  cemCurrentEmails=new Set();
+  const chk=document.getElementById('cemAvailableOnlyChk');
+  if(chk) chk.checked=false;
   document.querySelectorAll('.tab-btn[data-cemtab]').forEach(b=>b.classList.remove('active'));
   document.querySelector('.tab-btn[data-cemtab="search"]').classList.add('active');
   document.getElementById('cemTab-search').style.display='block';
@@ -1277,6 +1291,7 @@ window.openClientEmails=async function(id,name){
 async function refreshCemList(){
   const d=await api('/admin/api/clients/'+cemClientIdVal+'/emails');
   const emails=d.emails||[];
+  cemCurrentEmails=new Set(emails.map(item=>item.email||item));
   const countEl=document.getElementById('cemAssignedCount');
   const body=document.getElementById('cemAssignedBody');
   const empty=document.getElementById('cemEmptyMsg');
@@ -1310,7 +1325,7 @@ async function refreshCemList(){
       const em=btn.dataset.em;
       if(!confirm(`إزالة ${em} من هذا العميل؟`))return;
       const r=await api('/admin/api/clients/'+cemClientIdVal+'/emails/'+encodeURIComponent(em),'DELETE');
-      if(r.ok){toast('تمت الإزالة');document.getElementById('cemEditPanel').style.display='none';refreshCemList();loadClients();}
+      if(r.ok){toast('تمت الإزالة');document.getElementById('cemEditPanel').style.display='none';refreshCemList();loadCemEmails();loadClients();}
       else toast(r.error||'خطأ',true);
     });
   });
@@ -1347,19 +1362,55 @@ document.getElementById('cemEditSaveBtn').addEventListener('click',async()=>{
 });
 document.getElementById('cemEditCancelBtn').addEventListener('click',()=>document.getElementById('cemEditPanel').style.display='none');
 
+let cemAllEmailsData=[]; // objects with assigned_to info
+let cemShowAvailableOnly=false;
+let cemCurrentEmails=new Set(); // emails already assigned to the open client
+
 async function loadCemEmails(){
-  const d=await api('/admin/api/email-accounts');
-  cemAllEmails=(d.accounts||[]).map(a=>a.email);
+  const d=await api('/admin/api/email-accounts/assignment-status');
+  cemAllEmailsData=d.accounts||[];
+  cemAllEmails=cemAllEmailsData.map(a=>a.email); // compat
+
+  // Count how many are truly available for this client
+  // Available = unassigned (not shared with any other client, and not already added to this client)
+  const available=cemAllEmailsData.filter(a=>!a.assigned_to&&!cemCurrentEmails.has(a.email));
+  const countEl=document.getElementById('cemAvailableCount');
+  if(countEl){
+    countEl.textContent=available.length+' متاح';
+    countEl.style.display=available.length<cemAllEmailsData.length?'':'none';
+  }
   renderCemSearch('');
 }
 
 function renderCemSearch(q){
   const res=document.getElementById('cemSearchResults');
-  const filtered=q?cemAllEmails.filter(e=>e.toLowerCase().includes(q.toLowerCase())):cemAllEmails;
-  if(!q&&!filtered.length){res.style.display='none';return;}
+  const availOnly=cemShowAvailableOnly;
+  // Always exclude emails already assigned to THIS client (they're in the "حالياً" list)
+  let pool=cemAllEmailsData.filter(a=>!cemCurrentEmails.has(a.email));
+  // Filter by search query
+  let filtered=pool.filter(a=>!q||a.email.toLowerCase().includes(q.toLowerCase()));
+  // "إظهار المتاح فقط" hides emails shared with other clients
+  if(availOnly) filtered=filtered.filter(a=>!a.assigned_to);
+  if(!q&&!filtered.length&&!availOnly){res.style.display='none';return;}
+  if(!filtered.length){
+    res.style.display='block';
+    res.innerHTML='<div style="padding:.6rem .85rem;font-size:.8rem;color:var(--text3)">لا نتائج</div>';
+    return;
+  }
   res.style.display='block';
-  if(!filtered.length){res.innerHTML='<div style="padding:.6rem .85rem;font-size:.8rem;color:var(--text3)">لا نتائج</div>';return;}
-  res.innerHTML=filtered.slice(0,80).map(em=>`<div class="cem-result-row" data-em="${esc(em)}" style="padding:.45rem .8rem;font-size:.82rem;cursor:pointer;border-bottom:1px solid var(--border);color:var(--text2);transition:background .12s">${esc(em)}</div>`).join('');
+  res.innerHTML=filtered.slice(0,80).map(a=>{
+    const em=a.email;
+    const asgn=a.assigned_to;
+    // takenByOther = assigned to a different client (sharing is allowed but flagged)
+    const takenByOther=!!(asgn&&asgn.client_id!==cemClientIdVal);
+    const statusHtml=takenByOther
+      ? `<span style="font-size:.68rem;font-weight:600;color:var(--amber);background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:.1rem .42rem;white-space:nowrap;flex-shrink:0;">⚠ مشترك مع ${esc(asgn.client_display||asgn.client_username)}</span>`
+      : `<span style="font-size:.68rem;font-weight:700;color:var(--teal);background:rgba(0,201,167,.08);border:1px solid rgba(0,201,167,.2);border-radius:10px;padding:.1rem .42rem;white-space:nowrap;flex-shrink:0;">✓ متاح</span>`;
+    return `<div class="cem-result-row" data-em="${esc(em)}" style="padding:.45rem .8rem;font-size:.82rem;cursor:pointer;border-bottom:1px solid var(--border);color:var(--text2);transition:background .12s;display:flex;align-items:center;justify-content:space-between;gap:.5rem;">
+      <span style="word-break:break-all;min-width:0">${esc(em)}</span>
+      ${statusHtml}
+    </div>`;
+  }).join('');
   res.querySelectorAll('.cem-result-row').forEach(row=>{
     row.addEventListener('mouseenter',()=>row.style.background='var(--surf2)');
     row.addEventListener('mouseleave',()=>row.style.background='');
@@ -1386,10 +1437,16 @@ document.getElementById('cemConfirmAddBtn').addEventListener('click',async()=>{
   const start=document.getElementById('cemAddStart').value||null;
   const end=document.getElementById('cemAddEnd').value||null;
   const d=await api('/admin/api/clients/'+cemClientIdVal+'/emails','POST',{email:em,start_date:start,end_date:end});
-  if(d.ok){toast('تمت الإضافة ✓');document.getElementById('cemPendingForm').style.display='none';document.getElementById('cemSearchInput').value='';document.getElementById('cemSearchResults').style.display='none';refreshCemList();loadClients();}
+  if(d.ok){toast('تمت الإضافة ✓');document.getElementById('cemPendingForm').style.display='none';document.getElementById('cemSearchInput').value='';document.getElementById('cemSearchResults').style.display='none';refreshCemList();loadCemEmails();loadClients();}
   else toast(d.error||'خطأ',true);
 });
 document.getElementById('cemCancelPendingBtn').addEventListener('click',()=>{document.getElementById('cemPendingForm').style.display='none';document.getElementById('cemSearchInput').value='';document.getElementById('cemSearchResults').style.display='none';});
+
+// Available-only toggle
+document.getElementById('cemAvailableOnlyChk').addEventListener('change',function(){
+  cemShowAvailableOnly=this.checked;
+  renderCemSearch(document.getElementById('cemSearchInput').value.trim());
+});
 
 document.getElementById('cemPasteAddBtn').addEventListener('click',async()=>{
   const lines=document.getElementById('cemPasteArea').value.split(/[\r\n]+/).map(l=>l.trim()).filter(Boolean);
@@ -1421,28 +1478,44 @@ document.getElementById('clientEmailsOverlay').addEventListener('click',e=>{if(e
 
 /* ── Email Accounts ── */
 let allEmails=[];
+let allEmailsData=[]; // full data with assigned_to info
 async function loadEmails(){
-  const d=await api('/admin/api/email-accounts');
-  allEmails=d.accounts||[];
-  renderEmails(allEmails);
+  const d=await api('/admin/api/email-accounts/assignment-status');
+  allEmailsData=d.accounts||[];
+  allEmails=allEmailsData; // keep compat reference
+  const unassigned=d.unassigned_count||0;
+  const badge=document.getElementById('emailUnassignedBadge');
+  const countEl=document.getElementById('emailUnassignedCount');
+  if(badge&&countEl){
+    countEl.textContent=unassigned;
+    badge.style.display=unassigned>0?'':'none';
+  }
+  renderEmails(allEmailsData);
 }
 function renderEmails(accs){
   const tb=document.getElementById('emailsTbody');
   document.getElementById('emailCountLbl').textContent=accs.length+' حساب';
   document.getElementById('deleteAllEmailsBtn').disabled = !accs.length;
-  if(!accs.length){tb.innerHTML='<tr><td colspan="4"><div class="empty-st"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>لا توجد حسابات بريد</div></td></tr>';return;}
-  tb.innerHTML=accs.map(a=>`<tr>
-    <td class="td-main">${esc(a.email)}</td>
-    <td style="font-size:.77rem;color:var(--text3);font-family:'JetBrains Mono',monospace">${esc(a.pop3_host)}:${esc(String(a.pop3_port))}</td>
-    <td style="font-size:.77rem">${fmtDate(a.added_at)}</td>
-    <td><div class="td-actions">
-      <button class="row-btn edit" data-id="${esc(a._id)}" data-host="${esc(a.pop3_host)}" data-port="${esc(String(a.pop3_port))}">
-        <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>تعديل
-      </button>
-      <button class="row-btn del" data-id="${esc(a._id)}">
-        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>حذف
-      </button>
-    </div></td></tr>`).join('');
+  if(!accs.length){tb.innerHTML='<tr><td colspan="5"><div class="empty-st"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>لا توجد حسابات بريد</div></td></tr>';return;}
+  tb.innerHTML=accs.map(a=>{
+    const asgn=a.assigned_to;
+    const asgnCell=asgn
+      ? `<span class="badge badge-teal" title="عميل: ${esc(asgn.client_username)}">${esc(asgn.client_display||asgn.client_username)}</span>`
+      : `<span style="font-size:.72rem;color:var(--amber);font-weight:600">⚠ غير مخصص</span>`;
+    return `<tr>
+      <td class="td-main">${esc(a.email)}</td>
+      <td style="font-size:.77rem;color:var(--text3);font-family:'JetBrains Mono',monospace">${esc(a.pop3_host)}:${esc(String(a.pop3_port))}</td>
+      <td style="font-size:.77rem">${asgnCell}</td>
+      <td style="font-size:.77rem">${fmtDate(a.added_at)}</td>
+      <td><div class="td-actions">
+        <button class="row-btn edit" data-id="${esc(a._id)}" data-host="${esc(a.pop3_host)}" data-port="${esc(String(a.pop3_port))}">
+          <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>تعديل
+        </button>
+        <button class="row-btn del" data-id="${esc(a._id)}">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>حذف
+        </button>
+      </div></td></tr>`;
+  }).join('');
   tb.querySelectorAll('.row-btn.edit').forEach(btn=>{btn.addEventListener('click',()=>{document.getElementById('editEmailId').value=btn.dataset.id;document.getElementById('editEmailPw').value='';document.getElementById('editEmailHost').value=btn.dataset.host;document.getElementById('editEmailPort').value=btn.dataset.port;document.getElementById('editEmailOverlay').classList.add('show');});});
   tb.querySelectorAll('.row-btn.del').forEach(btn=>{btn.addEventListener('click',async()=>{if(!confirm('حذف هذا الحساب؟'))return;const d=await api('/admin/api/email-accounts/'+btn.dataset.id,'DELETE');if(d.ok){toast('تم الحذف');loadEmails();loadStats();}else toast(d.error||'خطأ',true);});});
 }
