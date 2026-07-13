@@ -888,6 +888,7 @@ def admin_assign_client_email(client_id):
     assigned = normalize_assigned_emails(doc.get("assigned_emails", []))
     if any(item["email"] == email for item in assigned):
         return jsonify({"error": f"البريد '{email}' مخصص مسبقاً لهذا العميل"}), 409
+
     assigned.append({
         "email":       email,
         "start_date":  start_date,
@@ -992,6 +993,51 @@ def admin_list_emails():
         a["_id"]      = str(a["_id"])
         a["added_at"] = dt_iso(a.get("added_at")) if a.get("added_at") else ""
     return jsonify({"accounts": accounts})
+
+
+
+@app.route("/admin/api/email-accounts/assignment-status")
+@admin_required
+def admin_email_assignment_status():
+    """Return all email accounts with their assignment status (which client owns it, or unassigned)."""
+    # Build a map: email -> client info, scanning ALL clients
+    assignment_map = {}
+    for client in client_accounts_col.find(
+        {}, {"_id": 1, "username": 1, "display_name": 1, "assigned_emails": 1}
+    ):
+        assigned = normalize_assigned_emails(client.get("assigned_emails", []))
+        for item in assigned:
+            em = item["email"]
+            if em not in assignment_map:
+                assignment_map[em] = {
+                    "client_id":       str(client["_id"]),
+                    "client_username": client["username"],
+                    "client_display":  client.get("display_name") or client["username"],
+                }
+
+    # Fetch all email accounts and attach assignment info
+    accounts = list(
+        email_accounts_col.find({}, {"pop3_password": 0}).sort("added_at", DESCENDING)
+    )
+    result = []
+    for a in accounts:
+        em = a["email"]
+        result.append({
+            "_id":        str(a["_id"]),
+            "email":      em,
+            "pop3_host":  a.get("pop3_host", DEFAULT_HOST),
+            "pop3_port":  a.get("pop3_port", DEFAULT_PORT),
+            "added_at":   dt_iso(a.get("added_at")) if a.get("added_at") else "",
+            "assigned_to": assignment_map.get(em),  # None if unassigned
+        })
+
+    unassigned = sum(1 for r in result if r["assigned_to"] is None)
+    return jsonify({
+        "accounts":         result,
+        "total":            len(result),
+        "unassigned_count": unassigned,
+        "assigned_count":   len(result) - unassigned,
+    })
 
 
 @app.route("/admin/api/email-accounts", methods=["POST"])
