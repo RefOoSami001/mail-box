@@ -940,6 +940,10 @@
           تجديد الكل
         </button>
       </div>
+      <div class="search-bar" style="margin-bottom:.45rem">
+        <div class="sico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+        <input class="inp" id="cemAssignedSearchInput" type="text" placeholder="بحث في البريد المخصص..." style="width:100%;padding-right:2.2rem" autocomplete="off"/>
+      </div>
       <div style="overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-sm)">
         <div style="max-height:230px;overflow-y:auto">
           <table id="cemAssignedTable" style="width:100%;border-collapse:collapse;font-size:.82rem">
@@ -1277,8 +1281,11 @@ window.openClientEmails=async function(id,name){
   document.getElementById('cemPasteResult').style.display='none';
   cemShowAvailableOnly=false;
   cemCurrentEmails=new Set();
+  cemAssignedAll=[];
   const chk=document.getElementById('cemAvailableOnlyChk');
   if(chk) chk.checked=false;
+  const asi=document.getElementById('cemAssignedSearchInput');
+  if(asi) asi.value='';
   document.querySelectorAll('.tab-btn[data-cemtab]').forEach(b=>b.classList.remove('active'));
   document.querySelector('.tab-btn[data-cemtab="search"]').classList.add('active');
   document.getElementById('cemTab-search').style.display='block';
@@ -1288,17 +1295,32 @@ window.openClientEmails=async function(id,name){
   await loadCemEmails();
 };
 
+let cemAssignedAll=[]; // full assigned list for this client
+
 async function refreshCemList(){
   const d=await api('/admin/api/clients/'+cemClientIdVal+'/emails');
-  const emails=d.emails||[];
-  cemCurrentEmails=new Set(emails.map(item=>item.email||item));
+  cemAssignedAll=d.emails||[];
+  cemCurrentEmails=new Set(cemAssignedAll.map(item=>item.email||item));
   const countEl=document.getElementById('cemAssignedCount');
+  countEl.textContent=cemAssignedAll.length?`(${cemAssignedAll.length})`:'';
+  // Preserve current search query when refreshing
+  const q=(document.getElementById('cemAssignedSearchInput')||{}).value||'';
+  renderCemAssigned(q.trim());
+}
+
+function renderCemAssigned(q){
   const body=document.getElementById('cemAssignedBody');
   const empty=document.getElementById('cemEmptyMsg');
-  countEl.textContent=emails.length?`(${emails.length})`:'';
-  if(!emails.length){body.innerHTML='';empty.style.display='block';return;}
+  if(!cemAssignedAll.length){body.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
-  body.innerHTML=emails.map(item=>{
+  const filtered=q
+    ? cemAssignedAll.filter(item=>(item.email||item).toLowerCase().includes(q.toLowerCase()))
+    : cemAssignedAll;
+  if(!filtered.length){
+    body.innerHTML=`<tr><td colspan="5" style="padding:1rem;text-align:center;font-size:.8rem;color:var(--text3)">لا نتائج للبحث "${esc(q)}"</td></tr>`;
+    return;
+  }
+  body.innerHTML=filtered.map(item=>{
     const em=item.email||item;
     const start=item.start_date||null;
     const end=item.end_date||null;
@@ -1430,6 +1452,10 @@ function renderCemSearch(q){
 document.getElementById('cemSearchInput').addEventListener('input',function(){
   document.getElementById('cemPendingForm').style.display='none';
   renderCemSearch(this.value.trim());
+});
+
+document.getElementById('cemAssignedSearchInput').addEventListener('input',function(){
+  renderCemAssigned(this.value.trim());
 });
 
 document.getElementById('cemConfirmAddBtn').addEventListener('click',async()=>{
