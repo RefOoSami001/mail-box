@@ -443,9 +443,19 @@ def logout():
 @app.route("/api/categories")
 @client_required
 def api_categories():
+    client_doc = client_accounts_col.find_one(
+        {"_id": ObjectId(session["client_id"])}, {"allowed_categories": 1}
+    )
+    allowed = client_doc.get("allowed_categories", []) if client_doc else []
+    query = {"enabled": True}
+    if allowed:
+        try:
+            query["_id"] = {"$in": [ObjectId(cid) for cid in allowed]}
+        except Exception:
+            pass
     cats = [
         {"id": str(c["_id"]), "label": c["label"], "description": c.get("description", "")}
-        for c in filter_categories_col.find({"enabled": True}).sort("order", 1)
+        for c in filter_categories_col.find(query).sort("order", 1)
     ]
     return jsonify({"categories": cats})
 
@@ -724,7 +734,8 @@ def admin_list_clients():
             "last_login":      dt_iso(doc.get("last_login")) if doc.get("last_login") else "—",
             "login_count":     doc.get("login_count", 0),
             "assigned_emails": assigned,
-            "email_count":     len(assigned),
+            "email_count":          len(assigned),
+            "allowed_categories":   doc.get("allowed_categories", []),
         })
     return jsonify({"clients": clients})
 
@@ -888,7 +899,6 @@ def admin_assign_client_email(client_id):
     assigned = normalize_assigned_emails(doc.get("assigned_emails", []))
     if any(item["email"] == email for item in assigned):
         return jsonify({"error": f"البريد '{email}' مخصص مسبقاً لهذا العميل"}), 409
-
     assigned.append({
         "email":       email,
         "start_date":  start_date,
@@ -999,8 +1009,7 @@ def admin_list_emails():
 @app.route("/admin/api/email-accounts/assignment-status")
 @admin_required
 def admin_email_assignment_status():
-    """Return all email accounts with their assignment status (which client owns it, or unassigned)."""
-    # Build a map: email -> client info, scanning ALL clients
+    """Return all email accounts with their assignment status."""
     assignment_map = {}
     for client in client_accounts_col.find(
         {}, {"_id": 1, "username": 1, "display_name": 1, "assigned_emails": 1}
@@ -1014,8 +1023,6 @@ def admin_email_assignment_status():
                     "client_username": client["username"],
                     "client_display":  client.get("display_name") or client["username"],
                 }
-
-    # Fetch all email accounts and attach assignment info
     accounts = list(
         email_accounts_col.find({}, {"pop3_password": 0}).sort("added_at", DESCENDING)
     )
@@ -1028,9 +1035,8 @@ def admin_email_assignment_status():
             "pop3_host":  a.get("pop3_host", DEFAULT_HOST),
             "pop3_port":  a.get("pop3_port", DEFAULT_PORT),
             "added_at":   dt_iso(a.get("added_at")) if a.get("added_at") else "",
-            "assigned_to": assignment_map.get(em),  # None if unassigned
+            "assigned_to": assignment_map.get(em),
         })
-
     unassigned = sum(1 for r in result if r["assigned_to"] is None)
     return jsonify({
         "accounts":         result,
@@ -1169,6 +1175,46 @@ def admin_bulk_delete_emails():
 
 
 # ── Admin API: Filter Categories ──────────────────────────────────
+
+
+@app.route("/admin/api/clients/<client_id>/filter-settings", methods=["GET"])
+@admin_required
+def admin_get_client_filter_settings(client_id):
+    """Return the allowed_categories list for a client (empty = all allowed)."""
+    try:
+        doc = client_accounts_col.find_one(
+            {"_id": ObjectId(client_id)}, {"allowed_categories": 1}
+        )
+    except Exception:
+        return jsonify({"error": "Invalid id"}), 400
+    if not doc:
+        return jsonify({"error": "Client not found"}), 404
+    return jsonify({"allowed_categories": doc.get("allowed_categories", [])})
+
+
+@app.route("/admin/api/clients/<client_id>/filter-settings", methods=["PUT"])
+@admin_required
+def admin_set_client_filter_settings(client_id):
+    """Set which filter categories a client is allowed to see (empty = all)."""
+    data = request.json or {}
+    raw  = data.get("allowed_categories", [])
+    if not isinstance(raw, list):
+        return jsonify({"error": "allowed_categories must be a list"}), 400
+    valid = []
+    for cid in raw:
+        try:
+            valid.append(str(ObjectId(cid)))
+        except Exception:
+            pass
+    try:
+        client_accounts_col.update_one(
+            {"_id": ObjectId(client_id)},
+            {"$set": {"allowed_categories": valid}}
+        )
+    except Exception:
+        return jsonify({"error": "Invalid client id"}), 400
+    return jsonify({"ok": True, "allowed_categories": valid})
+
 
 @app.route("/admin/api/filter-categories")
 @admin_required
