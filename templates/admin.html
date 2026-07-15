@@ -321,6 +321,7 @@
     .row-btn.act:hover{background:rgba(34,197,94,.1);color:var(--green);border-color:rgba(34,197,94,.25);}
     .row-btn.edit:hover{background:rgba(79,142,247,.1);color:var(--accent);border-color:rgba(79,142,247,.25);}
     .row-btn.emails-btn:hover{background:rgba(0,201,167,.1);color:var(--teal);border-color:rgba(0,201,167,.25);}
+    .row-btn.filters-btn:hover{background:rgba(139,92,246,.1);color:#8b5cf6;border-color:rgba(139,92,246,.25);}
     .row-btn svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
 
     /* ═══ BADGES ═══ */
@@ -1064,6 +1065,39 @@
   </div>
 </div>
 
+<!-- ══ Filter Settings Overlay ══ -->
+<div class="overlay" id="filterSettingsOverlay">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-title">
+      <svg viewBox="0 0 24 24" style="stroke:#8b5cf6"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+      إعدادات الفلترة: <span id="fsClientName" style="color:#8b5cf6;font-weight:800;margin-right:.3rem"></span>
+    </div>
+    <input type="hidden" id="fsClientId"/>
+
+    <div class="mrow">
+      <label class="mlabel">الفئات المسموح بها</label>
+      <div style="display:flex;gap:.4rem;margin-bottom:.65rem">
+        <button id="fsSelectAllBtn" class="btn btn-ghost" style="padding:.22rem .6rem;font-size:.73rem">تحديد الكل</button>
+        <button id="fsClearAllBtn" class="btn btn-ghost" style="padding:.22rem .6rem;font-size:.73rem">إلغاء الكل</button>
+      </div>
+      <div id="fsCategoriesList" style="display:flex;flex-direction:column;gap:.35rem;max-height:300px;overflow-y:auto"></div>
+    </div>
+
+    <div style="display:flex;align-items:flex-start;gap:.45rem;font-size:.75rem;color:var(--text3);background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.55rem .8rem;margin-top:.5rem;line-height:1.6">
+      <svg viewBox="0 0 24 24" style="width:13px;height:13px;flex-shrink:0;margin-top:.1rem;fill:none;stroke:var(--text3);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      إذا حددت الكل أو لم تحدد أي فئة، سيرى العميل جميع الفئات المتاحة دون قيود.
+    </div>
+
+    <div class="mactions">
+      <button class="btn btn-ghost" id="filterSettingsCancel">إلغاء</button>
+      <button class="btn btn-primary" id="filterSettingsSave">
+        <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg>
+        حفظ الإعدادات
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- Toasts -->
 <div class="toast-rack" id="toastRack"></div>
 
@@ -1220,6 +1254,9 @@ function renderClients(cs){
         <button class="row-btn emails-btn" onclick="openClientEmails('${esc(c.id)}','${esc(c.username)}')">
           <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>بريد
         </button>
+        <button class="row-btn filters-btn" onclick="openFilterSettings('${esc(c.id)}','${esc(c.username)}')">
+          <svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>${(c.allowed_categories&&c.allowed_categories.length)?'<span style="background:rgba(139,92,246,.18);border-radius:8px;padding:0 .35rem;font-size:.7rem;margin-right:.2rem">'+c.allowed_categories.length+'</span>':''}إعدادات الفلترة
+        </button>
         <button class="row-btn edit" onclick="openEditClient('${esc(c.id)}','${esc(c.username)}','${esc(c.display_name||'')}','${esc(c.status)}')">
           <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>تعديل
         </button>
@@ -1232,6 +1269,71 @@ function renderClients(cs){
   tb.querySelectorAll('.row-btn.sus,.row-btn.act').forEach(btn=>{btn.addEventListener('click',async()=>{const sus=btn.dataset.sus==='true';const d=await api('/admin/api/clients/'+btn.dataset.id,'PUT',{status:sus?'active':'suspended'});if(d.ok){toast(sus?'تم تفعيل الحساب':'تم إيقاف الحساب');loadClients();loadStats();}else toast(d.error||'خطأ',true);});});
   tb.querySelectorAll('.row-btn.del').forEach(btn=>{btn.addEventListener('click',async()=>{if(!confirm('حذف هذا العميل؟'))return;const d=await api('/admin/api/clients/'+btn.dataset.id,'DELETE');if(d.ok){toast('تم الحذف');loadClients();loadStats();}else toast(d.error||'خطأ',true);});});
 }
+/* ── Filter Settings ── */
+let fsAllCats=[];
+
+window.openFilterSettings=async function(clientId, clientUsername){
+  document.getElementById('fsClientId').value=clientId;
+  document.getElementById('fsClientName').textContent=clientUsername;
+  document.getElementById('fsCategoriesList').innerHTML='<div style="padding:1rem;text-align:center;font-size:.8rem;color:var(--text3)">جاري التحميل…</div>';
+  document.getElementById('filterSettingsOverlay').classList.add('show');
+  const [catsRes, settingsRes]=await Promise.all([
+    api('/admin/api/filter-categories'),
+    api('/admin/api/clients/'+clientId+'/filter-settings')
+  ]);
+  fsAllCats=catsRes.categories||[];
+  const allowed=settingsRes.allowed_categories||[];
+  renderFsCategories(fsAllCats,allowed);
+}
+
+function renderFsCategories(cats,allowedIds){
+  const el=document.getElementById('fsCategoriesList');
+  if(!cats.length){
+    el.innerHTML='<div class="empty-st"><svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>لا توجد فئات. أضف فئات من تبويب "فئات الفلترة".</div>';
+    return;
+  }
+  el.innerHTML=cats.map(c=>{
+    const checked=allowedIds.length===0||allowedIds.includes(c.id);
+    return `<label style="display:flex;align-items:center;gap:.85rem;padding:.75rem 1rem;background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:border-color .2s,background .15s;margin-bottom:0">
+      <input type="checkbox" value="${esc(c.id)}" ${checked?'checked':''} style="width:15px;height:15px;accent-color:#8b5cf6;cursor:pointer;flex-shrink:0"/>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:.84rem;color:var(--text)">${esc(c.label)}</div>
+        ${c.description?`<div style="font-size:.74rem;color:var(--text3);margin-top:.15rem">${esc(c.description)}</div>`:''}
+      </div>
+      <svg viewBox="0 0 24 24" style="width:14px;height:14px;flex-shrink:0;fill:none;stroke:var(--border);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;opacity:.5"><polyline points="9 18 15 12 9 6"/></svg>
+    </label>`;
+  }).join('');
+}
+
+function closeFsOverlay(){document.getElementById('filterSettingsOverlay').classList.remove('show');}
+
+document.getElementById('filterSettingsCancel').addEventListener('click',closeFsOverlay);
+document.getElementById('filterSettingsOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeFsOverlay();});
+
+document.getElementById('fsSelectAllBtn').addEventListener('click',()=>{
+  document.querySelectorAll('#fsCategoriesList input[type=checkbox]').forEach(cb=>cb.checked=true);
+});
+document.getElementById('fsClearAllBtn').addEventListener('click',()=>{
+  document.querySelectorAll('#fsCategoriesList input[type=checkbox]').forEach(cb=>cb.checked=false);
+});
+
+document.getElementById('filterSettingsSave').addEventListener('click',async()=>{
+  const clientId=document.getElementById('fsClientId').value;
+  const allBoxes=[...document.querySelectorAll('#fsCategoriesList input[type=checkbox]')];
+  const allChecked=allBoxes.every(cb=>cb.checked);
+  // If all checked → no restriction (empty list). If some unchecked → save the checked ids.
+  const allowed=allChecked?[]:allBoxes.filter(cb=>cb.checked).map(cb=>cb.value);
+  const r=await api('/admin/api/clients/'+clientId+'/filter-settings','PUT',{allowed_categories:allowed});
+  if(r.ok){
+    const label=allowed.length===0?'جميع الفئات':''+allowed.length+' فئة';
+    toast('تم الحفظ — '+label+' مخصصة ✓');
+    closeFsOverlay();
+    loadClients();
+  } else {
+    toast(r.error||'خطأ في الحفظ',true);
+  }
+});
+
 document.getElementById('clientSearch').addEventListener('input',function(){const q=this.value.toLowerCase();renderClients(q?allClients.filter(c=>c.username.toLowerCase().includes(q)||(c.display_name||'').toLowerCase().includes(q)):allClients);});
 document.getElementById('emailSearch').addEventListener('input',function(){const q=this.value.toLowerCase();renderEmails(q?allEmails.filter(e=>e.email.toLowerCase().includes(q)||e.pop3_host.toLowerCase().includes(q)):allEmails);});
 document.getElementById('createClientBtn').addEventListener('click',async()=>{
@@ -1279,13 +1381,9 @@ window.openClientEmails=async function(id,name){
   document.getElementById('cemPasteStart').value='';
   document.getElementById('cemPasteEnd').value='';
   document.getElementById('cemPasteResult').style.display='none';
-  cemShowAvailableOnly=false;
-  cemCurrentEmails=new Set();
-  cemAssignedAll=[];
-  const chk=document.getElementById('cemAvailableOnlyChk');
-  if(chk) chk.checked=false;
-  const asi=document.getElementById('cemAssignedSearchInput');
-  if(asi) asi.value='';
+  cemShowAvailableOnly=false;cemCurrentEmails=new Set();cemAssignedAll=[];
+  const chk=document.getElementById('cemAvailableOnlyChk');if(chk)chk.checked=false;
+  const asi=document.getElementById('cemAssignedSearchInput');if(asi)asi.value='';
   document.querySelectorAll('.tab-btn[data-cemtab]').forEach(b=>b.classList.remove('active'));
   document.querySelector('.tab-btn[data-cemtab="search"]').classList.add('active');
   document.getElementById('cemTab-search').style.display='block';
@@ -1295,7 +1393,7 @@ window.openClientEmails=async function(id,name){
   await loadCemEmails();
 };
 
-let cemAssignedAll=[]; // full assigned list for this client
+let cemAssignedAll=[];
 
 async function refreshCemList(){
   const d=await api('/admin/api/clients/'+cemClientIdVal+'/emails');
@@ -1303,7 +1401,6 @@ async function refreshCemList(){
   cemCurrentEmails=new Set(cemAssignedAll.map(item=>item.email||item));
   const countEl=document.getElementById('cemAssignedCount');
   countEl.textContent=cemAssignedAll.length?`(${cemAssignedAll.length})`:'';
-  // Preserve current search query when refreshing
   const q=(document.getElementById('cemAssignedSearchInput')||{}).value||'';
   renderCemAssigned(q.trim());
 }
@@ -1313,9 +1410,7 @@ function renderCemAssigned(q){
   const empty=document.getElementById('cemEmptyMsg');
   if(!cemAssignedAll.length){body.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
-  const filtered=q
-    ? cemAssignedAll.filter(item=>(item.email||item).toLowerCase().includes(q.toLowerCase()))
-    : cemAssignedAll;
+  const filtered=q?cemAssignedAll.filter(item=>(item.email||item).toLowerCase().includes(q.toLowerCase())):cemAssignedAll;
   if(!filtered.length){
     body.innerHTML=`<tr><td colspan="5" style="padding:1rem;text-align:center;font-size:.8rem;color:var(--text3)">لا نتائج للبحث "${esc(q)}"</td></tr>`;
     return;
@@ -1384,36 +1479,26 @@ document.getElementById('cemEditSaveBtn').addEventListener('click',async()=>{
 });
 document.getElementById('cemEditCancelBtn').addEventListener('click',()=>document.getElementById('cemEditPanel').style.display='none');
 
-let cemAllEmailsData=[]; // objects with assigned_to info
+let cemAllEmailsData=[];
 let cemShowAvailableOnly=false;
-let cemCurrentEmails=new Set(); // emails already assigned to the open client
+let cemCurrentEmails=new Set();
 
 async function loadCemEmails(){
   const d=await api('/admin/api/email-accounts/assignment-status');
   cemAllEmailsData=d.accounts||[];
-  cemAllEmails=cemAllEmailsData.map(a=>a.email); // compat
-
-  // Count how many are truly available for this client
-  // Available = unassigned (not shared with any other client, and not already added to this client)
+  cemAllEmails=cemAllEmailsData.map(a=>a.email);
   const available=cemAllEmailsData.filter(a=>!a.assigned_to&&!cemCurrentEmails.has(a.email));
   const countEl=document.getElementById('cemAvailableCount');
-  if(countEl){
-    countEl.textContent=available.length+' متاح';
-    countEl.style.display=available.length<cemAllEmailsData.length?'':'none';
-  }
+  if(countEl){countEl.textContent=available.length+' متاح';countEl.style.display=available.length<cemAllEmailsData.length?'':'none';}
   renderCemSearch('');
 }
 
 function renderCemSearch(q){
   const res=document.getElementById('cemSearchResults');
-  const availOnly=cemShowAvailableOnly;
-  // Always exclude emails already assigned to THIS client (they're in the "حالياً" list)
   let pool=cemAllEmailsData.filter(a=>!cemCurrentEmails.has(a.email));
-  // Filter by search query
   let filtered=pool.filter(a=>!q||a.email.toLowerCase().includes(q.toLowerCase()));
-  // "إظهار المتاح فقط" hides emails shared with other clients
-  if(availOnly) filtered=filtered.filter(a=>!a.assigned_to);
-  if(!q&&!filtered.length&&!availOnly){res.style.display='none';return;}
+  if(cemShowAvailableOnly) filtered=filtered.filter(a=>!a.assigned_to);
+  if(!q&&!filtered.length&&!cemShowAvailableOnly){res.style.display='none';return;}
   if(!filtered.length){
     res.style.display='block';
     res.innerHTML='<div style="padding:.6rem .85rem;font-size:.8rem;color:var(--text3)">لا نتائج</div>';
@@ -1423,7 +1508,6 @@ function renderCemSearch(q){
   res.innerHTML=filtered.slice(0,80).map(a=>{
     const em=a.email;
     const asgn=a.assigned_to;
-    // takenByOther = assigned to a different client (sharing is allowed but flagged)
     const takenByOther=!!(asgn&&asgn.client_id!==cemClientIdVal);
     const statusHtml=takenByOther
       ? `<span style="font-size:.68rem;font-weight:600;color:var(--amber);background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:.1rem .42rem;white-space:nowrap;flex-shrink:0;">⚠ مشترك مع ${esc(asgn.client_display||asgn.client_username)}</span>`
@@ -1454,10 +1538,6 @@ document.getElementById('cemSearchInput').addEventListener('input',function(){
   renderCemSearch(this.value.trim());
 });
 
-document.getElementById('cemAssignedSearchInput').addEventListener('input',function(){
-  renderCemAssigned(this.value.trim());
-});
-
 document.getElementById('cemConfirmAddBtn').addEventListener('click',async()=>{
   const em=document.getElementById('cemPendingEmailHidden').value;
   const start=document.getElementById('cemAddStart').value||null;
@@ -1467,12 +1547,8 @@ document.getElementById('cemConfirmAddBtn').addEventListener('click',async()=>{
   else toast(d.error||'خطأ',true);
 });
 document.getElementById('cemCancelPendingBtn').addEventListener('click',()=>{document.getElementById('cemPendingForm').style.display='none';document.getElementById('cemSearchInput').value='';document.getElementById('cemSearchResults').style.display='none';});
-
-// Available-only toggle
-document.getElementById('cemAvailableOnlyChk').addEventListener('change',function(){
-  cemShowAvailableOnly=this.checked;
-  renderCemSearch(document.getElementById('cemSearchInput').value.trim());
-});
+document.getElementById('cemAvailableOnlyChk').addEventListener('change',function(){cemShowAvailableOnly=this.checked;renderCemSearch(document.getElementById('cemSearchInput').value.trim());});
+document.getElementById('cemAssignedSearchInput').addEventListener('input',function(){renderCemAssigned(this.value.trim());});
 
 document.getElementById('cemPasteAddBtn').addEventListener('click',async()=>{
   const lines=document.getElementById('cemPasteArea').value.split(/[\r\n]+/).map(l=>l.trim()).filter(Boolean);
@@ -1504,18 +1580,15 @@ document.getElementById('clientEmailsOverlay').addEventListener('click',e=>{if(e
 
 /* ── Email Accounts ── */
 let allEmails=[];
-let allEmailsData=[]; // full data with assigned_to info
+let allEmailsData=[];
 async function loadEmails(){
   const d=await api('/admin/api/email-accounts/assignment-status');
   allEmailsData=d.accounts||[];
-  allEmails=allEmailsData; // keep compat reference
+  allEmails=allEmailsData;
   const unassigned=d.unassigned_count||0;
   const badge=document.getElementById('emailUnassignedBadge');
   const countEl=document.getElementById('emailUnassignedCount');
-  if(badge&&countEl){
-    countEl.textContent=unassigned;
-    badge.style.display=unassigned>0?'':'none';
-  }
+  if(badge&&countEl){countEl.textContent=unassigned;badge.style.display=unassigned>0?'':'none';}
   renderEmails(allEmailsData);
 }
 function renderEmails(accs){
@@ -1526,7 +1599,7 @@ function renderEmails(accs){
   tb.innerHTML=accs.map(a=>{
     const asgn=a.assigned_to;
     const asgnCell=asgn
-      ? `<span class="badge badge-teal" title="عميل: ${esc(asgn.client_username)}">${esc(asgn.client_display||asgn.client_username)}</span>`
+      ? `<span class="badge badge-teal" title="${esc(asgn.client_username)}">${esc(asgn.client_display||asgn.client_username)}</span>`
       : `<span style="font-size:.72rem;color:var(--amber);font-weight:600">⚠ غير مخصص</span>`;
     return `<tr>
       <td class="td-main">${esc(a.email)}</td>
