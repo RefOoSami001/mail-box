@@ -56,6 +56,7 @@ client_accounts_col   = db["client_accounts"]
 email_accounts_col    = db["email_accounts"]
 filter_categories_col = db["filter_categories"]
 login_activity_col    = db["login_activity"]
+app_settings_col      = db["app_settings"]
 
 client_accounts_col.create_index("username", unique=True)
 email_accounts_col.create_index("email", unique=True)
@@ -65,11 +66,55 @@ login_activity_col.create_index([("timestamp", DESCENDING)])
 _cache: dict = {}
 FETCH_LIMIT = 250
 
-# ─── Gmail / Outlook Configuration ────────────────────────────────
-GMAIL_SCOPES       = ["https://www.googleapis.com/auth/gmail.readonly"]
-CREDENTIALS_PATH   = os.environ.get("GOOGLE_CREDENTIALS_FILE", "credentials.json")
-TOKEN_PATH         = os.environ.get("GOOGLE_TOKEN_FILE", "token.json")
-OAUTH_PENDING_PATH = os.environ.get("GOOGLE_OAUTH_PENDING_FILE", "oauth_pending.json")
+# ─── Gmail / Outlook Configuration (stored in MongoDB) ─────────────
+GMAIL_SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
+GMAIL_SETTINGS_ID = "gmail_oauth"
+# Optional one-time migration sources (imported into MongoDB then unused)
+_LEGACY_CREDENTIALS_PATH = os.environ.get("GOOGLE_CREDENTIALS_FILE", "credentials.json")
+_LEGACY_TOKEN_PATH       = os.environ.get("GOOGLE_TOKEN_FILE", "token.json")
+
+
+def _gmail_settings_doc():
+    return app_settings_col.find_one({"_id": GMAIL_SETTINGS_ID}) or {}
+
+
+def _gmail_settings_update(**fields):
+    fields["updated_at"] = datetime.now(timezone.utc)
+    app_settings_col.update_one(
+        {"_id": GMAIL_SETTINGS_ID},
+        {"$set": fields},
+        upsert=True,
+    )
+
+
+def get_stored_credentials_config():
+    """Return the Google client secrets dict from MongoDB, or None."""
+    doc = _gmail_settings_doc()
+    cfg = doc.get("credentials")
+    return cfg if isinstance(cfg, dict) else None
+
+
+def get_stored_token_info():
+    """Return the OAuth token dict from MongoDB, or None."""
+    doc = _gmail_settings_doc()
+    tok = doc.get("token")
+    return tok if isinstance(tok, dict) else None
+
+
+def save_stored_credentials_config(config: dict):
+    _gmail_settings_update(credentials=config, token=None, oauth_pending=None)
+
+
+def save_stored_token_info(token_info: dict):
+    _gmail_settings_update(token=token_info, oauth_pending=None)
+
+
+def clear_stored_token():
+    app_settings_col.update_one(
+        {"_id": GMAIL_SETTINGS_ID},
+        {"$set": {"token": None, "oauth_pending": None, "updated_at": datetime.now(timezone.utc)}},
+        upsert=True,
+    )
 
 
 def _gmail_redirect_uri():
@@ -82,42 +127,75 @@ def _gmail_redirect_uri():
 
 
 def _save_oauth_pending(code_verifier, state, redirect_uri):
-    with open(OAUTH_PENDING_PATH, "w", encoding="utf-8") as f:
-        json.dump(
-            {
-                "code_verifier": code_verifier,
-                "state": state,
-                "redirect_uri": redirect_uri,
-                "created_at": datetime.now(timezone.utc).isoformat(),
-            },
-            f,
-        )
+    _gmail_settings_update(
+        oauth_pending={
+            "code_verifier": code_verifier,
+            "state": state,
+            "redirect_uri": redirect_uri,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+    )
 
 
 def _load_oauth_pending():
-    if not os.path.exists(OAUTH_PENDING_PATH):
-        return None
-    try:
-        with open(OAUTH_PENDING_PATH, encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
-        return None
+    pending = _gmail_settings_doc().get("oauth_pending")
+    return pending if isinstance(pending, dict) else None
 
 
 def _clear_oauth_pending():
-    if os.path.exists(OAUTH_PENDING_PATH):
-        try:
-            os.remove(OAUTH_PENDING_PATH)
-        except OSError:
-            pass
+    app_settings_col.update_one(
+        {"_id": GMAIL_SETTINGS_ID},
+        {"$set": {"oauth_pending": None, "updated_at": datetime.now(timezone.utc)}},
+        upsert=True,
+    )
 
 
 def _build_gmail_flow(redirect_uri):
-    return Flow.from_client_secrets_file(
-        CREDENTIALS_PATH,
+    client_config = get_stored_credentials_config()
+    if not client_config:
+        raise RuntimeError("لم يتم حفظ اعتمادات Google في قاعدة البيانات بعد")
+    return Flow.from_client_config(
+        client_config,
         scopes=GMAIL_SCOPES,
         redirect_uri=redirect_uri,
     )
+
+
+def _migrate_local_gmail_files_to_mongo():
+    """One-time import of legacy credentials.json / token.json into MongoDB."""
+    doc = _gmail_settings_doc()
+    updates = {}
+
+    if not doc.get("credentials") and os.path.exists(_LEGACY_CREDENTIALS_PATH):
+        try:
+            with open(_LEGACY_CREDENTIALS_PATH, encoding="utf-8") as f:
+                parsed = json.load(f)
+            if isinstance(parsed, dict) and ("installed" in parsed or "web" in parsed):
+                updates["credentials"] = parsed
+        except Exception:
+            pass
+
+    if not doc.get("token") and os.path.exists(_LEGACY_TOKEN_PATH):
+        try:
+            with open(_LEGACY_TOKEN_PATH, encoding="utf-8") as f:
+                parsed = json.load(f)
+            if isinstance(parsed, dict) and parsed.get("refresh_token"):
+                updates["token"] = parsed
+        except Exception:
+            pass
+
+    if updates:
+        updates["updated_at"] = datetime.now(timezone.utc)
+        updates["migrated_from_files"] = True
+        app_settings_col.update_one(
+            {"_id": GMAIL_SETTINGS_ID},
+            {"$set": updates},
+            upsert=True,
+        )
+
+
+_migrate_local_gmail_files_to_mongo()
+
 
 # All Microsoft consumer email domains that forward to the shared Gmail inbox
 OUTLOOK_DOMAINS = {
@@ -436,14 +514,16 @@ def fetch_email_messages(email_addr, pop3_password, pop3_host, pop3_port, limit=
 def get_gmail_credentials():
     """
     Return valid Google OAuth2 credentials, refreshing automatically if expired.
+    Token is loaded from / saved to MongoDB.
     Returns None when no token exists or the library is not installed.
     """
     if not GMAIL_AVAILABLE:
         return None
-    if not os.path.exists(TOKEN_PATH):
+    token_info = get_stored_token_info()
+    if not token_info:
         return None
     try:
-        creds = Credentials.from_authorized_user_file(TOKEN_PATH, GMAIL_SCOPES)
+        creds = Credentials.from_authorized_user_info(token_info, GMAIL_SCOPES)
     except Exception:
         return None
     if creds and creds.valid:
@@ -451,8 +531,7 @@ def get_gmail_credentials():
     if creds and creds.expired and creds.refresh_token:
         try:
             creds.refresh(GoogleRequest())
-            with open(TOKEN_PATH, "w") as f:
-                f.write(creds.to_json())
+            save_stored_token_info(json.loads(creds.to_json()))
             return creds
         except Exception:
             return None
@@ -1419,21 +1498,22 @@ def admin_clear_activity():
 @admin_required
 def admin_gmail_config():
     """Return Gmail OAuth configuration status (no secrets exposed)."""
-    has_creds = os.path.exists(CREDENTIALS_PATH)
-    has_token = os.path.exists(TOKEN_PATH)
+    creds_cfg   = get_stored_credentials_config()
+    token_info  = get_stored_token_info()
+    has_creds   = bool(creds_cfg)
+    has_token   = bool(token_info)
     token_valid = False
     gmail_lib   = GMAIL_AVAILABLE
 
     if has_token and GMAIL_AVAILABLE:
         try:
-            creds = Credentials.from_authorized_user_file(TOKEN_PATH, GMAIL_SCOPES)
+            creds = Credentials.from_authorized_user_info(token_info, GMAIL_SCOPES)
             if creds and creds.valid:
                 token_valid = True
             elif creds and creds.expired and creds.refresh_token:
                 try:
                     creds.refresh(GoogleRequest())
-                    with open(TOKEN_PATH, "w") as f:
-                        f.write(creds.to_json())
+                    save_stored_token_info(json.loads(creds.to_json()))
                     token_valid = True
                 except Exception:
                     token_valid = False
@@ -1443,9 +1523,7 @@ def admin_gmail_config():
     creds_preview = None
     if has_creds:
         try:
-            with open(CREDENTIALS_PATH) as f:
-                data = json.load(f)
-            section = data.get("installed") or data.get("web") or {}
+            section = creds_cfg.get("installed") or creds_cfg.get("web") or {}
             creds_preview = {
                 "client_id":  section.get("client_id", ""),
                 "project_id": section.get("project_id", ""),
@@ -1459,15 +1537,14 @@ def admin_gmail_config():
         "has_token":           has_token,
         "token_valid":         token_valid,
         "credentials_preview": creds_preview,
-        "credentials_path":    CREDENTIALS_PATH,
-        "token_path":          TOKEN_PATH,
+        "storage":             "mongodb",
     })
 
 
 @app.route("/admin/api/gmail-config", methods=["PUT"])
 @admin_required
 def admin_update_gmail_credentials():
-    """Replace credentials.json with new content supplied by the admin."""
+    """Save Google client credentials into MongoDB."""
     data    = request.json or {}
     content = (data.get("credentials_json") or "").strip()
     if not content:
@@ -1479,12 +1556,8 @@ def admin_update_gmail_credentials():
     if "installed" not in parsed and "web" not in parsed:
         return jsonify({"error": "ملف غير صالح: يجب أن يحتوي على مفتاح 'installed' أو 'web'"}), 400
     try:
-        with open(CREDENTIALS_PATH, "w") as f:
-            json.dump(parsed, f, indent=2)
-        # Remove old token — new credentials require fresh consent
-        if os.path.exists(TOKEN_PATH):
-            os.remove(TOKEN_PATH)
-        return jsonify({"ok": True, "message": "تم حفظ ملف الاعتمادات. يجب إعادة التوثيق."})
+        save_stored_credentials_config(parsed)
+        return jsonify({"ok": True, "message": "تم حفظ الاعتمادات في MongoDB. يجب إعادة التوثيق."})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -1492,11 +1565,11 @@ def admin_update_gmail_credentials():
 @app.route("/admin/api/gmail-auth-url")
 @admin_required
 def admin_gmail_auth_url():
-    """Generate a Google OAuth2 authorization URL (PKCE verifier is persisted)."""
+    """Generate a Google OAuth2 authorization URL (PKCE verifier is persisted in MongoDB)."""
     if not GMAIL_AVAILABLE:
         return jsonify({"error": "مكتبة google-auth غير مثبّتة. شغّل: pip install google-auth google-auth-oauthlib google-api-python-client"}), 500
-    if not os.path.exists(CREDENTIALS_PATH):
-        return jsonify({"error": "لم يتم رفع ملف credentials.json بعد"}), 400
+    if not get_stored_credentials_config():
+        return jsonify({"error": "لم يتم حفظ اعتمادات Google بعد — الصق credentials.json واحفظه أولاً"}), 400
     try:
         redirect_uri = _gmail_redirect_uri()
         flow = _build_gmail_flow(redirect_uri)
@@ -1542,7 +1615,7 @@ def admin_gmail_oauth_redirect():
             "<p><a href='/admin' style='color:#4f8ef7'>العودة</a></p></div></body></html>"
         ), 400
 
-    if not GMAIL_AVAILABLE or not os.path.exists(CREDENTIALS_PATH):
+    if not GMAIL_AVAILABLE or not get_stored_credentials_config():
         return "Gmail OAuth not available", 500
 
     pending = _load_oauth_pending()
@@ -1563,9 +1636,7 @@ def admin_gmail_oauth_redirect():
         flow = _build_gmail_flow(pending["redirect_uri"])
         flow.code_verifier = pending["code_verifier"]
         flow.fetch_token(code=code)
-        with open(TOKEN_PATH, "w", encoding="utf-8") as f:
-            f.write(flow.credentials.to_json())
-        _clear_oauth_pending()
+        save_stored_token_info(json.loads(flow.credentials.to_json()))
         _cache.clear()
         return (
             "<!doctype html><html lang='ar' dir='rtl'><meta charset='utf-8'>"
@@ -1575,7 +1646,7 @@ def admin_gmail_oauth_redirect():
             "<div style='text-align:center;max-width:420px;padding:2rem'>"
             "<div style='width:64px;height:64px;border-radius:50%;background:rgba(34,197,94,.15);display:flex;align-items:center;justify-content:center;margin:0 auto 1.2rem;font-size:2rem'>✓</div>"
             "<h2 style='color:#22c55e;margin:0 0 .5rem'>تم التوثيق بنجاح</h2>"
-            "<p style='color:#9aa3b5'>جاري العودة إلى لوحة التحكم…</p>"
+            "<p style='color:#9aa3b5'>تم حفظ التوكن في MongoDB. جاري العودة…</p>"
             "<p><a href='/admin?gmail_oauth=ok' style='color:#4f8ef7'>اضغط هنا إذا لم يتم التحويل</a></p>"
             "</div></body></html>"
         )
@@ -1599,8 +1670,8 @@ def admin_gmail_auth_callback():
     code = (data.get("code") or "").strip()
     if not code:
         return jsonify({"error": "auth code required"}), 400
-    if not os.path.exists(CREDENTIALS_PATH):
-        return jsonify({"error": "لم يتم رفع ملف credentials.json بعد"}), 400
+    if not get_stored_credentials_config():
+        return jsonify({"error": "لم يتم حفظ اعتمادات Google بعد"}), 400
 
     pending = _load_oauth_pending()
     if not pending or not pending.get("code_verifier"):
@@ -1612,11 +1683,9 @@ def admin_gmail_auth_callback():
         flow = _build_gmail_flow(pending["redirect_uri"])
         flow.code_verifier = pending["code_verifier"]
         flow.fetch_token(code=code)
-        with open(TOKEN_PATH, "w", encoding="utf-8") as f:
-            f.write(flow.credentials.to_json())
-        _clear_oauth_pending()
+        save_stored_token_info(json.loads(flow.credentials.to_json()))
         _cache.clear()
-        return jsonify({"ok": True, "message": "تم التوثيق بنجاح ✓ يمكنك الآن استخدام Outlook عبر Gmail."})
+        return jsonify({"ok": True, "message": "تم التوثيق بنجاح ✓ (محفوظ في MongoDB)"})
     except Exception as e:
         return jsonify({"error": f"فشل التوثيق: {str(e)[:200]}"}), 400
 
@@ -1625,11 +1694,9 @@ def admin_gmail_auth_callback():
 @admin_required
 def admin_delete_gmail_token():
     """Delete the stored OAuth token to force re-authentication."""
-    if os.path.exists(TOKEN_PATH):
-        os.remove(TOKEN_PATH)
-    _clear_oauth_pending()
-    _cache.clear()   # invalidate Gmail cache entries
-    return jsonify({"ok": True, "message": "تم حذف التوكن. يجب إعادة التوثيق."})
+    clear_stored_token()
+    _cache.clear()
+    return jsonify({"ok": True, "message": "تم حذف التوكن من MongoDB. يجب إعادة التوثيق."})
 
 
 # ─── Entry Point ──────────────────────────────────────────────────
