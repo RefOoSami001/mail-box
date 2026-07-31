@@ -5,6 +5,8 @@ import re
 import unicodedata
 import calendar
 import functools
+import json
+import base64
 from email.header import decode_header
 from email.utils import parseaddr, parsedate_to_datetime
 from bs4 import BeautifulSoup
@@ -15,6 +17,18 @@ from bson import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta, timezone
 
+# ─── Google / Gmail OAuth (optional — only needed for Outlook forwarding) ─────
+try:
+    from google.oauth2.credentials import Credentials
+    from google_auth_oauthlib.flow import Flow
+    from google.auth.transport.requests import Request as GoogleRequest
+    from googleapiclient.discovery import build as google_build
+    GMAIL_AVAILABLE = True
+except ImportError:
+    GMAIL_AVAILABLE = False
+    Flow = None  # type: ignore
+
+# ─── App ──────────────────────────────────────────────────────────
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-in-production")
 app.config["SESSION_COOKIE_HTTPONLY"] = True
@@ -51,6 +65,79 @@ login_activity_col.create_index([("timestamp", DESCENDING)])
 _cache: dict = {}
 FETCH_LIMIT = 250
 
+# ─── Gmail / Outlook Configuration ────────────────────────────────
+GMAIL_SCOPES       = ["https://www.googleapis.com/auth/gmail.readonly"]
+CREDENTIALS_PATH   = os.environ.get("GOOGLE_CREDENTIALS_FILE", "credentials.json")
+TOKEN_PATH         = os.environ.get("GOOGLE_TOKEN_FILE", "token.json")
+OAUTH_PENDING_PATH = os.environ.get("GOOGLE_OAUTH_PENDING_FILE", "oauth_pending.json")
+
+
+def _gmail_redirect_uri():
+    """Loopback redirect required for Desktop OAuth clients (no OOB / copy-paste)."""
+    host = (request.host or "127.0.0.1:5000").split("%")[0]
+    port = host.split(":")[-1] if ":" in host else str(os.environ.get("PORT", 5000))
+    if not str(port).isdigit():
+        port = str(os.environ.get("PORT", 5000))
+    return f"http://127.0.0.1:{port}/admin/api/gmail-oauth-callback"
+
+
+def _save_oauth_pending(code_verifier, state, redirect_uri):
+    with open(OAUTH_PENDING_PATH, "w", encoding="utf-8") as f:
+        json.dump(
+            {
+                "code_verifier": code_verifier,
+                "state": state,
+                "redirect_uri": redirect_uri,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            },
+            f,
+        )
+
+
+def _load_oauth_pending():
+    if not os.path.exists(OAUTH_PENDING_PATH):
+        return None
+    try:
+        with open(OAUTH_PENDING_PATH, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
+def _clear_oauth_pending():
+    if os.path.exists(OAUTH_PENDING_PATH):
+        try:
+            os.remove(OAUTH_PENDING_PATH)
+        except OSError:
+            pass
+
+
+def _build_gmail_flow(redirect_uri):
+    return Flow.from_client_secrets_file(
+        CREDENTIALS_PATH,
+        scopes=GMAIL_SCOPES,
+        redirect_uri=redirect_uri,
+    )
+
+# All Microsoft consumer email domains that forward to the shared Gmail inbox
+OUTLOOK_DOMAINS = {
+    "outlook.com", "outlook.fr", "outlook.de", "outlook.es", "outlook.it",
+    "outlook.jp", "outlook.com.br", "outlook.co.uk", "outlook.sa",
+    "outlook.com.au", "outlook.at", "outlook.be", "outlook.cl",
+    "hotmail.com", "hotmail.co.uk", "hotmail.fr", "hotmail.de",
+    "hotmail.es", "hotmail.it", "hotmail.com.br",
+    "live.com", "live.co.uk", "live.fr", "live.de", "live.nl",
+    "msn.com",
+}
+
+
+def is_outlook_email(email_addr: str) -> bool:
+    """Return True if this address belongs to a Microsoft consumer mail domain."""
+    domain = email_addr.rsplit("@", 1)[-1].lower() if "@" in email_addr else ""
+    return domain in OUTLOOK_DOMAINS or domain.endswith(".outlook.com")
+
+
+# ─── Helpers ──────────────────────────────────────────────────────
 
 def dt_iso(dt):
     """Serialize a datetime to ISO string, always with UTC timezone info."""
@@ -93,10 +180,7 @@ def normalize_assigned_emails(raw_list):
 
 
 def is_email_expired(item):
-    """Return True if the assignment is past its end date.
-
-    Future start dates should not mark an email as expired in the dashboard.
-    """
+    """Return True if the assignment is past its end date."""
     today = datetime.now(timezone.utc).date().isoformat()
     end   = item.get("end_date")
     return bool(end and today > end)
@@ -143,6 +227,8 @@ def admin_required(fn):
     return wrapper
 
 
+# ─── POP3 Helpers ─────────────────────────────────────────────────
+
 def connect_pop3(host, port, user, password):
     conn = poplib.POP3_SSL(host, int(port))
     conn.user(user)
@@ -151,27 +237,13 @@ def connect_pop3(host, port, user, password):
 
 
 def decode_str(value):
-    """
-    Decode a MIME-encoded email header string.
-
-    BUG FIX: The original code fell back to UTF-8 when the charset was None.
-    For Arabic emails encoded in cp1256/windows-1256 without a declared charset
-    label, decoding as UTF-8 with errors='ignore' silently produces an empty
-    string — the entire subject disappears before filtering runs.
-
-    Fix: try the declared charset first, then try a chain of common Arabic
-    charsets (cp1256, iso-8859-6) before finally falling back to latin-1.
-    latin-1 is used as the last resort because it maps every byte 0x00-0xFF
-    to the same code-point, so it never loses data (it just won't look right
-    for unsupported scripts, but that's better than a silent empty string).
-    """
+    """Decode a MIME-encoded email header string with Arabic charset fallbacks."""
     if value is None:
         return ""
     parts = decode_header(value)
     result = []
     for chunk, enc in parts:
         if isinstance(chunk, bytes):
-            # Normalise charset name so Python recognises common aliases
             charset = (enc or "").lower().replace("_", "-").strip()
             if charset:
                 try:
@@ -179,13 +251,9 @@ def decode_str(value):
                     continue
                 except (LookupError, UnicodeDecodeError):
                     pass
-            # Charset missing or unknown — try Arabic charsets before UTF-8
-            # because cp1256 bytes are completely opaque to the UTF-8 decoder.
             for fallback in ("cp1256", "iso-8859-6", "utf-8", "latin-1"):
                 try:
                     decoded = chunk.decode(fallback, errors="ignore")
-                    # Accept the result only if it produced visible characters.
-                    # For cp1256/iso-8859-6 this rules out garbled attempts.
                     if decoded.strip():
                         result.append(decoded)
                         break
@@ -199,41 +267,14 @@ def decode_str(value):
 
 
 def normalize_text(value):
-    """
-    Normalize a text string for reliable comparison.
-
-    BUG FIXES applied here:
-    1. Changed NFC -> NFKC.  NFC does canonical decomposition only.  Arabic
-       emails from older clients often use Unicode presentation-form characters
-       (U+FE8D–U+FEFC).  NFKC converts these to standard Arabic (U+0600–U+06FF)
-       so that filter patterns stored in the DB match correctly.
-
-    2. Added missing invisible/non-printing Unicode characters that can appear
-       inside email subjects and silently break string comparisons:
-         U+200B zero-width space
-         U+200C zero-width non-joiner
-         U+200D zero-width joiner
-         U+FEFF BOM / zero-width no-break space
-         U+00AD soft hyphen
-    """
+    """Normalize a text string for reliable comparison (NFKC + invisible chars)."""
     if value is None:
         return ""
     text = str(value)
-    # KFKC covers both canonical equivalence (NFC) AND compatibility
-    # equivalence — critical for Arabic presentation forms.
     text = unicodedata.normalize("NFKC", text)
-    # Replace every known non-standard whitespace / invisible character with a
-    # regular space so that re.sub(r"\s+", " ", …) can collapse them.
     _INVISIBLE = (
-        "\u00A0"  # non-breaking space
-        "\u00AD"  # soft hyphen          ← NEW
-        "\u200B"  # zero-width space     ← NEW
-        "\u200C"  # zero-width non-joiner ← NEW
-        "\u200D"  # zero-width joiner    ← NEW
-        "\u202F"  # narrow no-break space
-        "\u2007"  # figure space
-        "\u2060"  # word joiner
-        "\uFEFF"  # BOM / zero-width no-break space ← NEW
+        "\u00A0\u00AD\u200B\u200C\u200D"
+        "\u202F\u2007\u2060\uFEFF"
     )
     for ch in _INVISIBLE:
         text = text.replace(ch, " ")
@@ -307,6 +348,38 @@ def text_preview(msg):
     return preview.strip()
 
 
+def _build_summary(msg, uid):
+    """Build a summary dict from a parsed email.message.Message object."""
+    subject_raw = msg.get("Subject", "")
+    subject     = normalize_text(decode_str(subject_raw)) or "(بدون موضوع)"
+    sender_raw  = msg.get("From", "")
+    sender_name, sender_addr = parseaddr(decode_str(sender_raw))
+    body, body_type = extract_body(msg)
+    preview     = text_preview(msg)
+    msg_ts = None
+    try:
+        msg_dt = parsedate_to_datetime(msg.get("Date", ""))
+        if msg_dt is not None and msg_dt.tzinfo is None:
+            msg_dt = msg_dt.replace(tzinfo=timezone.utc)
+        msg_ts = msg_dt.isoformat() if msg_dt is not None else None
+    except Exception:
+        msg_ts = None
+    return (
+        {
+            "uid":         uid,
+            "subject":     subject,
+            "sender_name": sender_name or sender_addr,
+            "sender_addr": sender_addr,
+            "date":        format_date(msg.get("Date", "")),
+            "timestamp":   msg_ts,
+            "preview":     preview,
+        },
+        {"body": body, "body_type": body_type},
+    )
+
+
+# ─── POP3 Fetch ───────────────────────────────────────────────────
+
 def fetch_email_messages(email_addr, pop3_password, pop3_host, pop3_port, limit=FETCH_LIMIT):
     existing   = _cache.get(email_addr, {"summaries": [], "bodies": {}})
     known_uids = {m["uid"] for m in existing["summaries"]}
@@ -329,7 +402,6 @@ def fetch_email_messages(email_addr, pop3_password, pop3_host, pop3_port, limit=
 
     for item in reversed(uidl_list):
         if len(new_summaries) >= limit:
-            print(f"Reached fetch limit of {limit} messages for {email_addr}, stopping fetch")
             break
         try:
             parts = item.decode(errors="ignore").split(" ", 1)
@@ -344,31 +416,9 @@ def fetch_email_messages(email_addr, pop3_password, pop3_host, pop3_port, limit=
             raw       = b"\n".join(raw_lines)
             msg       = email_lib.message_from_bytes(raw)
 
-            subject_raw = msg.get("Subject", "")
-            subject     = normalize_text(decode_str(subject_raw)) or "(بدون موضوع)"
-            sender_raw  = msg.get("From", "")
-            sender_name, sender_addr = parseaddr(decode_str(sender_raw))
-            body, body_type = extract_body(msg)
-            preview     = text_preview(msg)
-            msg_ts = None
-            try:
-                msg_dt = parsedate_to_datetime(msg.get("Date", ""))
-                if msg_dt is not None and msg_dt.tzinfo is None:
-                    msg_dt = msg_dt.replace(tzinfo=timezone.utc)
-                msg_ts = msg_dt.isoformat() if msg_dt is not None else None
-            except Exception:
-                msg_ts = None
-
-            new_summaries.append({
-                "uid":         uid,
-                "subject":     subject,
-                "sender_name": sender_name or sender_addr,
-                "sender_addr": sender_addr,
-                "date":        format_date(msg.get("Date", "")),
-                "timestamp":   msg_ts,
-                "preview":     preview,
-            })
-            new_bodies[uid] = {"body": body, "body_type": body_type}
+            summary, body_entry = _build_summary(msg, uid)
+            new_summaries.append(summary)
+            new_bodies[uid] = body_entry
 
         except Exception:
             continue
@@ -378,6 +428,92 @@ def fetch_email_messages(email_addr, pop3_password, pop3_host, pop3_port, limit=
     merged_summaries = new_summaries + existing["summaries"]
     merged_bodies    = {**existing["bodies"], **new_bodies}
     _cache[email_addr] = {"summaries": merged_summaries, "bodies": merged_bodies}
+    return merged_summaries
+
+
+# ─── Gmail / Outlook Fetch ────────────────────────────────────────
+
+def get_gmail_credentials():
+    """
+    Return valid Google OAuth2 credentials, refreshing automatically if expired.
+    Returns None when no token exists or the library is not installed.
+    """
+    if not GMAIL_AVAILABLE:
+        return None
+    if not os.path.exists(TOKEN_PATH):
+        return None
+    try:
+        creds = Credentials.from_authorized_user_file(TOKEN_PATH, GMAIL_SCOPES)
+    except Exception:
+        return None
+    if creds and creds.valid:
+        return creds
+    if creds and creds.expired and creds.refresh_token:
+        try:
+            creds.refresh(GoogleRequest())
+            with open(TOKEN_PATH, "w") as f:
+                f.write(creds.to_json())
+            return creds
+        except Exception:
+            return None
+    return None
+
+
+def fetch_outlook_via_gmail(outlook_email: str, limit: int = FETCH_LIMIT) -> list:
+    """
+    Fetch emails addressed to a specific Outlook inbox using the Gmail API.
+    All Outlook inboxes forward to one shared Gmail account; we isolate each
+    inbox by searching the To: header for the original Outlook address.
+    Uses the same in-memory cache structure as fetch_email_messages().
+    """
+    cache_key  = f"__gmail__{outlook_email}"
+    existing   = _cache.get(cache_key, {"summaries": [], "bodies": {}})
+    known_uids = {m["uid"] for m in existing["summaries"]}
+
+    creds = get_gmail_credentials()
+    if not creds:
+        raise RuntimeError(
+            "Gmail OAuth غير مكوّن أو انتهت صلاحية التوكن. "
+            "يرجى إعداد Gmail من لوحة الإدارة ← إعدادات Gmail."
+        )
+
+    service = google_build("gmail", "v1", credentials=creds, cache_discovery=False)
+
+    # Search only for messages whose To: header contains this Outlook address
+    response = service.users().messages().list(
+        userId="me",
+        q=f"to:{outlook_email}",
+        maxResults=limit,
+    ).execute()
+
+    new_summaries: list = []
+    new_bodies:    dict = {}
+
+    for meta in response.get("messages", []):
+        if len(new_summaries) >= limit:
+            break
+        msg_id = meta["id"]
+        if msg_id in known_uids:
+            continue
+        try:
+            msg_data  = service.users().messages().get(
+                userId="me", id=msg_id, format="raw"
+            ).execute()
+            # Gmail API pads base64 inconsistently — add == to be safe
+            raw_bytes = base64.urlsafe_b64decode(msg_data["raw"] + "==")
+            msg       = email_lib.message_from_bytes(raw_bytes)
+
+            summary, body_entry = _build_summary(msg, msg_id)
+            new_summaries.append(summary)
+            new_bodies[msg_id] = body_entry
+
+        except Exception as exc:
+            print(f"[GMAIL] failed to fetch message {msg_id}: {exc}")
+            continue
+
+    merged_summaries = new_summaries + existing["summaries"]
+    merged_bodies    = {**existing["bodies"], **new_bodies}
+    _cache[cache_key] = {"summaries": merged_summaries, "bodies": merged_bodies}
     return merged_summaries
 
 
@@ -463,8 +599,7 @@ def api_categories():
 @app.route("/api/my-emails")
 @client_required
 def api_my_emails():
-    """Return ALL emails assigned to the client, with an 'expired' flag.
-    Expired emails are still returned so the dashboard can show them as expired."""
+    """Return ALL emails assigned to the client, with an 'expired' flag."""
     doc = client_accounts_col.find_one({"_id": ObjectId(session["client_id"])})
     if not doc:
         return jsonify({"emails": []})
@@ -496,6 +631,7 @@ def api_fetch():
     if not acc:
         return jsonify({"error": "هذا البريد غير مسجّل في النظام. تواصل مع المشرف."}), 404
 
+    # ── Filter patterns ──────────────────────────────────────────
     patterns = []
     normalized_patterns = []
     category_label = "الكل"
@@ -509,152 +645,83 @@ def api_fetch():
         except Exception:
             pass
 
-    print(f"[FILTER DEBUG] ── fetch ──────────────────────────────────────")
-    print(f"[FILTER DEBUG] email={email_addr!r}")
-    print(f"[FILTER DEBUG] category_id={category_id!r}  label={category_label!r}")
-    print(f"[FILTER DEBUG] raw patterns ({len(patterns)}): {patterns!r}")
+    print(f"[FILTER DEBUG] email={email_addr!r}  category={category_label!r}")
     print(f"[FILTER DEBUG] normalized patterns ({len(normalized_patterns)}): {normalized_patterns!r}")
 
     def apply_filter_patterns(msg_list, patterns_list):
-        """
-        Return only messages whose normalized subject contains at least one
-        pattern (case-insensitive substring match).
-
-        BUG FIX: Both sides are already normalized by normalize_text() before
-        comparison, so NFKC + invisible-char stripping apply to both the stored
-        subject and the stored pattern.  Lower-casing is applied at comparison
-        time so patterns are case-insensitive.
-        """
         if not patterns_list:
-            print(f"[FILTER DEBUG] no patterns — returning all {len(msg_list)} messages unfiltered")
             return msg_list
-
-        print(f"[FILTER DEBUG] applying {len(patterns_list)} pattern(s) to {len(msg_list)} message(s)")
         filtered = []
         for m in msg_list:
-            raw_subject        = m.get("subject", "")
-            normalized_subject = normalize_text(raw_subject)
-            subject_lower      = normalized_subject.lower()
-
-            match_detail = []
-            matched = False
-            for p in patterns_list:
-                p_lower = p.lower()
-                hit = p_lower in subject_lower
-                match_detail.append(f"  pattern={p_lower!r}  hit={hit}")
-                if hit:
-                    matched = True
-
-            print(f"[FILTER DEBUG] uid={m.get('uid')!r}")
-            print(f"[FILTER DEBUG]   raw_subject     = {raw_subject!r}")
-            print(f"[FILTER DEBUG]   norm_subject    = {normalized_subject!r}")
-            print(f"[FILTER DEBUG]   timestamp       = {m.get('timestamp')!r}")
-            for detail in match_detail:
-                print(f"[FILTER DEBUG]{detail}")
-            print(f"[FILTER DEBUG]   → MATCHED={matched}")
-
-            if matched:
+            subject_lower = normalize_text(m.get("subject", "")).lower()
+            if any(p.lower() in subject_lower for p in patterns_list):
                 filtered.append(m)
-
-        if not filtered:
-            print(f"[FILTER DEBUG] ✗ NO MATCHES — all {len(msg_list)} subjects rejected")
-            for m in msg_list:
-                print(f"[FILTER DEBUG]   subject={normalize_text(m.get('subject',''))!r}")
-        else:
-            print(f"[FILTER DEBUG] ✓ {len(filtered)}/{len(msg_list)} messages matched")
-
         return filtered
 
     def apply_time_cutoff(msg_list, cutoff_dt):
-        """
-        BUG FIX (Critical): The original code used a hard 20-minute window and
-        also silently dropped any message that had no timestamp (timestamp=None).
-
-        Both behaviours cause real emails to disappear:
-          • An email that arrived 25 minutes ago but matches the filter perfectly
-            was discarded entirely.
-          • Emails whose Date header was missing or malformed got timestamp=None
-            and were always excluded.
-
-        Fix:
-          • Extended the window to 2 hours (EMAIL_CUTOFF_MINUTES env var,
-            default 120).  For OTP services the old 20-minute window was far too
-            tight — email delivery delays are common.
-          • Messages with timestamp=None are now INCLUDED (we keep them rather
-            than silently dropping them).
-        """
         result = []
         for m in msg_list:
             ts = m.get("timestamp")
             if ts is None:
-                print(f"[FILTER DEBUG] uid={m.get('uid')!r} — no timestamp, INCLUDING anyway")
                 result.append(m)
                 continue
             try:
                 msg_dt = datetime.fromisoformat(ts)
                 if msg_dt.tzinfo is None:
                     msg_dt = msg_dt.replace(tzinfo=timezone.utc)
-                passes = msg_dt >= cutoff_dt
-                print(f"[FILTER DEBUG] uid={m.get('uid')!r} timestamp={ts!r} passes_cutoff={passes}")
-                if passes:
+                if msg_dt >= cutoff_dt:
                     result.append(m)
-            except Exception as exc:
-                print(f"[FILTER DEBUG] uid={m.get('uid')!r} bad timestamp {ts!r}: {exc} — INCLUDING anyway")
+            except Exception:
                 result.append(m)
         return result
 
-    # Cutoff window is configurable via env var; default 120 minutes.
     cutoff_minutes = int(os.environ.get("EMAIL_CUTOFF_MINUTES", 20))
     cutoff = datetime.now(timezone.utc) - timedelta(minutes=cutoff_minutes)
-    print(f"[FILTER DEBUG] cutoff_minutes={cutoff_minutes}  cutoff={cutoff.isoformat()}")
+
+    # ── Route: Outlook → Gmail API  |  Other → POP3 ──────────────
+    use_gmail   = (acc.get("account_type") == "gmail_forwarded") or is_outlook_email(email_addr)
+    cache_key   = f"__gmail__{email_addr}" if use_gmail else email_addr
+    warning     = None
 
     try:
-        summaries = fetch_email_messages(
-            email_addr,
-            acc["pop3_password"],
-            acc.get("pop3_host", DEFAULT_HOST),
-            acc.get("pop3_port", DEFAULT_PORT),
-        )
+        if use_gmail:
+            summaries = fetch_outlook_via_gmail(email_addr)
+        else:
+            summaries = fetch_email_messages(
+                email_addr,
+                acc["pop3_password"],
+                acc.get("pop3_host", DEFAULT_HOST),
+                acc.get("pop3_port", DEFAULT_PORT),
+            )
     except Exception as e:
-        cached = _cache.get(email_addr, {}).get("summaries", [])
+        cached = _cache.get(cache_key, {}).get("summaries", [])
         if not cached:
-            return jsonify({"error": f"فشل الاتصال بالبريد: {str(e)[:120]}"}), 503
+            return jsonify({"error": f"فشل جلب الرسائل: {str(e)[:180]}"}), 503
         summaries = cached
-        warning = "تعذّر تحديث الرسائل — يتم عرض نسخة محفوظة مؤقتاً"
-        print(f"[FILTER DEBUG] using cached {len(summaries)} messages (connection failed: {e})")
-        if normalized_patterns:
-            summaries = apply_filter_patterns(summaries, normalized_patterns)
-        summaries = apply_time_cutoff(summaries, cutoff)
-        print(f"[FILTER DEBUG] after time cutoff: {len(summaries)} messages remain")
-        if summaries:
-            summaries = [summaries[0]]
-        return jsonify({"messages": summaries, "total": len(summaries), "warning": warning, "category": category_label, "cached": True})
+        warning   = "تعذّر تحديث الرسائل — يتم عرض نسخة محفوظة مؤقتاً"
 
-    print(f"[FILTER DEBUG] fetched {len(summaries)} messages from server")
     if normalized_patterns:
         summaries = apply_filter_patterns(summaries, normalized_patterns)
     summaries = apply_time_cutoff(summaries, cutoff)
-    print(f"[FILTER DEBUG] after time cutoff: {len(summaries)} messages remain")
     if summaries:
         summaries = [summaries[0]]
 
     log_activity(session["client_id"], session["client_username"],
                  f"fetch:{email_addr}:cat:{category_label}", get_client_ip())
 
-    print(f"[FILTER DEBUG] returning {len(summaries)} message(s) to client")
     return jsonify({
         "messages":  summaries,
         "total":     len(summaries),
-        "warning":   None,
+        "warning":   warning,
         "category":  category_label,
-        "cached":    False,
+        "cached":    warning is not None,
     })
 
 
 @app.route("/api/message/<uid>")
 @client_required
 def api_message(uid):
-    for email_addr, cached in _cache.items():
+    for cached in _cache.values():
         bodies = cached.get("bodies", {})
         if uid in bodies:
             return jsonify(bodies[uid])
@@ -866,7 +933,6 @@ def admin_client_activity(client_id):
 @app.route("/admin/api/clients/<client_id>/emails", methods=["GET"])
 @admin_required
 def admin_get_client_emails(client_id):
-    """Get the list of emails assigned to a client (with dates)."""
     try:
         doc = client_accounts_col.find_one({"_id": ObjectId(client_id)})
     except Exception:
@@ -880,7 +946,6 @@ def admin_get_client_emails(client_id):
 @app.route("/admin/api/clients/<client_id>/emails", methods=["POST"])
 @admin_required
 def admin_assign_client_email(client_id):
-    """Assign an email to a client, optionally with start/end dates."""
     data       = request.json or {}
     email      = (data.get("email") or "").strip().lower()
     start_date = (data.get("start_date") or "").strip() or None
@@ -915,7 +980,6 @@ def admin_assign_client_email(client_id):
 @app.route("/admin/api/clients/<client_id>/emails/<path:email>", methods=["PUT"])
 @admin_required
 def admin_edit_client_email_dates(client_id, email):
-    """Edit start/end dates for an assigned email."""
     data       = request.json or {}
     start_date = (data.get("start_date") or "").strip() or None
     end_date   = (data.get("end_date") or "").strip() or None
@@ -946,7 +1010,6 @@ def admin_edit_client_email_dates(client_id, email):
 @app.route("/admin/api/clients/<client_id>/emails/<path:email>", methods=["DELETE"])
 @admin_required
 def admin_remove_client_email(client_id, email):
-    """Remove an email assignment from a client."""
     email = email.strip().lower()
     try:
         doc = client_accounts_col.find_one({"_id": ObjectId(client_id)})
@@ -966,9 +1029,6 @@ def admin_remove_client_email(client_id, email):
 @app.route("/admin/api/clients/<client_id>/emails/renew-all", methods=["POST"])
 @admin_required
 def admin_renew_all_client_emails(client_id):
-    """Renew all assigned emails for a client by shifting dates +1 month.
-    New start_date = old end_date; new end_date = old end_date + 1 month.
-    For emails without an end_date the dates are left unchanged."""
     try:
         doc = client_accounts_col.find_one({"_id": ObjectId(client_id)})
     except Exception:
@@ -981,10 +1041,8 @@ def admin_renew_all_client_emails(client_id):
         end = item.get("end_date")
         if not end:
             continue
-        new_start = end
-        new_end   = add_one_month(end)
-        item["start_date"] = new_start
-        item["end_date"]   = new_end
+        item["start_date"] = end
+        item["end_date"]   = add_one_month(end)
         updated += 1
     client_accounts_col.update_one(
         {"_id": ObjectId(client_id)},
@@ -993,17 +1051,17 @@ def admin_renew_all_client_emails(client_id):
     return jsonify({"ok": True, "updated": updated})
 
 
-# ── Admin API: Email Accounts (admin-managed) ─────────────────────
+# ── Admin API: Email Accounts ─────────────────────────────────────
 
 @app.route("/admin/api/email-accounts")
 @admin_required
 def admin_list_emails():
     accounts = list(email_accounts_col.find({}, {"pop3_password": 0}).sort("added_at", DESCENDING))
     for a in accounts:
-        a["_id"]      = str(a["_id"])
-        a["added_at"] = dt_iso(a.get("added_at")) if a.get("added_at") else ""
+        a["_id"]         = str(a["_id"])
+        a["added_at"]    = dt_iso(a.get("added_at")) if a.get("added_at") else ""
+        a["account_type"]= a.get("account_type", "pop3")
     return jsonify({"accounts": accounts})
-
 
 
 @app.route("/admin/api/email-accounts/assignment-status")
@@ -1014,8 +1072,7 @@ def admin_email_assignment_status():
     for client in client_accounts_col.find(
         {}, {"_id": 1, "username": 1, "display_name": 1, "assigned_emails": 1}
     ):
-        assigned = normalize_assigned_emails(client.get("assigned_emails", []))
-        for item in assigned:
+        for item in normalize_assigned_emails(client.get("assigned_emails", [])):
             em = item["email"]
             if em not in assignment_map:
                 assignment_map[em] = {
@@ -1029,13 +1086,15 @@ def admin_email_assignment_status():
     result = []
     for a in accounts:
         em = a["email"]
+        acct_type = a.get("account_type", "pop3")
         result.append({
-            "_id":        str(a["_id"]),
-            "email":      em,
-            "pop3_host":  a.get("pop3_host", DEFAULT_HOST),
-            "pop3_port":  a.get("pop3_port", DEFAULT_PORT),
-            "added_at":   dt_iso(a.get("added_at")) if a.get("added_at") else "",
-            "assigned_to": assignment_map.get(em),
+            "_id":          str(a["_id"]),
+            "email":        em,
+            "account_type": acct_type,
+            "pop3_host":    a.get("pop3_host", DEFAULT_HOST) if acct_type == "pop3" else "gmail-forwarded",
+            "pop3_port":    a.get("pop3_port", DEFAULT_PORT) if acct_type == "pop3" else 0,
+            "added_at":     dt_iso(a.get("added_at")) if a.get("added_at") else "",
+            "assigned_to":  assignment_map.get(em),
         })
     unassigned = sum(1 for r in result if r["assigned_to"] is None)
     return jsonify({
@@ -1049,29 +1108,49 @@ def admin_email_assignment_status():
 @app.route("/admin/api/email-accounts", methods=["POST"])
 @admin_required
 def admin_add_email():
-    data  = request.json or {}
-    em    = (data.get("email") or "").strip().lower()
-    pw    = (data.get("password") or "").strip()
-    host  = (data.get("host") or DEFAULT_HOST).strip() or DEFAULT_HOST
-    port  = int(data.get("port") or DEFAULT_PORT)
-    if not em or not pw:
-        return jsonify({"error": "email and password required"}), 400
-    try:
-        conn = connect_pop3(host, port, em, pw)
-        conn.quit()
-    except Exception as e:
-        return jsonify({"error": f"فشل الاتصال بالخادم: {str(e)[:120]}"}), 400
-    try:
-        result = email_accounts_col.insert_one({
+    data = request.json or {}
+    em   = (data.get("email") or "").strip().lower()
+    pw   = (data.get("password") or "").strip()
+    host = (data.get("host") or DEFAULT_HOST).strip() or DEFAULT_HOST
+    port = int(data.get("port") or DEFAULT_PORT)
+
+    if not em:
+        return jsonify({"error": "email required"}), 400
+
+    # Outlook / Microsoft addresses → Gmail-forwarded account (no POP3 test)
+    if is_outlook_email(em):
+        account_type = "gmail_forwarded"
+        doc = {
             "email":        em,
+            "account_type": account_type,
+            "added_at":     datetime.now(timezone.utc),
+            "added_by":     session.get("admin_username", "admin"),
+        }
+    else:
+        if not pw:
+            return jsonify({"error": "password required for POP3 accounts"}), 400
+        # Verify POP3 connectivity before saving
+        try:
+            conn = connect_pop3(host, port, em, pw)
+            conn.quit()
+        except Exception as e:
+            return jsonify({"error": f"فشل الاتصال بالخادم: {str(e)[:120]}"}), 400
+        account_type = "pop3"
+        doc = {
+            "email":        em,
+            "account_type": account_type,
             "pop3_password": pw,
             "pop3_host":    host,
             "pop3_port":    port,
             "added_at":     datetime.now(timezone.utc),
             "added_by":     session.get("admin_username", "admin"),
-        })
+        }
+
+    try:
+        result = email_accounts_col.insert_one(doc)
         _cache.pop(em, None)
-        return jsonify({"ok": True, "id": str(result.inserted_id)})
+        _cache.pop(f"__gmail__{em}", None)
+        return jsonify({"ok": True, "id": str(result.inserted_id), "account_type": account_type})
     except DuplicateKeyError:
         return jsonify({"error": f"البريد '{em}' مضاف مسبقاً"}), 409
 
@@ -1079,7 +1158,11 @@ def admin_add_email():
 @app.route("/admin/api/email-accounts/bulk", methods=["POST"])
 @admin_required
 def admin_bulk_emails():
-    """Bulk-add email accounts in email:password format, one per line."""
+    """
+    Bulk-add email accounts.
+    Format per line: email@example.com:password
+    For Outlook domains the password is optional (ignored); write email: or email:anything.
+    """
     data = request.json or {}
     raw  = (data.get("text") or "").strip()
     host = (data.get("host") or DEFAULT_HOST).strip() or DEFAULT_HOST
@@ -1094,31 +1177,48 @@ def admin_bulk_emails():
         line = line.strip()
         if not line:
             continue
-        if ":" not in line:
-            error_list.append(f"تنسيق خاطئ: {line[:60]}")
+        # Support both "email:pass" and bare "email" (for Outlook accounts)
+        if ":" in line:
+            parts = line.split(":", 1)
+            em = parts[0].strip().lower()
+            pw = parts[1].strip()
+        else:
+            em = line.lower()
+            pw = ""
+
+        if not em or "@" not in em:
+            error_list.append(f"بريد غير صالح: {line[:60]}")
             errors += 1
             continue
-        parts = line.split(":", 1)
-        em = parts[0].strip().lower()
-        pw = parts[1].strip()
-        if not em or not pw:
-            error_list.append(f"حقل فارغ: {line[:60]}")
-            errors += 1
-            continue
-        if "@" not in em:
-            error_list.append(f"بريد غير صالح: {em[:60]}")
-            errors += 1
-            continue
-        try:
-            email_accounts_col.insert_one({
+
+        if is_outlook_email(em):
+            account_type = "gmail_forwarded"
+            doc = {
                 "email":        em,
+                "account_type": account_type,
+                "added_at":     datetime.now(timezone.utc),
+                "added_by":     session.get("admin_username", "admin"),
+            }
+        else:
+            if not pw:
+                error_list.append(f"كلمة المرور مطلوبة: {em[:60]}")
+                errors += 1
+                continue
+            account_type = "pop3"
+            doc = {
+                "email":        em,
+                "account_type": account_type,
                 "pop3_password": pw,
                 "pop3_host":    host,
                 "pop3_port":    port,
                 "added_at":     datetime.now(timezone.utc),
                 "added_by":     session.get("admin_username", "admin"),
-            })
+            }
+
+        try:
+            email_accounts_col.insert_one(doc)
             _cache.pop(em, None)
+            _cache.pop(f"__gmail__{em}", None)
             added += 1
         except DuplicateKeyError:
             skipped += 1
@@ -1148,6 +1248,7 @@ def admin_edit_email(acc_id):
             return jsonify({"error": "not found"}), 404
         email_accounts_col.update_one({"_id": ObjectId(acc_id)}, {"$set": update})
         _cache.pop(acc["email"], None)
+        _cache.pop(f"__gmail__{acc['email']}", None)
     except Exception:
         return jsonify({"error": "Invalid id"}), 400
     return jsonify({"ok": True})
@@ -1160,6 +1261,7 @@ def admin_delete_email(acc_id):
         acc = email_accounts_col.find_one({"_id": ObjectId(acc_id)})
         if acc:
             _cache.pop(acc["email"], None)
+            _cache.pop(f"__gmail__{acc['email']}", None)
         email_accounts_col.delete_one({"_id": ObjectId(acc_id)})
     except Exception:
         return jsonify({"error": "Invalid id"}), 400
@@ -1169,18 +1271,16 @@ def admin_delete_email(acc_id):
 @app.route("/admin/api/email-accounts/bulk-delete", methods=["DELETE"])
 @admin_required
 def admin_bulk_delete_emails():
-    result = email_accounts_col.delete_many({})
+    email_accounts_col.delete_many({})
     _cache.clear()
-    return jsonify({"ok": True, "deleted_count": result.deleted_count})
+    return jsonify({"ok": True})
 
 
 # ── Admin API: Filter Categories ──────────────────────────────────
 
-
 @app.route("/admin/api/clients/<client_id>/filter-settings", methods=["GET"])
 @admin_required
 def admin_get_client_filter_settings(client_id):
-    """Return the allowed_categories list for a client (empty = all allowed)."""
     try:
         doc = client_accounts_col.find_one(
             {"_id": ObjectId(client_id)}, {"allowed_categories": 1}
@@ -1195,7 +1295,6 @@ def admin_get_client_filter_settings(client_id):
 @app.route("/admin/api/clients/<client_id>/filter-settings", methods=["PUT"])
 @admin_required
 def admin_set_client_filter_settings(client_id):
-    """Set which filter categories a client is allowed to see (empty = all)."""
     data = request.json or {}
     raw  = data.get("allowed_categories", [])
     if not isinstance(raw, list):
@@ -1245,10 +1344,6 @@ def admin_create_category():
         raw_list = [p.strip() for p in raw_pats if p.strip()]
     else:
         raw_list = [p.strip() for p in raw_pats.splitlines() if p.strip()]
-    # BUG FIX: normalize patterns at save time so they are stored in a
-    # canonical form.  This ensures the comparison in apply_filter_patterns()
-    # (which also normalises both sides) is symmetric, and removes any
-    # invisible Unicode characters that an admin might inadvertently paste.
     patterns = [normalize_text(p) for p in raw_list if normalize_text(p)]
     count = filter_categories_col.count_documents({})
     result = filter_categories_col.insert_one({
@@ -1277,7 +1372,6 @@ def admin_edit_category(cat_id):
             raw_list = [p.strip() for p in raw if p.strip()]
         else:
             raw_list = [p.strip() for p in raw.splitlines() if p.strip()]
-        # BUG FIX: normalize patterns at save time (same as create endpoint).
         update["patterns"] = [normalize_text(p) for p in raw_list if normalize_text(p)]
     if "enabled" in data:
         update["enabled"] = bool(data["enabled"])
@@ -1315,10 +1409,230 @@ def admin_all_activity():
 @app.route("/admin/api/activity", methods=["DELETE"])
 @admin_required
 def admin_clear_activity():
-    """Delete all activity logs from the database."""
     result = login_activity_col.delete_many({})
     return jsonify({"ok": True, "deleted_count": result.deleted_count})
 
+
+# ── Admin API: Gmail / OAuth Configuration ────────────────────────
+
+@app.route("/admin/api/gmail-config")
+@admin_required
+def admin_gmail_config():
+    """Return Gmail OAuth configuration status (no secrets exposed)."""
+    has_creds = os.path.exists(CREDENTIALS_PATH)
+    has_token = os.path.exists(TOKEN_PATH)
+    token_valid = False
+    gmail_lib   = GMAIL_AVAILABLE
+
+    if has_token and GMAIL_AVAILABLE:
+        try:
+            creds = Credentials.from_authorized_user_file(TOKEN_PATH, GMAIL_SCOPES)
+            if creds and creds.valid:
+                token_valid = True
+            elif creds and creds.expired and creds.refresh_token:
+                try:
+                    creds.refresh(GoogleRequest())
+                    with open(TOKEN_PATH, "w") as f:
+                        f.write(creds.to_json())
+                    token_valid = True
+                except Exception:
+                    token_valid = False
+        except Exception:
+            token_valid = False
+
+    creds_preview = None
+    if has_creds:
+        try:
+            with open(CREDENTIALS_PATH) as f:
+                data = json.load(f)
+            section = data.get("installed") or data.get("web") or {}
+            creds_preview = {
+                "client_id":  section.get("client_id", ""),
+                "project_id": section.get("project_id", ""),
+            }
+        except Exception:
+            pass
+
+    return jsonify({
+        "gmail_lib_installed": gmail_lib,
+        "has_credentials":     has_creds,
+        "has_token":           has_token,
+        "token_valid":         token_valid,
+        "credentials_preview": creds_preview,
+        "credentials_path":    CREDENTIALS_PATH,
+        "token_path":          TOKEN_PATH,
+    })
+
+
+@app.route("/admin/api/gmail-config", methods=["PUT"])
+@admin_required
+def admin_update_gmail_credentials():
+    """Replace credentials.json with new content supplied by the admin."""
+    data    = request.json or {}
+    content = (data.get("credentials_json") or "").strip()
+    if not content:
+        return jsonify({"error": "credentials_json required"}), 400
+    try:
+        parsed = json.loads(content)
+    except json.JSONDecodeError as e:
+        return jsonify({"error": f"JSON غير صالح: {e}"}), 400
+    if "installed" not in parsed and "web" not in parsed:
+        return jsonify({"error": "ملف غير صالح: يجب أن يحتوي على مفتاح 'installed' أو 'web'"}), 400
+    try:
+        with open(CREDENTIALS_PATH, "w") as f:
+            json.dump(parsed, f, indent=2)
+        # Remove old token — new credentials require fresh consent
+        if os.path.exists(TOKEN_PATH):
+            os.remove(TOKEN_PATH)
+        return jsonify({"ok": True, "message": "تم حفظ ملف الاعتمادات. يجب إعادة التوثيق."})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/admin/api/gmail-auth-url")
+@admin_required
+def admin_gmail_auth_url():
+    """Generate a Google OAuth2 authorization URL (PKCE verifier is persisted)."""
+    if not GMAIL_AVAILABLE:
+        return jsonify({"error": "مكتبة google-auth غير مثبّتة. شغّل: pip install google-auth google-auth-oauthlib google-api-python-client"}), 500
+    if not os.path.exists(CREDENTIALS_PATH):
+        return jsonify({"error": "لم يتم رفع ملف credentials.json بعد"}), 400
+    try:
+        redirect_uri = _gmail_redirect_uri()
+        flow = _build_gmail_flow(redirect_uri)
+        auth_url, state = flow.authorization_url(
+            access_type="offline",
+            include_granted_scopes="true",
+            prompt="consent",
+        )
+        # PKCE: must reuse the same code_verifier when exchanging the auth code
+        if not flow.code_verifier:
+            return jsonify({"error": "فشل إنشاء code_verifier — حدّث google-auth-oauthlib"}), 500
+        _save_oauth_pending(flow.code_verifier, state, redirect_uri)
+        return jsonify({
+            "auth_url": auth_url,
+            "redirect_uri": redirect_uri,
+            "auto": True,
+            "message": "افتح الرابط، وافق على الصلاحيات — سيتم التوثيق تلقائياً بعد العودة.",
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/admin/api/gmail-oauth-callback")
+def admin_gmail_oauth_redirect():
+    """Google redirects here after consent. Exchange code using saved PKCE verifier."""
+    err = request.args.get("error")
+    if err:
+        _clear_oauth_pending()
+        return (
+            "<!doctype html><html lang='ar' dir='rtl'><meta charset='utf-8'>"
+            f"<title>فشل التوثيق</title><body style='font-family:sans-serif;background:#0f1117;color:#eee;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0'>"
+            f"<div style='text-align:center;max-width:420px;padding:2rem'><h2 style='color:#f25f7a'>فشل التوثيق</h2>"
+            f"<p>{err}</p><p><a href='/admin' style='color:#4f8ef7'>العودة للوحة التحكم</a></p></div></body></html>"
+        ), 400
+
+    code = (request.args.get("code") or "").strip()
+    state = (request.args.get("state") or "").strip()
+    if not code:
+        return (
+            "<!doctype html><html lang='ar' dir='rtl'><meta charset='utf-8'>"
+            "<title>خطأ</title><body style='font-family:sans-serif;background:#0f1117;color:#eee;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0'>"
+            "<div style='text-align:center'><h2>لم يُستلم كود التوثيق</h2>"
+            "<p><a href='/admin' style='color:#4f8ef7'>العودة</a></p></div></body></html>"
+        ), 400
+
+    if not GMAIL_AVAILABLE or not os.path.exists(CREDENTIALS_PATH):
+        return "Gmail OAuth not available", 500
+
+    pending = _load_oauth_pending()
+    if not pending or not pending.get("code_verifier"):
+        return (
+            "<!doctype html><html lang='ar' dir='rtl'><meta charset='utf-8'>"
+            "<title>انتهت الجلسة</title><body style='font-family:sans-serif;background:#0f1117;color:#eee;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0'>"
+            "<div style='text-align:center;max-width:420px;padding:2rem'><h2 style='color:#f25f7a'>انتهت جلسة التوثيق</h2>"
+            "<p>أعد إنشاء رابط التوثيق من لوحة التحكم ثم حاول مرة أخرى.</p>"
+            "<p><a href='/admin' style='color:#4f8ef7'>العودة للوحة التحكم</a></p></div></body></html>"
+        ), 400
+
+    if pending.get("state") and state and pending["state"] != state:
+        _clear_oauth_pending()
+        return "Invalid OAuth state", 400
+
+    try:
+        flow = _build_gmail_flow(pending["redirect_uri"])
+        flow.code_verifier = pending["code_verifier"]
+        flow.fetch_token(code=code)
+        with open(TOKEN_PATH, "w", encoding="utf-8") as f:
+            f.write(flow.credentials.to_json())
+        _clear_oauth_pending()
+        _cache.clear()
+        return (
+            "<!doctype html><html lang='ar' dir='rtl'><meta charset='utf-8'>"
+            "<title>تم التوثيق</title>"
+            "<meta http-equiv='refresh' content='2;url=/admin?gmail_oauth=ok'>"
+            "<body style='font-family:sans-serif;background:#0f1117;color:#eee;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0'>"
+            "<div style='text-align:center;max-width:420px;padding:2rem'>"
+            "<div style='width:64px;height:64px;border-radius:50%;background:rgba(34,197,94,.15);display:flex;align-items:center;justify-content:center;margin:0 auto 1.2rem;font-size:2rem'>✓</div>"
+            "<h2 style='color:#22c55e;margin:0 0 .5rem'>تم التوثيق بنجاح</h2>"
+            "<p style='color:#9aa3b5'>جاري العودة إلى لوحة التحكم…</p>"
+            "<p><a href='/admin?gmail_oauth=ok' style='color:#4f8ef7'>اضغط هنا إذا لم يتم التحويل</a></p>"
+            "</div></body></html>"
+        )
+    except Exception as e:
+        return (
+            "<!doctype html><html lang='ar' dir='rtl'><meta charset='utf-8'>"
+            "<title>فشل التوثيق</title><body style='font-family:sans-serif;background:#0f1117;color:#eee;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0'>"
+            f"<div style='text-align:center;max-width:480px;padding:2rem'><h2 style='color:#f25f7a'>فشل التوثيق</h2>"
+            f"<p style='word-break:break-word'>{str(e)[:300]}</p>"
+            "<p><a href='/admin' style='color:#4f8ef7'>العودة وإعادة المحاولة</a></p></div></body></html>"
+        ), 400
+
+
+@app.route("/admin/api/gmail-auth-callback", methods=["POST"])
+@admin_required
+def admin_gmail_auth_callback():
+    """Manual fallback: exchange a pasted authorization code (uses saved PKCE verifier)."""
+    if not GMAIL_AVAILABLE:
+        return jsonify({"error": "مكتبة google-auth غير مثبّتة"}), 500
+    data = request.json or {}
+    code = (data.get("code") or "").strip()
+    if not code:
+        return jsonify({"error": "auth code required"}), 400
+    if not os.path.exists(CREDENTIALS_PATH):
+        return jsonify({"error": "لم يتم رفع ملف credentials.json بعد"}), 400
+
+    pending = _load_oauth_pending()
+    if not pending or not pending.get("code_verifier"):
+        return jsonify({
+            "error": "لا توجد جلسة توثيق نشطة. اضغط «ربط حساب Google» أولاً، ثم الصق الكود من نفس الجلسة."
+        }), 400
+
+    try:
+        flow = _build_gmail_flow(pending["redirect_uri"])
+        flow.code_verifier = pending["code_verifier"]
+        flow.fetch_token(code=code)
+        with open(TOKEN_PATH, "w", encoding="utf-8") as f:
+            f.write(flow.credentials.to_json())
+        _clear_oauth_pending()
+        _cache.clear()
+        return jsonify({"ok": True, "message": "تم التوثيق بنجاح ✓ يمكنك الآن استخدام Outlook عبر Gmail."})
+    except Exception as e:
+        return jsonify({"error": f"فشل التوثيق: {str(e)[:200]}"}), 400
+
+
+@app.route("/admin/api/gmail-token", methods=["DELETE"])
+@admin_required
+def admin_delete_gmail_token():
+    """Delete the stored OAuth token to force re-authentication."""
+    if os.path.exists(TOKEN_PATH):
+        os.remove(TOKEN_PATH)
+    _clear_oauth_pending()
+    _cache.clear()   # invalidate Gmail cache entries
+    return jsonify({"ok": True, "message": "تم حذف التوكن. يجب إعادة التوثيق."})
+
+
+# ─── Entry Point ──────────────────────────────────────────────────
 
 if __name__ == "__main__":
     app.run(
