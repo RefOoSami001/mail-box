@@ -749,8 +749,10 @@
           حفظ اعتمادات Google في MongoDB
         </div>
         <div style="font-size:.82rem;color:var(--text2);margin-bottom:.85rem;line-height:1.7">
-          احصل على ملف <code>credentials.json</code> من <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:var(--accent)">Google Cloud Console</a> (نوع "Desktop app").
-          ألصق محتواه أدناه — يُحفظ في قاعدة البيانات وليس كملف محلي.
+          احصل على ملف <code>credentials.json</code> من <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:var(--accent)">Google Cloud Console</a>.
+          محلياً: نوع <strong>Desktop app</strong>. على Koyeb: نوع <strong>Web application</strong> وأضف Redirect URI:
+          <code>https://YOUR-APP.koyeb.app/admin/api/gmail-oauth-callback</code>.
+          المحتوى يُحفظ في MongoDB.
         </div>
         <textarea class="inp" id="gmailCredsInput" placeholder='{"installed":{"client_id":"...","client_secret":"...","redirect_uris":["http://localhost"],...}}' style="min-height:130px;font-family:\'JetBrains Mono\',monospace;font-size:.78rem"></textarea>
         <div style="display:flex;gap:.5rem;margin-top:.75rem;flex-wrap:wrap">
