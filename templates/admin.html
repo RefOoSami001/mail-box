@@ -735,22 +735,22 @@
 
         <div class="gmail-status-grid" id="gmailStatusGrid">
           <div class="gstat gstat-warn"><div class="gstat-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div><div class="gstat-label">مكتبة Google</div><div class="gstat-val" id="gsLibVal">جارٍ التحقق…</div></div></div>
-          <div class="gstat gstat-warn"><div class="gstat-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div><div class="gstat-label">ملف الاعتمادات</div><div class="gstat-val" id="gsCredsVal">جارٍ التحقق…</div></div></div>
-          <div class="gstat gstat-warn"><div class="gstat-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div><div class="gstat-label">توكن OAuth</div><div class="gstat-val" id="gsTokenVal">جارٍ التحقق…</div></div></div>
+          <div class="gstat gstat-warn"><div class="gstat-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div><div class="gstat-label">الاعتمادات (MongoDB)</div><div class="gstat-val" id="gsCredsVal">جارٍ التحقق…</div></div></div>
+          <div class="gstat gstat-warn"><div class="gstat-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div><div class="gstat-label">توكن OAuth (MongoDB)</div><div class="gstat-val" id="gsTokenVal">جارٍ التحقق…</div></div></div>
         </div>
 
         <div id="gsCredsPreview" style="display:none;background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.65rem 1rem;font-size:.8rem;color:var(--text2);font-family:'JetBrains Mono',monospace;margin-top:-.25rem"></div>
       </div>
 
-      <!-- Step 1: Upload / Update credentials.json -->
+      <!-- Step 1: Upload / Update credentials (stored in MongoDB) -->
       <div class="card">
         <div class="card-title">
           <div class="step-num" style="width:22px;height:22px;font-size:.6rem">١</div>
-          رفع / تحديث ملف credentials.json
+          حفظ اعتمادات Google في MongoDB
         </div>
         <div style="font-size:.82rem;color:var(--text2);margin-bottom:.85rem;line-height:1.7">
-          احصل على ملف <code>credentials.json</code> من <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:var(--accent)">Google Cloud Console</a> (نوع "Desktop app" / تطبيق مثبّت).
-          ألصق محتواه كاملاً أدناه.
+          احصل على ملف <code>credentials.json</code> من <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:var(--accent)">Google Cloud Console</a> (نوع "Desktop app").
+          ألصق محتواه أدناه — يُحفظ في قاعدة البيانات وليس كملف محلي.
         </div>
         <textarea class="inp" id="gmailCredsInput" placeholder='{"installed":{"client_id":"...","client_secret":"...","redirect_uris":["http://localhost"],...}}' style="min-height:130px;font-family:\'JetBrains Mono\',monospace;font-size:.78rem"></textarea>
         <div style="display:flex;gap:.5rem;margin-top:.75rem;flex-wrap:wrap">
