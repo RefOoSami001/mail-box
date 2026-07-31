@@ -15,6 +15,7 @@ from pymongo import MongoClient, DESCENDING
 from pymongo.errors import DuplicateKeyError
 from bson import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.middleware.proxy_fix import ProxyFix
 from datetime import datetime, timedelta, timezone
 
 # ─── Google / Gmail OAuth (optional — only needed for Outlook forwarding) ─────
@@ -34,6 +35,10 @@ app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-in-production")
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
+# Trust X-Forwarded-* from Koyeb / reverse proxies
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+if os.environ.get("FORCE_HTTPS", "1") == "1" and os.environ.get("PUBLIC_BASE_URL", "").startswith("https"):
+    app.config["SESSION_COOKIE_SECURE"] = True
 
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
@@ -118,12 +123,27 @@ def clear_stored_token():
 
 
 def _gmail_redirect_uri():
-    """Loopback redirect required for Desktop OAuth clients (no OOB / copy-paste)."""
-    host = (request.host or "127.0.0.1:5000").split("%")[0]
-    port = host.split(":")[-1] if ":" in host else str(os.environ.get("PORT", 5000))
-    if not str(port).isdigit():
-        port = str(os.environ.get("PORT", 5000))
-    return f"http://127.0.0.1:{port}/admin/api/gmail-oauth-callback"
+    """
+    OAuth callback URL.
+    - Local: http://127.0.0.1:<port>/...  (Desktop OAuth client)
+    - Production (Koyeb): https://your-app/...  set PUBLIC_BASE_URL, or derived from request.
+      Use a Google Cloud "Web application" client and add this exact redirect URI.
+    """
+    base = (os.environ.get("PUBLIC_BASE_URL") or "").rstrip("/")
+    if base:
+        return f"{base}/admin/api/gmail-oauth-callback"
+
+    proto = request.headers.get("X-Forwarded-Proto") or request.scheme or "http"
+    host = (request.headers.get("X-Forwarded-Host") or request.host or "127.0.0.1:5000").split("%")[0]
+    hostname = host.split(":")[0].lower()
+
+    if hostname in ("127.0.0.1", "localhost"):
+        port = host.split(":")[-1] if ":" in host else str(os.environ.get("PORT", 5000))
+        if not str(port).isdigit():
+            port = str(os.environ.get("PORT", 5000))
+        return f"http://127.0.0.1:{port}/admin/api/gmail-oauth-callback"
+
+    return f"{proto}://{host}/admin/api/gmail-oauth-callback"
 
 
 def _save_oauth_pending(code_verifier, state, redirect_uri):
