@@ -616,6 +616,81 @@ def fetch_outlook_via_gmail(outlook_email: str, limit: int = FETCH_LIMIT) -> lis
     return merged_summaries
 
 
+def _cache_put_body(cache_key: str, uid: str, summary: dict, body_entry: dict):
+    """Store a single message body (and summary) into this process cache."""
+    entry = _cache.setdefault(cache_key, {"summaries": [], "bodies": {}})
+    entry["bodies"][uid] = body_entry
+    if not any(m.get("uid") == uid for m in entry["summaries"]):
+        entry["summaries"].insert(0, summary)
+
+
+def fetch_single_message_body(email_addr: str, uid: str, acc: dict) -> dict:
+    """
+    Load one message body from Gmail or POP3 when it is missing from this
+    worker's in-memory cache (common with multiple gunicorn workers / restarts).
+    """
+    use_gmail = (acc.get("account_type") == "gmail_forwarded") or is_outlook_email(email_addr)
+    cache_key = f"__gmail__{email_addr}" if use_gmail else email_addr
+
+    if use_gmail:
+        creds = get_gmail_credentials()
+        if not creds:
+            raise RuntimeError("Gmail OAuth غير مكوّن أو انتهت صلاحية التوكن.")
+        service = google_build("gmail", "v1", credentials=creds, cache_discovery=False)
+        msg_data = service.users().messages().get(
+            userId="me", id=uid, format="raw"
+        ).execute()
+        raw_bytes = base64.urlsafe_b64decode(msg_data["raw"] + "==")
+        msg = email_lib.message_from_bytes(raw_bytes)
+        summary, body_entry = _build_summary(msg, uid)
+        _cache_put_body(cache_key, uid, summary, body_entry)
+        return body_entry
+
+    conn = connect_pop3(
+        acc.get("pop3_host", DEFAULT_HOST),
+        acc.get("pop3_port", DEFAULT_PORT),
+        email_addr,
+        acc["pop3_password"],
+    )
+    try:
+        try:
+            _, uidl_list, _ = conn.uidl()
+        except Exception:
+            _, list_raw, _ = conn.list()
+            uidl_list = [
+                f"{item.decode().split()[0]} uid{item.decode().split()[0]}".encode()
+                for item in list_raw
+            ]
+        msg_num = None
+        for item in uidl_list:
+            parts = item.decode(errors="ignore").split(" ", 1)
+            if len(parts) >= 2 and parts[1].strip() == uid:
+                msg_num = int(parts[0])
+                break
+        if msg_num is None:
+            raise RuntimeError("الرسالة غير موجودة على الخادم")
+        raw_lines = conn.retr(msg_num)[1]
+        raw = b"\n".join(raw_lines)
+        msg = email_lib.message_from_bytes(raw)
+        summary, body_entry = _build_summary(msg, uid)
+        _cache_put_body(cache_key, uid, summary, body_entry)
+        return body_entry
+    finally:
+        try:
+            conn.quit()
+        except Exception:
+            pass
+
+
+def _client_may_access_email(client_id: str, email_addr: str) -> bool:
+    """True if the email is assigned to this client (or exists in the system for admin testing)."""
+    doc = client_accounts_col.find_one({"_id": ObjectId(client_id)})
+    if not doc:
+        return False
+    assigned = normalize_assigned_emails(doc.get("assigned_emails", []))
+    return any((item.get("email") or "").lower() == email_addr for item in assigned)
+
+
 # ─── Client Routes ────────────────────────────────────────────────
 
 @app.route("/", methods=["GET", "POST"])
@@ -808,6 +883,8 @@ def api_fetch():
     log_activity(session["client_id"], session["client_username"],
                  f"fetch:{email_addr}:cat:{category_label}", get_client_ip())
 
+    session["last_fetch_email"] = email_addr
+
     return jsonify({
         "messages":  summaries,
         "total":     len(summaries),
@@ -820,11 +897,40 @@ def api_fetch():
 @app.route("/api/message/<uid>")
 @client_required
 def api_message(uid):
+    """
+    Return message body. Prefer in-memory cache; on miss (other gunicorn worker
+    / restart), fetch the single message from Gmail or POP3.
+    """
+    # 1) Fast path: any worker-local cache hit
     for cached in _cache.values():
         bodies = cached.get("bodies", {})
         if uid in bodies:
             return jsonify(bodies[uid])
-    return jsonify({"error": "الرسالة غير موجودة في الذاكرة المؤقتة"}), 404
+
+    # 2) Resolve mailbox so we can fetch on demand
+    email_addr = (
+        (request.args.get("email") or "").strip().lower()
+        or (session.get("last_fetch_email") or "").strip().lower()
+    )
+    if not email_addr:
+        return jsonify({
+            "error": "الرسالة غير محمّلة. أعد جلب الرسائل ثم افتحها مرة أخرى."
+        }), 404
+
+    if not _client_may_access_email(session["client_id"], email_addr):
+        return jsonify({"error": "غير مصرح بالوصول لهذا البريد"}), 403
+
+    acc = email_accounts_col.find_one({"email": email_addr})
+    if not acc:
+        return jsonify({"error": "هذا البريد غير مسجّل في النظام"}), 404
+
+    try:
+        body_entry = fetch_single_message_body(email_addr, uid, acc)
+        return jsonify(body_entry)
+    except Exception as e:
+        return jsonify({
+            "error": f"تعذّر تحميل الرسالة: {str(e)[:160]}"
+        }), 404
 
 
 # ─── Admin Routes ─────────────────────────────────────────────────
