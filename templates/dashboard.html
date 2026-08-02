@@ -678,7 +678,9 @@ async function openMessage(uid){
   document.getElementById('backBtn')?.addEventListener('click',goSidebar);
 
   try{
-    const r=await fetch('/api/message/'+encodeURIComponent(uid));
+    const em=document.getElementById('emailInput').value.trim().toLowerCase();
+    const qs=em?('?email='+encodeURIComponent(em)):'';
+    const r=await fetch('/api/message/'+encodeURIComponent(uid)+qs);
     const body=await r.json();
     if(body.error){document.getElementById('bc').innerHTML=`<div class="inline-err"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>${esc(body.error)}</div>`;return;}
 
