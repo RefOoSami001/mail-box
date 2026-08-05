@@ -583,6 +583,11 @@ async function doFetch(){
     const wb=document.getElementById('warnBar');
     if(data.warning){wb.textContent='⚠️ '+data.warning;wb.classList.add('show');}
     else wb.classList.remove('show');
+    // Auto-open the single OTP message when body is already embedded
+    if(allMsgs.length===1){
+      openMessage(allMsgs[0].uid);
+      if(isMob())goViewer();
+    }
   }catch(e){
     showError(e.message);
     document.getElementById('countPill').classList.remove('vis');
@@ -678,10 +683,15 @@ async function openMessage(uid){
   document.getElementById('backBtn')?.addEventListener('click',goSidebar);
 
   try{
-    const em=document.getElementById('emailInput').value.trim().toLowerCase();
-    const qs=em?('?email='+encodeURIComponent(em)):'';
-    const r=await fetch('/api/message/'+encodeURIComponent(uid)+qs);
-    const body=await r.json();
+    let body;
+    if(meta.body!=null && meta.body!==undefined){
+      body={body:meta.body, body_type:meta.body_type||'plain'};
+    } else {
+      const em=document.getElementById('emailInput').value.trim().toLowerCase();
+      const qs=em?('?email='+encodeURIComponent(em)):'';
+      const r=await fetch('/api/message/'+encodeURIComponent(uid)+qs);
+      body=await r.json();
+    }
     if(body.error){document.getElementById('bc').innerHTML=`<div class="inline-err"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>${esc(body.error)}</div>`;return;}
 
     const isHtml=body.body_type==='html';
