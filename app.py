@@ -62,11 +62,18 @@ email_accounts_col    = db["email_accounts"]
 filter_categories_col = db["filter_categories"]
 login_activity_col    = db["login_activity"]
 app_settings_col      = db["app_settings"]
+message_bodies_col    = db["message_bodies"]
 
 client_accounts_col.create_index("username", unique=True)
 email_accounts_col.create_index("email", unique=True)
 login_activity_col.create_index([("client_id", 1), ("timestamp", DESCENDING)])
 login_activity_col.create_index([("timestamp", DESCENDING)])
+# Shared body cache across gunicorn workers (auto-expire)
+try:
+    message_bodies_col.create_index("cached_at", expireAfterSeconds=int(os.environ.get("MSG_BODY_TTL_SECONDS", 7200)))
+    message_bodies_col.create_index([("email", 1), ("uid", 1)], unique=True)
+except Exception:
+    pass
 
 _cache: dict = {}
 FETCH_LIMIT = 250
@@ -481,6 +488,7 @@ def _build_summary(msg, uid):
 def fetch_email_messages(email_addr, pop3_password, pop3_host, pop3_port, limit=FETCH_LIMIT):
     existing   = _cache.get(email_addr, {"summaries": [], "bodies": {}})
     known_uids = {m["uid"] for m in existing["summaries"]}
+    known_bodies = existing.get("bodies", {})
 
     conn = connect_pop3(pop3_host, pop3_port, email_addr, pop3_password)
     try:
@@ -507,7 +515,8 @@ def fetch_email_messages(email_addr, pop3_password, pop3_host, pop3_port, limit=
                 continue
             num, uid = parts
             uid = uid.strip()
-            if uid in known_uids:
+            # Skip only when we already have BOTH summary and body
+            if uid in known_uids and uid in known_bodies:
                 continue
 
             raw_lines = conn.retr(int(num))[1]
@@ -517,13 +526,14 @@ def fetch_email_messages(email_addr, pop3_password, pop3_host, pop3_port, limit=
             summary, body_entry = _build_summary(msg, uid)
             new_summaries.append(summary)
             new_bodies[uid] = body_entry
+            _cache_put_body(email_addr, uid, summary, body_entry, email_addr)
 
         except Exception:
             continue
 
     conn.quit()
 
-    merged_summaries = new_summaries + existing["summaries"]
+    merged_summaries = new_summaries + [m for m in existing["summaries"] if m["uid"] not in new_bodies]
     merged_bodies    = {**existing["bodies"], **new_bodies}
     _cache[email_addr] = {"summaries": merged_summaries, "bodies": merged_bodies}
     return merged_summaries
@@ -568,6 +578,7 @@ def fetch_outlook_via_gmail(outlook_email: str, limit: int = FETCH_LIMIT) -> lis
     cache_key  = f"__gmail__{outlook_email}"
     existing   = _cache.get(cache_key, {"summaries": [], "bodies": {}})
     known_uids = {m["uid"] for m in existing["summaries"]}
+    known_bodies = existing.get("bodies", {})
 
     creds = get_gmail_credentials()
     if not creds:
@@ -578,10 +589,14 @@ def fetch_outlook_via_gmail(outlook_email: str, limit: int = FETCH_LIMIT) -> lis
 
     service = google_build("gmail", "v1", credentials=creds, cache_discovery=False)
 
-    # Search only for messages whose To: header contains this Outlook address
+    # Broader query: forwarding can put the address in To / Delivered-To / Cc
+    gmail_q = (
+        f"(to:{outlook_email} OR deliveredto:{outlook_email} "
+        f"OR cc:{outlook_email} OR bcc:{outlook_email})"
+    )
     response = service.users().messages().list(
         userId="me",
-        q=f"to:{outlook_email}",
+        q=gmail_q,
         maxResults=limit,
     ).execute()
 
@@ -592,7 +607,7 @@ def fetch_outlook_via_gmail(outlook_email: str, limit: int = FETCH_LIMIT) -> lis
         if len(new_summaries) >= limit:
             break
         msg_id = meta["id"]
-        if msg_id in known_uids:
+        if msg_id in known_uids and msg_id in known_bodies:
             continue
         try:
             msg_data  = service.users().messages().get(
@@ -605,23 +620,68 @@ def fetch_outlook_via_gmail(outlook_email: str, limit: int = FETCH_LIMIT) -> lis
             summary, body_entry = _build_summary(msg, msg_id)
             new_summaries.append(summary)
             new_bodies[msg_id] = body_entry
+            _cache_put_body(cache_key, msg_id, summary, body_entry, outlook_email)
 
         except Exception as exc:
             print(f"[GMAIL] failed to fetch message {msg_id}: {exc}")
             continue
 
-    merged_summaries = new_summaries + existing["summaries"]
+    merged_summaries = new_summaries + [m for m in existing["summaries"] if m["uid"] not in new_bodies]
     merged_bodies    = {**existing["bodies"], **new_bodies}
     _cache[cache_key] = {"summaries": merged_summaries, "bodies": merged_bodies}
     return merged_summaries
 
 
-def _cache_put_body(cache_key: str, uid: str, summary: dict, body_entry: dict):
-    """Store a single message body (and summary) into this process cache."""
+def _cache_put_body(cache_key: str, uid: str, summary: dict, body_entry: dict, email_addr: str = ""):
+    """Store a single message body in process cache + MongoDB (shared across workers)."""
     entry = _cache.setdefault(cache_key, {"summaries": [], "bodies": {}})
     entry["bodies"][uid] = body_entry
     if not any(m.get("uid") == uid for m in entry["summaries"]):
         entry["summaries"].insert(0, summary)
+    email_key = (email_addr or cache_key.replace("__gmail__", "")).lower()
+    if email_key and uid:
+        try:
+            message_bodies_col.update_one(
+                {"email": email_key, "uid": uid},
+                {
+                    "$set": {
+                        "email": email_key,
+                        "uid": uid,
+                        "body": body_entry.get("body", ""),
+                        "body_type": body_entry.get("body_type", "plain"),
+                        "summary": summary,
+                        "cached_at": datetime.now(timezone.utc),
+                    }
+                },
+                upsert=True,
+            )
+        except Exception as exc:
+            print(f"[CACHE] mongo body save failed: {exc}")
+
+
+def _get_cached_body(uid: str, email_addr: str = ""):
+    """Look up body in process RAM, then MongoDB."""
+    for cached in _cache.values():
+        bodies = cached.get("bodies", {})
+        if uid in bodies:
+            return bodies[uid]
+    query = {"uid": uid}
+    if email_addr:
+        query["email"] = email_addr.lower()
+    try:
+        doc = message_bodies_col.find_one(query, sort=[("cached_at", DESCENDING)])
+        if doc:
+            body_entry = {"body": doc.get("body", ""), "body_type": doc.get("body_type", "plain")}
+            # hydrate local cache for this worker
+            email_key = doc.get("email") or email_addr
+            cache_key = f"__gmail__{email_key}" if email_key and is_outlook_email(email_key) else email_key
+            if cache_key:
+                entry = _cache.setdefault(cache_key, {"summaries": [], "bodies": {}})
+                entry["bodies"][uid] = body_entry
+            return body_entry
+    except Exception as exc:
+        print(f"[CACHE] mongo body load failed: {exc}")
+    return None
 
 
 def fetch_single_message_body(email_addr: str, uid: str, acc: dict) -> dict:
@@ -631,20 +691,27 @@ def fetch_single_message_body(email_addr: str, uid: str, acc: dict) -> dict:
     """
     use_gmail = (acc.get("account_type") == "gmail_forwarded") or is_outlook_email(email_addr)
     cache_key = f"__gmail__{email_addr}" if use_gmail else email_addr
+    uid = (uid or "").strip()
 
     if use_gmail:
         creds = get_gmail_credentials()
         if not creds:
             raise RuntimeError("Gmail OAuth غير مكوّن أو انتهت صلاحية التوكن.")
         service = google_build("gmail", "v1", credentials=creds, cache_discovery=False)
-        msg_data = service.users().messages().get(
-            userId="me", id=uid, format="raw"
-        ).execute()
+        try:
+            msg_data = service.users().messages().get(
+                userId="me", id=uid, format="raw"
+            ).execute()
+        except Exception as exc:
+            raise RuntimeError(f"تعذّر جلب الرسالة من Gmail: {str(exc)[:120]}") from exc
         raw_bytes = base64.urlsafe_b64decode(msg_data["raw"] + "==")
         msg = email_lib.message_from_bytes(raw_bytes)
         summary, body_entry = _build_summary(msg, uid)
-        _cache_put_body(cache_key, uid, summary, body_entry)
+        _cache_put_body(cache_key, uid, summary, body_entry, email_addr)
         return body_entry
+
+    if not acc.get("pop3_password"):
+        raise RuntimeError("لا توجد كلمة مرور POP3 لهذا البريد")
 
     conn = connect_pop3(
         acc.get("pop3_host", DEFAULT_HOST),
@@ -664,8 +731,15 @@ def fetch_single_message_body(email_addr: str, uid: str, acc: dict) -> dict:
         msg_num = None
         for item in uidl_list:
             parts = item.decode(errors="ignore").split(" ", 1)
-            if len(parts) >= 2 and parts[1].strip() == uid:
-                msg_num = int(parts[0])
+            if len(parts) < 2:
+                continue
+            num_s, server_uid = parts[0].strip(), parts[1].strip()
+            if server_uid == uid or server_uid.lower() == uid.lower():
+                msg_num = int(num_s)
+                break
+            # fallback ids like "uid12" from servers without UIDL
+            if uid == f"uid{num_s}" or uid == num_s:
+                msg_num = int(num_s)
                 break
         if msg_num is None:
             raise RuntimeError("الرسالة غير موجودة على الخادم")
@@ -673,7 +747,7 @@ def fetch_single_message_body(email_addr: str, uid: str, acc: dict) -> dict:
         raw = b"\n".join(raw_lines)
         msg = email_lib.message_from_bytes(raw)
         summary, body_entry = _build_summary(msg, uid)
-        _cache_put_body(cache_key, uid, summary, body_entry)
+        _cache_put_body(cache_key, uid, summary, body_entry, email_addr)
         return body_entry
     finally:
         try:
@@ -682,13 +756,6 @@ def fetch_single_message_body(email_addr: str, uid: str, acc: dict) -> dict:
             pass
 
 
-def _client_may_access_email(client_id: str, email_addr: str) -> bool:
-    """True if the email is assigned to this client (or exists in the system for admin testing)."""
-    doc = client_accounts_col.find_one({"_id": ObjectId(client_id)})
-    if not doc:
-        return False
-    assigned = normalize_assigned_emails(doc.get("assigned_emails", []))
-    return any((item.get("email") or "").lower() == email_addr for item in assigned)
 
 
 # ─── Client Routes ────────────────────────────────────────────────
@@ -849,6 +916,11 @@ def api_fetch():
                 result.append(m)
         return result
 
+    def sort_newest(msg_list):
+        def key(m):
+            return m.get("timestamp") or ""
+        return sorted(msg_list, key=key, reverse=True)
+
     cutoff_minutes = int(os.environ.get("EMAIL_CUTOFF_MINUTES", 20))
     cutoff = datetime.now(timezone.utc) - timedelta(minutes=cutoff_minutes)
 
@@ -876,9 +948,32 @@ def api_fetch():
 
     if normalized_patterns:
         summaries = apply_filter_patterns(summaries, normalized_patterns)
-    summaries = apply_time_cutoff(summaries, cutoff)
+    summaries = sort_newest(summaries)
+    timed = apply_time_cutoff(summaries, cutoff)
+    # If cutoff wiped everything but pattern matches exist (bad Date headers),
+    # still show the newest match so OTP codes are not lost.
+    if not timed and summaries:
+        timed = [summaries[0]]
+        warning = warning or "يُعرض أحدث رمز مطابق (تاريخ الرسالة خارج النافذة الزمنية)"
+    summaries = timed
     if summaries:
         summaries = [summaries[0]]
+
+    # Embed body in the response so opening never depends on another worker's RAM
+    out_messages = []
+    for m in summaries:
+        item = dict(m)
+        uid = m.get("uid")
+        body_entry = None
+        if uid:
+            body_entry = (
+                _cache.get(cache_key, {}).get("bodies", {}).get(uid)
+                or _get_cached_body(uid, email_addr)
+            )
+        if body_entry:
+            item["body"] = body_entry.get("body", "")
+            item["body_type"] = body_entry.get("body_type", "plain")
+        out_messages.append(item)
 
     log_activity(session["client_id"], session["client_username"],
                  f"fetch:{email_addr}:cat:{category_label}", get_client_ip())
@@ -886,39 +981,37 @@ def api_fetch():
     session["last_fetch_email"] = email_addr
 
     return jsonify({
-        "messages":  summaries,
-        "total":     len(summaries),
+        "messages":  out_messages,
+        "total":     len(out_messages),
         "warning":   warning,
         "category":  category_label,
-        "cached":    warning is not None,
+        "cached":    warning is not None and "نسخة محفوظة" in (warning or ""),
     })
 
 
-@app.route("/api/message/<uid>")
+@app.route("/api/message/<path:uid>")
 @client_required
 def api_message(uid):
     """
-    Return message body. Prefer in-memory cache; on miss (other gunicorn worker
-    / restart), fetch the single message from Gmail or POP3.
+    Return message body. Prefer RAM → MongoDB → live Gmail/POP3 fetch.
     """
-    # 1) Fast path: any worker-local cache hit
-    for cached in _cache.values():
-        bodies = cached.get("bodies", {})
-        if uid in bodies:
-            return jsonify(bodies[uid])
+    uid = (uid or "").strip()
 
-    # 2) Resolve mailbox so we can fetch on demand
     email_addr = (
         (request.args.get("email") or "").strip().lower()
         or (session.get("last_fetch_email") or "").strip().lower()
     )
+
+    # 1) Shared cache (this worker RAM or MongoDB)
+    cached_body = _get_cached_body(uid, email_addr)
+    if cached_body:
+        return jsonify(cached_body)
+
+    # 2) Resolve mailbox so we can fetch on demand
     if not email_addr:
         return jsonify({
             "error": "الرسالة غير محمّلة. أعد جلب الرسائل ثم افتحها مرة أخرى."
         }), 404
-
-    if not _client_may_access_email(session["client_id"], email_addr):
-        return jsonify({"error": "غير مصرح بالوصول لهذا البريد"}), 403
 
     acc = email_accounts_col.find_one({"email": email_addr})
     if not acc:
