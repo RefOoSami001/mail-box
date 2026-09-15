@@ -1150,8 +1150,11 @@ function renderEmails(accs){
     const asgn=a.assigned_to;
     const asgnCell=asgn?`<span class="badge badge-teal" title="${esc(asgn.client_username)}">${esc(asgn.client_display||asgn.client_username)}</span>`:`<span style="font-size:.72rem;color:var(--amber);font-weight:600">⚠ غير مخصص</span>`;
     const isHotmail=(a.account_type||'pop3')==='hotmail';
+    const tokenKind=a.token_kind||'';
+    const tokenOk=tokenKind==='refresh_90d';
+    const tokenHint=a.token_expires_at?('حتى '+fmtDate(a.token_expires_at)):'';
     const serverCell=isHotmail
-      ?'<span style="font-size:.74rem;font-weight:700;color:var(--teal);background:rgba(0,201,167,.08);border:1px solid rgba(0,201,167,.2);border-radius:10px;padding:.1rem .45rem">Hotmail OAuth</span>'
+      ?`<span style="font-size:.74rem;font-weight:700;color:${tokenOk?'var(--teal)':'var(--danger)'};background:${tokenOk?'rgba(0,201,167,.08)':'rgba(242,95,122,.1)'};border:1px solid ${tokenOk?'rgba(0,201,167,.2)':'rgba(242,95,122,.25)'};border-radius:10px;padding:.1rem .45rem">${esc(a.token_label||'Hotmail OAuth')}</span>${tokenHint?`<div style="font-size:.68rem;color:var(--text3);margin-top:.25rem">${esc(tokenHint)}</div>`:''}`
       :`<span style="font-size:.77rem;color:var(--text3);font-family:\'JetBrains Mono\',monospace">${esc(a.pop3_host)}:${esc(String(a.pop3_port))}</span>`;
     return`<tr>
       <td class="td-main">${esc(a.email)}</td>
