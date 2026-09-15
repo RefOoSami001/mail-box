@@ -578,7 +578,7 @@
           <div class="card-title" style="margin-bottom:.85rem"><div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>إضافة حساب بريد</div>
           <div id="singleEmailHint" style="font-size:.8rem;color:var(--text2);margin-bottom:.85rem;background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.65rem 1rem;line-height:1.7">
             <strong style="color:var(--accent)">POP3:</strong> أدخل البريد + كلمة المرور + بيانات الخادم.<br/>
-            <strong style="color:var(--teal)">Hotmail / Outlook:</strong> اضغط «ربط حساب Hotmail» وسجّل الدخول في نافذة Microsoft.
+            <strong style="color:var(--teal)">Hotmail / Outlook:</strong> اضغط «ربط حساب Hotmail» وأكمل تسجيل الدخول في نافذة Microsoft.
           </div>
           <div class="form-row">
             <div class="fgroup" style="min-width:200px"><div class="flabel">البريد الإلكتروني</div><input class="inp" id="newEmail" type="email" placeholder="user@example.com"/></div>
@@ -601,7 +601,7 @@
           <div class="card-title" style="margin-bottom:.85rem"><div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg></div>إضافة جماعية لحسابات البريد</div>
           <div style="font-size:.82rem;color:var(--text2);margin-bottom:.8rem;line-height:1.75">
             POP3: <code>email@example.com:password</code><br/>
-            Hotmail: <code>email|password|refresh_token|client_id</code>
+            Hotmail (من accounts.txt): <code>email|password|refresh_token|client_id</code>
           </div>
           <div class="form-row" style="margin-bottom:.75rem">
             <div class="fgroup"><div class="flabel">الخادم الافتراضي</div><input class="inp" id="bulkEmailHost" type="text" value="pop3.kuku.lu"/></div>
@@ -796,16 +796,6 @@
     </div>
     <div id="editEmailHotmailNote" style="display:none;font-size:.82rem;color:var(--teal);background:rgba(0,201,167,.07);border:1px solid rgba(0,201,167,.2);border-radius:var(--radius-sm);padding:.65rem 1rem;line-height:1.6;margin-bottom:.75rem">هذا حساب Hotmail. حدّث توكن الوصول من زر «تجديد التوكن» في الجدول، أو أعد الربط عبر Microsoft بنفس البريد.<div style="margin-top:.65rem"><button type="button" class="btn btn-primary" id="editHotmailReconnectBtn">إعادة ربط Microsoft</button></div></div>
     <div class="mactions"><button class="btn btn-ghost" id="editEmailCancel">إلغاء</button><button class="btn btn-primary" id="editEmailSave">حفظ</button></div>
-  </div>
-</div>
-
-<div class="overlay" id="hotmailDeviceOverlay">
-  <div class="modal" style="max-width:420px">
-    <div class="modal-title">ربط Hotmail عبر Microsoft</div>
-    <p style="font-size:.84rem;color:var(--text2);line-height:1.7;margin:0 0 .85rem">أكمل تسجيل الدخول في نافذة Microsoft. إذا طُلب رمز أدخله هنا:</p>
-    <div id="hotmailDeviceCode" style="font-size:1.45rem;font-weight:800;letter-spacing:.12em;text-align:center;padding:.85rem;background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:.75rem;font-family:'JetBrains Mono',monospace">—</div>
-    <div id="hotmailDeviceStatus" style="font-size:.8rem;color:var(--text3);text-align:center">بانتظار التأكيد في Microsoft…</div>
-    <div class="mactions"><button class="btn btn-ghost" id="hotmailDeviceCancel">إلغاء</button></div>
   </div>
 </div>
 
@@ -1246,46 +1236,11 @@ async function startHotmailConnect(){
   if(btn){btn.disabled=true;}
   const d=await api('/admin/api/hotmail-auth-url');
   if(btn){btn.disabled=false;}
-  if(!d.ok){toast(d.error||'فشل بدء ربط Microsoft',true);return;}
-  if(d.mode==='device'){
-    startHotmailDevicePoll(d);
-    return;
-  }
-  if(!d.auth_url){toast(d.error||'فشل إنشاء رابط Microsoft',true);return;}
+  if(!d.ok||!d.auth_url){toast(d.error||'فشل إنشاء رابط Microsoft',true);return;}
   const popup=window.open(d.auth_url,'hotmail_oauth','width=520,height=700,scrollbars=yes');
   if(!popup){toast('اسمح بالنوافذ المنبثقة ثم حاول مرة أخرى',true);return;}
   toast('أكمل تسجيل الدخول في نافذة Microsoft');
 }
-
-let _hotmailDeviceTimer=null;
-function stopHotmailDevicePoll(){
-  if(_hotmailDeviceTimer){clearInterval(_hotmailDeviceTimer);_hotmailDeviceTimer=null;}
-  const ov=document.getElementById('hotmailDeviceOverlay');
-  if(ov)ov.classList.remove('show');
-}
-function startHotmailDevicePoll(d){
-  stopHotmailDevicePoll();
-  document.getElementById('hotmailDeviceCode').textContent=d.user_code||'—';
-  document.getElementById('hotmailDeviceStatus').textContent='بانتظار التأكيد في Microsoft…';
-  document.getElementById('hotmailDeviceOverlay').classList.add('show');
-  const msUrl=d.verification_uri_complete||d.verification_uri||'https://microsoft.com/devicelogin';
-  const popup=window.open(msUrl,'hotmail_oauth','width=520,height=700,scrollbars=yes');
-  if(!popup){toast('اسمح بالنوافذ المنبثقة ثم حاول مرة أخرى',true);return;}
-  toast('أكمل تسجيل الدخول في نافذة Microsoft');
-  const interval=Math.max(3,(d.interval||5))*1000;
-  _hotmailDeviceTimer=setInterval(async()=>{
-    try{
-      const st=await api('/admin/api/hotmail-device-poll?poll_id='+encodeURIComponent(d.poll_id));
-      if(st.pending)return;
-      stopHotmailDevicePoll();
-      try{popup.close();}catch(e){}
-      if(st.ok){toast('تم ربط '+(st.email||'Hotmail')+' ✓');loadEmails();loadStats();}
-      else toast(st.error||'فشل التوثيق',true);
-    }catch(e){}
-  },interval);
-}
-document.getElementById('hotmailDeviceCancel').addEventListener('click',stopHotmailDevicePoll);
-document.getElementById('hotmailDeviceOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)stopHotmailDevicePoll();});
 
 document.getElementById('connectHotmailBtn').addEventListener('click',startHotmailConnect);
 const editHotmailReconnectBtn=document.getElementById('editHotmailReconnectBtn');
