@@ -506,12 +506,6 @@ def _ms_token_request(payload):
         data = {"error": "invalid_response", "error_description": (res.text or "")[:200]}
     if not data.get("access_token"):
         print(f"[HOTMAIL] token HTTP {res.status_code}: {str(data)[:300]}")
-    else:
-        rt = data.get("refresh_token") or ""
-        print(
-            f"[HOTMAIL] token HTTP {res.status_code} expires_in={data.get('expires_in')} "
-            f"has_refresh={_looks_like_ms_refresh_token(rt)} rt_len={len(rt)}"
-        )
     return data
 
 
@@ -525,6 +519,39 @@ def _looks_like_ms_refresh_token(token):
     if t.count(".") == 2 and t.startswith("ey"):
         return False
     return True
+
+
+def _hotmail_token_meta(acc):
+    rt = (acc or {}).get("refresh_token") or ""
+    if _looks_like_ms_refresh_token(rt):
+        kind = "refresh_90d"
+        label = "90 يوم"
+        exp = acc.get("refresh_expires_at")
+        if not exp and acc.get("token_updated_at"):
+            try:
+                base = acc["token_updated_at"]
+                if isinstance(base, str):
+                    base = datetime.fromisoformat(base.replace("Z", "+00:00"))
+                if base.tzinfo is None:
+                    base = base.replace(tzinfo=timezone.utc)
+                exp = base + timedelta(days=90)
+            except Exception:
+                exp = None
+    elif rt:
+        kind = "access_1h"
+        label = "ساعة — أعد الربط"
+        exp = acc.get("access_expires_at")
+    else:
+        kind = "none"
+        label = "لا يوجد توكن"
+        exp = None
+    updated = acc.get("token_updated_at")
+    return {
+        "token_kind": kind,
+        "token_label": label,
+        "token_updated_at": dt_iso(updated) if updated else "",
+        "token_expires_at": dt_iso(exp) if exp else "",
+    }
 
 
 def graph_refresh_access(acc):
@@ -574,6 +601,8 @@ def _persist_hotmail_tokens(acc, data, client_id=None):
     if _looks_like_ms_refresh_token(new_refresh):
         fields["refresh_token"] = new_refresh
         acc["refresh_token"] = new_refresh
+        rt_secs = int(data.get("refresh_token_expires_in") or 90 * 24 * 3600)
+        fields["refresh_expires_at"] = now + timedelta(seconds=max(rt_secs, 3600))
     query = {"_id": acc["_id"]} if acc.get("_id") else {"email": (acc.get("email") or "").lower()}
     if not (query.get("_id") or query.get("email")):
         return
@@ -708,6 +737,7 @@ def upsert_hotmail_account(email_addr, refresh_token, client_id, added_by="admin
         "refresh_token": refresh_token,
         "ms_client_id": client_id or MS_CLIENT_ID,
         "token_updated_at": now,
+        "refresh_expires_at": now + timedelta(days=90),
     }
     if access_token and not _looks_like_ms_refresh_token(access_token):
         fields["access_token"] = access_token
@@ -1516,12 +1546,13 @@ def admin_email_assignment_status():
                     "client_display":  client.get("display_name") or client["username"],
                 }
     accounts = list(
-        email_accounts_col.find({}, {"pop3_password": 0, "refresh_token": 0, "access_token": 0}).sort("added_at", DESCENDING)
+        email_accounts_col.find({}, {"pop3_password": 0, "access_token": 0}).sort("added_at", DESCENDING)
     )
     result = []
     for a in accounts:
         em = a["email"]
         acct_type = a.get("account_type", "pop3")
+        meta = _hotmail_token_meta(a) if acct_type == "hotmail" or a.get("refresh_token") else {}
         result.append({
             "_id":          str(a["_id"]),
             "email":        em,
@@ -1530,6 +1561,7 @@ def admin_email_assignment_status():
             "pop3_port":    a.get("pop3_port", DEFAULT_PORT) if acct_type != "hotmail" else 0,
             "added_at":     dt_iso(a.get("added_at")) if a.get("added_at") else "",
             "assigned_to":  assignment_map.get(em),
+            **meta,
         })
     unassigned = sum(1 for r in result if r["assigned_to"] is None)
     return jsonify({
