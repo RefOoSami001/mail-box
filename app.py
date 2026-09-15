@@ -5,8 +5,12 @@ import re
 import unicodedata
 import calendar
 import functools
+import secrets
+import time
 import json
 import base64
+import urllib.parse
+import requests
 from email.header import decode_header
 from email.utils import parseaddr, parsedate_to_datetime
 from bs4 import BeautifulSoup
@@ -17,17 +21,6 @@ from bson import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.middleware.proxy_fix import ProxyFix
 from datetime import datetime, timedelta, timezone
-
-# ─── Google / Gmail OAuth (optional — only needed for Outlook forwarding) ─────
-try:
-    from google.oauth2.credentials import Credentials
-    from google_auth_oauthlib.flow import Flow
-    from google.auth.transport.requests import Request as GoogleRequest
-    from googleapiclient.discovery import build as google_build
-    GMAIL_AVAILABLE = True
-except ImportError:
-    GMAIL_AVAILABLE = False
-    Flow = None  # type: ignore
 
 # ─── App ──────────────────────────────────────────────────────────
 app = Flask(__name__)
@@ -61,8 +54,8 @@ client_accounts_col   = db["client_accounts"]
 email_accounts_col    = db["email_accounts"]
 filter_categories_col = db["filter_categories"]
 login_activity_col    = db["login_activity"]
-app_settings_col      = db["app_settings"]
 message_bodies_col    = db["message_bodies"]
+oauth_states_col      = db["oauth_states"]
 
 client_accounts_col.create_index("username", unique=True)
 email_accounts_col.create_index("email", unique=True)
@@ -72,175 +65,23 @@ login_activity_col.create_index([("timestamp", DESCENDING)])
 try:
     message_bodies_col.create_index("cached_at", expireAfterSeconds=int(os.environ.get("MSG_BODY_TTL_SECONDS", 7200)))
     message_bodies_col.create_index([("email", 1), ("uid", 1)], unique=True)
+    oauth_states_col.create_index("created_at", expireAfterSeconds=900)
 except Exception:
     pass
 
 _cache: dict = {}
+_oauth_pending_mem: dict = {}
 FETCH_LIMIT = 250
 
-# ─── Gmail / Outlook Configuration (stored in MongoDB) ─────────────
-GMAIL_SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
-GMAIL_SETTINGS_ID = "gmail_oauth"
-# Optional one-time migration sources (imported into MongoDB then unused)
-_LEGACY_CREDENTIALS_PATH = os.environ.get("GOOGLE_CREDENTIALS_FILE", "credentials.json")
-_LEGACY_TOKEN_PATH       = os.environ.get("GOOGLE_TOKEN_FILE", "token.json")
-
-
-def _gmail_settings_doc():
-    return app_settings_col.find_one({"_id": GMAIL_SETTINGS_ID}) or {}
-
-
-def _gmail_settings_update(**fields):
-    fields["updated_at"] = datetime.now(timezone.utc)
-    app_settings_col.update_one(
-        {"_id": GMAIL_SETTINGS_ID},
-        {"$set": fields},
-        upsert=True,
-    )
-
-
-def get_stored_credentials_config():
-    """Return the Google client secrets dict from MongoDB, or None."""
-    doc = _gmail_settings_doc()
-    cfg = doc.get("credentials")
-    return cfg if isinstance(cfg, dict) else None
-
-
-def get_stored_token_info():
-    """Return the OAuth token dict from MongoDB, or None."""
-    doc = _gmail_settings_doc()
-    tok = doc.get("token")
-    return tok if isinstance(tok, dict) else None
-
-
-def save_stored_credentials_config(config: dict):
-    _gmail_settings_update(credentials=config, token=None, oauth_pending=None)
-
-
-def save_stored_token_info(token_info: dict):
-    _gmail_settings_update(token=token_info, oauth_pending=None)
-
-
-def clear_stored_token():
-    app_settings_col.update_one(
-        {"_id": GMAIL_SETTINGS_ID},
-        {"$set": {"token": None, "oauth_pending": None, "updated_at": datetime.now(timezone.utc)}},
-        upsert=True,
-    )
-
-
-def _gmail_redirect_uri():
-    """
-    OAuth callback URL.
-    - Local: http://127.0.0.1:<port>/...  (Desktop OAuth client)
-    - Production (Koyeb): https://your-app/...  set PUBLIC_BASE_URL, or derived from request.
-      Use a Google Cloud "Web application" client and add this exact redirect URI.
-    """
-    base = (os.environ.get("PUBLIC_BASE_URL") or "").rstrip("/")
-    if base:
-        return f"{base}/admin/api/gmail-oauth-callback"
-
-    proto = request.headers.get("X-Forwarded-Proto") or request.scheme or "http"
-    host = (request.headers.get("X-Forwarded-Host") or request.host or "127.0.0.1:5000").split("%")[0]
-    hostname = host.split(":")[0].lower()
-
-    if hostname in ("127.0.0.1", "localhost"):
-        port = host.split(":")[-1] if ":" in host else str(os.environ.get("PORT", 5000))
-        if not str(port).isdigit():
-            port = str(os.environ.get("PORT", 5000))
-        return f"http://127.0.0.1:{port}/admin/api/gmail-oauth-callback"
-
-    return f"{proto}://{host}/admin/api/gmail-oauth-callback"
-
-
-def _save_oauth_pending(code_verifier, state, redirect_uri):
-    _gmail_settings_update(
-        oauth_pending={
-            "code_verifier": code_verifier,
-            "state": state,
-            "redirect_uri": redirect_uri,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        }
-    )
-
-
-def _load_oauth_pending():
-    pending = _gmail_settings_doc().get("oauth_pending")
-    return pending if isinstance(pending, dict) else None
-
-
-def _clear_oauth_pending():
-    app_settings_col.update_one(
-        {"_id": GMAIL_SETTINGS_ID},
-        {"$set": {"oauth_pending": None, "updated_at": datetime.now(timezone.utc)}},
-        upsert=True,
-    )
-
-
-def _build_gmail_flow(redirect_uri):
-    client_config = get_stored_credentials_config()
-    if not client_config:
-        raise RuntimeError("لم يتم حفظ اعتمادات Google في قاعدة البيانات بعد")
-    return Flow.from_client_config(
-        client_config,
-        scopes=GMAIL_SCOPES,
-        redirect_uri=redirect_uri,
-    )
-
-
-def _migrate_local_gmail_files_to_mongo():
-    """One-time import of legacy credentials.json / token.json into MongoDB."""
-    doc = _gmail_settings_doc()
-    updates = {}
-
-    if not doc.get("credentials") and os.path.exists(_LEGACY_CREDENTIALS_PATH):
-        try:
-            with open(_LEGACY_CREDENTIALS_PATH, encoding="utf-8") as f:
-                parsed = json.load(f)
-            if isinstance(parsed, dict) and ("installed" in parsed or "web" in parsed):
-                updates["credentials"] = parsed
-        except Exception:
-            pass
-
-    if not doc.get("token") and os.path.exists(_LEGACY_TOKEN_PATH):
-        try:
-            with open(_LEGACY_TOKEN_PATH, encoding="utf-8") as f:
-                parsed = json.load(f)
-            if isinstance(parsed, dict) and parsed.get("refresh_token"):
-                updates["token"] = parsed
-        except Exception:
-            pass
-
-    if updates:
-        updates["updated_at"] = datetime.now(timezone.utc)
-        updates["migrated_from_files"] = True
-        app_settings_col.update_one(
-            {"_id": GMAIL_SETTINGS_ID},
-            {"$set": updates},
-            upsert=True,
-        )
-
-
-_migrate_local_gmail_files_to_mongo()
-
-
-# All Microsoft consumer email domains that forward to the shared Gmail inbox
-OUTLOOK_DOMAINS = {
-    "outlook.com", "outlook.fr", "outlook.de", "outlook.es", "outlook.it",
-    "outlook.jp", "outlook.com.br", "outlook.co.uk", "outlook.sa",
-    "outlook.com.au", "outlook.at", "outlook.be", "outlook.cl",
-    "hotmail.com", "hotmail.co.uk", "hotmail.fr", "hotmail.de",
-    "hotmail.es", "hotmail.it", "hotmail.com.br",
-    "live.com", "live.co.uk", "live.fr", "live.de", "live.nl",
-    "msn.com",
-}
-
-
-def is_outlook_email(email_addr: str) -> bool:
-    """Return True if this address belongs to a Microsoft consumer mail domain."""
-    domain = email_addr.rsplit("@", 1)[-1].lower() if "@" in email_addr else ""
-    return domain in OUTLOOK_DOMAINS or domain.endswith(".outlook.com")
-
+# Outlook Mobile public client — same as LOGIN_TO_TOKEN / READ_EMAILS / RENEW_TOKEN
+MS_CLIENT_ID = os.environ.get("MS_CLIENT_ID", "9e5f94bc-e8a4-4e73-b8be-63364c29d753")
+MS_TOKEN_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
+MS_AUTH_URL  = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
+MS_DEVICE_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/devicecode"
+MS_GRAPH_ME  = "https://graph.microsoft.com/v1.0/me"
+MS_GRAPH_INBOX = "https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages"
+MS_GRAPH_MSG = "https://graph.microsoft.com/v1.0/me/messages"
+MS_SCOPE     = "openid profile email offline_access User.Read https://graph.microsoft.com/Mail.Read"
 
 # ─── Helpers ──────────────────────────────────────────────────────
 
@@ -483,6 +324,373 @@ def _build_summary(msg, uid):
     )
 
 
+def is_hotmail_account(acc):
+    if not acc:
+        return False
+    return acc.get("account_type") == "hotmail" or bool(acc.get("refresh_token"))
+
+
+def _request_host_port():
+    host = (request.headers.get("X-Forwarded-Host") or request.host or "").split(",")[0].strip()
+    hostname = (host.split(":")[0] or "").lower()
+    if ":" in host and host.split(":")[-1].isdigit():
+        port = host.split(":")[-1]
+    else:
+        port = str(os.environ.get("PORT", 5000))
+    return hostname, port
+
+
+def _is_loopback_request():
+    hostname, _ = _request_host_port()
+    return hostname in ("127.0.0.1", "localhost")
+
+
+def hotmail_redirect_uri():
+    """
+    Outlook Mobile public client only accepts http://localhost:<port> with no path
+    (same as LOGIN_TO_TOKEN). Paths like /admin/api/... are rejected.
+    """
+    _, port = _request_host_port()
+    return f"http://localhost:{port}"
+
+
+def _save_oauth_state(state, doc):
+    doc = dict(doc)
+    doc["_id"] = state
+    doc["created_at"] = doc.get("created_at") or datetime.now(timezone.utc)
+    _oauth_pending_mem[state] = doc
+    try:
+        oauth_states_col.replace_one({"_id": state}, doc, upsert=True)
+    except Exception as exc:
+        print(f"[HOTMAIL] oauth state mongo save failed: {exc}")
+
+
+def _load_oauth_state(state):
+    doc = _oauth_pending_mem.get(state)
+    if doc:
+        return doc
+    try:
+        return oauth_states_col.find_one({"_id": state})
+    except Exception as exc:
+        print(f"[HOTMAIL] oauth state mongo load failed: {exc}")
+        return None
+
+
+def _delete_oauth_state(state):
+    _oauth_pending_mem.pop(state, None)
+    try:
+        oauth_states_col.delete_one({"_id": state})
+    except Exception:
+        pass
+
+
+def _normalize_msa_email(val):
+    if val is None:
+        return ""
+    if isinstance(val, (list, tuple)):
+        for item in val:
+            got = _normalize_msa_email(item)
+            if got:
+                return got
+        return ""
+    text = str(val).lower().strip()
+    if "#" in text and "@" in text:
+        text = text.split("#")[-1].strip()
+    if text.startswith("live.com#"):
+        text = text[9:]
+    return text if "@" in text and " " not in text else ""
+
+
+def _email_from_jwt(token):
+    try:
+        parts = (token or "").split(".")
+        if len(parts) != 3:
+            return ""
+        pad = "=" * (-len(parts[1]) % 4)
+        payload = json.loads(base64.urlsafe_b64decode(parts[1] + pad))
+        for key in ("preferred_username", "email", "upn", "unique_name", "verified_primary_email"):
+            got = _normalize_msa_email(payload.get(key))
+            if got:
+                return got
+        got = _normalize_msa_email(payload.get("emails"))
+        if got:
+            return got
+    except Exception:
+        pass
+    return ""
+
+
+def _msa_email_from_token(access_token, id_token=None):
+    for token in (id_token, access_token):
+        got = _email_from_jwt(token)
+        if got:
+            return got
+    try:
+        me = _graph_request(
+            "GET",
+            MS_GRAPH_ME,
+            access_token,
+            params={"$select": "mail,userPrincipalName,proxyAddresses,otherMails"},
+        )
+        print(f"[HOTMAIL] /me HTTP {me.status_code} {me.text[:180]}")
+        if me.status_code == 200:
+            u = me.json()
+            for key in ("mail", "userPrincipalName"):
+                got = _normalize_msa_email(u.get(key))
+                if got:
+                    return got
+            got = _normalize_msa_email(u.get("otherMails"))
+            if got:
+                return got
+            for proxy in u.get("proxyAddresses") or []:
+                got = _normalize_msa_email(str(proxy).split(":", 1)[-1])
+                if got:
+                    return got
+    except Exception as exc:
+        print(f"[HOTMAIL] /me failed: {exc}")
+    try:
+        res = _graph_request(
+            "GET",
+            MS_GRAPH_INBOX,
+            access_token,
+            params={"$top": 8, "$select": "toRecipients,ccRecipients"},
+        )
+        if res.status_code == 200:
+            counts = {}
+            for m in res.json().get("value") or []:
+                for field in ("toRecipients", "ccRecipients"):
+                    for rec in m.get(field) or []:
+                        got = _normalize_msa_email((rec.get("emailAddress") or {}).get("address"))
+                        if got:
+                            counts[got] = counts.get(got, 0) + 1
+            if counts:
+                preferred = [e for e in counts if e.endswith((".outlook.com", ".hotmail.com", ".live.com", ".msn.com"))]
+                pool = preferred or list(counts)
+                return max(pool, key=lambda e: counts[e])
+    except Exception as exc:
+        print(f"[HOTMAIL] inbox identity lookup failed: {exc}")
+    return ""
+
+
+def _exchange_ms_auth_code(code, redirect_uri):
+    """Single token request — an auth code can be redeemed only once."""
+    payload = {
+        "client_id": MS_CLIENT_ID,
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": redirect_uri,
+        "scope": MS_SCOPE,
+    }
+    data = _ms_token_request(payload)
+    if data.get("access_token"):
+        print(f"[HOTMAIL] token exchange ok redirect_uri={redirect_uri}")
+        return data
+    err = data.get("error_description") or data.get("error") or data
+    print(f"[HOTMAIL] token exchange failed uri={redirect_uri} err={str(err)[:300]}")
+    return data
+
+
+def _ms_token_request(payload):
+    res = requests.post(
+        MS_TOKEN_URL,
+        data=payload,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        timeout=20,
+    )
+    try:
+        data = res.json()
+    except Exception:
+        data = {"error": "invalid_response", "error_description": (res.text or "")[:200]}
+    if not data.get("access_token"):
+        print(f"[HOTMAIL] token HTTP {res.status_code}: {str(data)[:300]}")
+    return data
+
+
+def graph_refresh_access(acc):
+    """
+    Exchange stored refresh_token for an access_token.
+    Persist rotated refresh_token (90-day rolling window).
+    """
+    refresh_token = (acc or {}).get("refresh_token") or ""
+    if not refresh_token:
+        raise RuntimeError("لا يوجد توكن Hotmail لهذا البريد. أعد ربط الحساب من لوحة الإدارة.")
+    client_id = acc.get("ms_client_id") or MS_CLIENT_ID
+    last = {}
+    for scope in (MS_SCOPE, "https://graph.microsoft.com/mail.read offline_access"):
+        data = _ms_token_request({
+            "client_id": client_id,
+            "grant_type": "refresh_token",
+            "refresh_token": refresh_token,
+            "scope": scope,
+        })
+        last = data
+        if data.get("access_token"):
+            _persist_hotmail_tokens(acc, data, client_id)
+            return data["access_token"]
+    err = last.get("error_description") or last.get("error") or "token refresh failed"
+    raise RuntimeError(f"فشل تجديد توكن Hotmail: {str(err).split(chr(10))[0][:160]}")
+
+
+def _persist_hotmail_tokens(acc, data, client_id=None):
+    access_token = data.get("access_token") or ""
+    new_refresh = data.get("refresh_token") or acc.get("refresh_token") or ""
+    now = datetime.now(timezone.utc)
+    expires_in = int(data.get("expires_in") or 3600)
+    fields = {
+        "refresh_token": new_refresh,
+        "access_token": access_token,
+        "token_updated_at": now,
+        "access_expires_at": now + timedelta(seconds=max(expires_in - 60, 60)),
+        "account_type": "hotmail",
+        "ms_client_id": client_id or acc.get("ms_client_id") or MS_CLIENT_ID,
+    }
+    acc["refresh_token"] = new_refresh
+    acc["access_token"] = access_token
+    query = {"_id": acc["_id"]} if acc.get("_id") else {"email": (acc.get("email") or "").lower()}
+    if not (query.get("_id") or query.get("email")):
+        return
+    try:
+        email_accounts_col.update_one(query, {"$set": fields})
+    except Exception as exc:
+        print(f"[HOTMAIL] failed to persist tokens: {exc}")
+
+
+def graph_stored_access(acc):
+    token = (acc or {}).get("access_token") or ""
+    if not token:
+        raise RuntimeError("لا يوجد توكن وصول محفوظ. اطلب من المشرف تجديد توكن Hotmail.")
+    return token
+
+
+def _graph_request(method, url, access_token, **kwargs):
+    headers = kwargs.pop("headers", {})
+    headers["Authorization"] = f"Bearer {access_token}"
+    headers.setdefault("Accept", "application/json")
+    res = None
+    for attempt in range(2):
+        res = requests.request(method, url, headers=headers, timeout=12, **kwargs)
+        if res.status_code == 429:
+            wait = min(int(res.headers.get("Retry-After", 1)), 4)
+            time.sleep(wait)
+            continue
+        return res
+    return res
+
+
+def _graph_message_to_summary(m):
+    sender = (m.get("from") or {}).get("emailAddress") or {}
+    sender_addr = sender.get("address") or ""
+    sender_name = sender.get("name") or sender_addr
+    subject = normalize_text(m.get("subject") or "") or "(بدون موضوع)"
+    received = m.get("receivedDateTime") or ""
+    msg_ts = None
+    date_disp = received or "—"
+    try:
+        msg_dt = datetime.fromisoformat(received.replace("Z", "+00:00"))
+        if msg_dt.tzinfo is None:
+            msg_dt = msg_dt.replace(tzinfo=timezone.utc)
+        msg_ts = msg_dt.isoformat()
+        date_disp = msg_dt.strftime("%d %b %Y  %H:%M")
+    except Exception:
+        msg_ts = received or None
+    body_obj = m.get("body") or {}
+    content = body_obj.get("content") or ""
+    ctype = (body_obj.get("contentType") or "html").lower()
+    body_type = "html" if ctype == "html" else "plain"
+    preview = (m.get("bodyPreview") or "").strip()
+    if not preview and content:
+        preview = BeautifulSoup(content, "html.parser").get_text()[:300].strip()
+    uid = m.get("id") or ""
+    summary = {
+        "uid":         uid,
+        "subject":     subject,
+        "sender_name": sender_name,
+        "sender_addr": sender_addr,
+        "date":        date_disp,
+        "timestamp":   msg_ts,
+        "preview":     preview[:300],
+    }
+    body_entry = {"body": content or "(لا يوجد محتوى)", "body_type": body_type}
+    return summary, body_entry
+
+
+def _graph_list_messages(access_token, limit):
+    select = "id,subject,from,receivedDateTime,bodyPreview,isRead"
+    top = min(max(limit, 1), 25)
+    attempts = [
+        (MS_GRAPH_INBOX, {"$top": top, "$orderby": "receivedDateTime desc", "$select": select}),
+        (MS_GRAPH_INBOX, {"$top": top, "$select": select}),
+    ]
+    last_error = "unknown"
+    for url, params in attempts:
+        res = _graph_request("GET", url, access_token, params=params)
+        if res.status_code == 200:
+            return res.json().get("value") or []
+        if res.status_code in (401, 403):
+            raise RuntimeError("انتهت صلاحية توكن Hotmail. اطلب من المشرف تجديد التوكن.")
+        last_error = f"HTTP {res.status_code} {res.text[:120]}"
+    raise RuntimeError(f"فشل جلب بريد Hotmail: {last_error}")
+
+
+def fetch_hotmail_messages(email_addr, acc, limit=15):
+    access_token = graph_stored_access(acc)
+    raw_msgs = _graph_list_messages(access_token, limit)
+    new_summaries = []
+    for m in raw_msgs:
+        uid = m.get("id") or ""
+        if not uid:
+            continue
+        summary, _body = _graph_message_to_summary(m)
+        new_summaries.append(summary)
+        if len(new_summaries) >= limit:
+            break
+    entry = _cache.setdefault(email_addr, {"summaries": [], "bodies": {}})
+    entry["summaries"] = new_summaries
+    return new_summaries
+
+
+def fetch_hotmail_message_body(email_addr, uid, acc):
+    access_token = graph_stored_access(acc)
+    encoded = urllib.parse.quote(uid, safe="")
+    res = _graph_request(
+        "GET",
+        f"{MS_GRAPH_MSG}/{encoded}",
+        access_token,
+        params={"$select": "id,subject,from,receivedDateTime,bodyPreview,body,isRead"},
+    )
+    if res.status_code in (401, 403):
+        raise RuntimeError("انتهت صلاحية توكن Hotmail. اطلب من المشرف تجديد التوكن.")
+    if res.status_code != 200:
+        raise RuntimeError(f"تعذّر جلب الرسالة من Hotmail: HTTP {res.status_code}")
+    summary, body_entry = _graph_message_to_summary(res.json())
+    _cache_put_body(email_addr, uid, summary, body_entry, email_addr)
+    return body_entry
+
+
+def upsert_hotmail_account(email_addr, refresh_token, client_id, added_by="admin", access_token="", expires_in=3600):
+    email_addr = (email_addr or "").strip().lower()
+    now = datetime.now(timezone.utc)
+    existing = email_accounts_col.find_one({"email": email_addr})
+    fields = {
+        "email": email_addr,
+        "account_type": "hotmail",
+        "refresh_token": refresh_token,
+        "ms_client_id": client_id or MS_CLIENT_ID,
+        "token_updated_at": now,
+    }
+    if access_token:
+        fields["access_token"] = access_token
+        fields["access_expires_at"] = now + timedelta(seconds=max(int(expires_in or 3600) - 60, 60))
+    if existing:
+        email_accounts_col.update_one({"_id": existing["_id"]}, {"$set": fields})
+        _cache.pop(email_addr, None)
+        return str(existing["_id"]), False
+    fields["added_at"] = now
+    fields["added_by"] = added_by
+    result = email_accounts_col.insert_one(fields)
+    return str(result.inserted_id), True
+
+
 # ─── POP3 Fetch ───────────────────────────────────────────────────
 
 def fetch_email_messages(email_addr, pop3_password, pop3_host, pop3_port, limit=FETCH_LIMIT):
@@ -539,106 +747,13 @@ def fetch_email_messages(email_addr, pop3_password, pop3_host, pop3_port, limit=
     return merged_summaries
 
 
-# ─── Gmail / Outlook Fetch ────────────────────────────────────────
-
-def get_gmail_credentials():
-    """
-    Return valid Google OAuth2 credentials, refreshing automatically if expired.
-    Token is loaded from / saved to MongoDB.
-    Returns None when no token exists or the library is not installed.
-    """
-    if not GMAIL_AVAILABLE:
-        return None
-    token_info = get_stored_token_info()
-    if not token_info:
-        return None
-    try:
-        creds = Credentials.from_authorized_user_info(token_info, GMAIL_SCOPES)
-    except Exception:
-        return None
-    if creds and creds.valid:
-        return creds
-    if creds and creds.expired and creds.refresh_token:
-        try:
-            creds.refresh(GoogleRequest())
-            save_stored_token_info(json.loads(creds.to_json()))
-            return creds
-        except Exception:
-            return None
-    return None
-
-
-def fetch_outlook_via_gmail(outlook_email: str, limit: int = FETCH_LIMIT) -> list:
-    """
-    Fetch emails addressed to a specific Outlook inbox using the Gmail API.
-    All Outlook inboxes forward to one shared Gmail account; we isolate each
-    inbox by searching the To: header for the original Outlook address.
-    Uses the same in-memory cache structure as fetch_email_messages().
-    """
-    cache_key  = f"__gmail__{outlook_email}"
-    existing   = _cache.get(cache_key, {"summaries": [], "bodies": {}})
-    known_uids = {m["uid"] for m in existing["summaries"]}
-    known_bodies = existing.get("bodies", {})
-
-    creds = get_gmail_credentials()
-    if not creds:
-        raise RuntimeError(
-            "Gmail OAuth غير مكوّن أو انتهت صلاحية التوكن. "
-            "يرجى إعداد Gmail من لوحة الإدارة ← إعدادات Gmail."
-        )
-
-    service = google_build("gmail", "v1", credentials=creds, cache_discovery=False)
-
-    # Broader query: forwarding can put the address in To / Delivered-To / Cc
-    gmail_q = (
-        f"(to:{outlook_email} OR deliveredto:{outlook_email} "
-        f"OR cc:{outlook_email} OR bcc:{outlook_email})"
-    )
-    response = service.users().messages().list(
-        userId="me",
-        q=gmail_q,
-        maxResults=limit,
-    ).execute()
-
-    new_summaries: list = []
-    new_bodies:    dict = {}
-
-    for meta in response.get("messages", []):
-        if len(new_summaries) >= limit:
-            break
-        msg_id = meta["id"]
-        if msg_id in known_uids and msg_id in known_bodies:
-            continue
-        try:
-            msg_data  = service.users().messages().get(
-                userId="me", id=msg_id, format="raw"
-            ).execute()
-            # Gmail API pads base64 inconsistently — add == to be safe
-            raw_bytes = base64.urlsafe_b64decode(msg_data["raw"] + "==")
-            msg       = email_lib.message_from_bytes(raw_bytes)
-
-            summary, body_entry = _build_summary(msg, msg_id)
-            new_summaries.append(summary)
-            new_bodies[msg_id] = body_entry
-            _cache_put_body(cache_key, msg_id, summary, body_entry, outlook_email)
-
-        except Exception as exc:
-            print(f"[GMAIL] failed to fetch message {msg_id}: {exc}")
-            continue
-
-    merged_summaries = new_summaries + [m for m in existing["summaries"] if m["uid"] not in new_bodies]
-    merged_bodies    = {**existing["bodies"], **new_bodies}
-    _cache[cache_key] = {"summaries": merged_summaries, "bodies": merged_bodies}
-    return merged_summaries
-
-
 def _cache_put_body(cache_key: str, uid: str, summary: dict, body_entry: dict, email_addr: str = ""):
     """Store a single message body in process cache + MongoDB (shared across workers)."""
     entry = _cache.setdefault(cache_key, {"summaries": [], "bodies": {}})
     entry["bodies"][uid] = body_entry
     if not any(m.get("uid") == uid for m in entry["summaries"]):
         entry["summaries"].insert(0, summary)
-    email_key = (email_addr or cache_key.replace("__gmail__", "")).lower()
+    email_key = (email_addr or cache_key).lower()
     if email_key and uid:
         try:
             message_bodies_col.update_one(
@@ -674,7 +789,7 @@ def _get_cached_body(uid: str, email_addr: str = ""):
             body_entry = {"body": doc.get("body", ""), "body_type": doc.get("body_type", "plain")}
             # hydrate local cache for this worker
             email_key = doc.get("email") or email_addr
-            cache_key = f"__gmail__{email_key}" if email_key and is_outlook_email(email_key) else email_key
+            cache_key = email_key
             if cache_key:
                 entry = _cache.setdefault(cache_key, {"summaries": [], "bodies": {}})
                 entry["bodies"][uid] = body_entry
@@ -686,29 +801,14 @@ def _get_cached_body(uid: str, email_addr: str = ""):
 
 def fetch_single_message_body(email_addr: str, uid: str, acc: dict) -> dict:
     """
-    Load one message body from Gmail or POP3 when it is missing from this
-    worker's in-memory cache (common with multiple gunicorn workers / restarts).
+    Load one message body from Hotmail Graph or POP3 when it is missing
+    from this worker's in-memory cache.
     """
-    use_gmail = (acc.get("account_type") == "gmail_forwarded") or is_outlook_email(email_addr)
-    cache_key = f"__gmail__{email_addr}" if use_gmail else email_addr
+    cache_key = email_addr
     uid = (uid or "").strip()
 
-    if use_gmail:
-        creds = get_gmail_credentials()
-        if not creds:
-            raise RuntimeError("Gmail OAuth غير مكوّن أو انتهت صلاحية التوكن.")
-        service = google_build("gmail", "v1", credentials=creds, cache_discovery=False)
-        try:
-            msg_data = service.users().messages().get(
-                userId="me", id=uid, format="raw"
-            ).execute()
-        except Exception as exc:
-            raise RuntimeError(f"تعذّر جلب الرسالة من Gmail: {str(exc)[:120]}") from exc
-        raw_bytes = base64.urlsafe_b64decode(msg_data["raw"] + "==")
-        msg = email_lib.message_from_bytes(raw_bytes)
-        summary, body_entry = _build_summary(msg, uid)
-        _cache_put_body(cache_key, uid, summary, body_entry, email_addr)
-        return body_entry
+    if is_hotmail_account(acc):
+        return fetch_hotmail_message_body(email_addr, uid, acc)
 
     if not acc.get("pop3_password"):
         raise RuntimeError("لا توجد كلمة مرور POP3 لهذا البريد")
@@ -762,6 +862,10 @@ def fetch_single_message_body(email_addr: str, uid: str, acc: dict) -> dict:
 
 @app.route("/", methods=["GET", "POST"])
 def login():
+    # Outlook redirects to http://localhost:<port>/?code=... (no extra path allowed)
+    raw_qs = (request.query_string or b"").decode("ascii", errors="ignore")
+    if request.method == "GET" and ("code=" in raw_qs or "error=" in raw_qs):
+        return complete_hotmail_oauth_from_request()
     if session.get("client_id"):
         return redirect(url_for("dashboard"))
     error = None
@@ -924,15 +1028,15 @@ def api_fetch():
     cutoff_minutes = int(os.environ.get("EMAIL_CUTOFF_MINUTES", 20))
     cutoff = datetime.now(timezone.utc) - timedelta(minutes=cutoff_minutes)
 
-    # ── Route: Outlook → Gmail API  |  Other → POP3 ──────────────
-    use_gmail   = (acc.get("account_type") == "gmail_forwarded") or is_outlook_email(email_addr)
-    cache_key   = f"__gmail__{email_addr}" if use_gmail else email_addr
-    warning     = None
+    cache_key = email_addr
+    warning   = None
 
     try:
-        if use_gmail:
-            summaries = fetch_outlook_via_gmail(email_addr)
+        if is_hotmail_account(acc):
+            summaries = fetch_hotmail_messages(email_addr, acc)
         else:
+            if not acc.get("pop3_password"):
+                return jsonify({"error": "لا توجد كلمة مرور POP3 لهذا البريد"}), 400
             summaries = fetch_email_messages(
                 email_addr,
                 acc["pop3_password"],
@@ -940,22 +1044,19 @@ def api_fetch():
                 acc.get("pop3_port", DEFAULT_PORT),
             )
     except Exception as e:
+        err = str(e)
+        if "توكن" in err:
+            return jsonify({"error": err[:180]}), 401
         cached = _cache.get(cache_key, {}).get("summaries", [])
         if not cached:
-            return jsonify({"error": f"فشل جلب الرسائل: {str(e)[:180]}"}), 503
+            return jsonify({"error": f"فشل جلب الرسائل: {err[:180]}"}), 503
         summaries = cached
         warning   = "تعذّر تحديث الرسائل — يتم عرض نسخة محفوظة مؤقتاً"
 
     if normalized_patterns:
         summaries = apply_filter_patterns(summaries, normalized_patterns)
     summaries = sort_newest(summaries)
-    timed = apply_time_cutoff(summaries, cutoff)
-    # If cutoff wiped everything but pattern matches exist (bad Date headers),
-    # still show the newest match so OTP codes are not lost.
-    if not timed and summaries:
-        timed = [summaries[0]]
-        warning = warning or "يُعرض أحدث رمز مطابق (تاريخ الرسالة خارج النافذة الزمنية)"
-    summaries = timed
+    summaries = apply_time_cutoff(summaries, cutoff)
     if summaries:
         summaries = [summaries[0]]
 
@@ -970,6 +1071,11 @@ def api_fetch():
                 _cache.get(cache_key, {}).get("bodies", {}).get(uid)
                 or _get_cached_body(uid, email_addr)
             )
+            if not body_entry and is_hotmail_account(acc):
+                try:
+                    body_entry = fetch_hotmail_message_body(email_addr, uid, acc)
+                except Exception as exc:
+                    print(f"[HOTMAIL] body fetch skipped: {exc}")
         if body_entry:
             item["body"] = body_entry.get("body", "")
             item["body_type"] = body_entry.get("body_type", "plain")
@@ -993,7 +1099,7 @@ def api_fetch():
 @client_required
 def api_message(uid):
     """
-    Return message body. Prefer RAM → MongoDB → live Gmail/POP3 fetch.
+    Return message body. Prefer RAM → MongoDB → live Hotmail/POP3 fetch.
     """
     uid = (uid or "").strip()
 
@@ -1354,7 +1460,7 @@ def admin_renew_all_client_emails(client_id):
 @app.route("/admin/api/email-accounts")
 @admin_required
 def admin_list_emails():
-    accounts = list(email_accounts_col.find({}, {"pop3_password": 0}).sort("added_at", DESCENDING))
+    accounts = list(email_accounts_col.find({}, {"pop3_password": 0, "refresh_token": 0, "access_token": 0}).sort("added_at", DESCENDING))
     for a in accounts:
         a["_id"]         = str(a["_id"])
         a["added_at"]    = dt_iso(a.get("added_at")) if a.get("added_at") else ""
@@ -1379,7 +1485,7 @@ def admin_email_assignment_status():
                     "client_display":  client.get("display_name") or client["username"],
                 }
     accounts = list(
-        email_accounts_col.find({}, {"pop3_password": 0}).sort("added_at", DESCENDING)
+        email_accounts_col.find({}, {"pop3_password": 0, "refresh_token": 0, "access_token": 0}).sort("added_at", DESCENDING)
     )
     result = []
     for a in accounts:
@@ -1389,8 +1495,8 @@ def admin_email_assignment_status():
             "_id":          str(a["_id"]),
             "email":        em,
             "account_type": acct_type,
-            "pop3_host":    a.get("pop3_host", DEFAULT_HOST) if acct_type == "pop3" else "gmail-forwarded",
-            "pop3_port":    a.get("pop3_port", DEFAULT_PORT) if acct_type == "pop3" else 0,
+            "pop3_host":    a.get("pop3_host", DEFAULT_HOST) if acct_type != "hotmail" else "hotmail",
+            "pop3_port":    a.get("pop3_port", DEFAULT_PORT) if acct_type != "hotmail" else 0,
             "added_at":     dt_iso(a.get("added_at")) if a.get("added_at") else "",
             "assigned_to":  assignment_map.get(em),
         })
@@ -1414,40 +1520,27 @@ def admin_add_email():
 
     if not em:
         return jsonify({"error": "email required"}), 400
-
-    # Outlook / Microsoft addresses → Gmail-forwarded account (no POP3 test)
-    if is_outlook_email(em):
-        account_type = "gmail_forwarded"
-        doc = {
-            "email":        em,
-            "account_type": account_type,
-            "added_at":     datetime.now(timezone.utc),
-            "added_by":     session.get("admin_username", "admin"),
-        }
-    else:
-        if not pw:
-            return jsonify({"error": "password required for POP3 accounts"}), 400
-        # Verify POP3 connectivity before saving
-        try:
-            conn = connect_pop3(host, port, em, pw)
-            conn.quit()
-        except Exception as e:
-            return jsonify({"error": f"فشل الاتصال بالخادم: {str(e)[:120]}"}), 400
-        account_type = "pop3"
-        doc = {
-            "email":        em,
-            "account_type": account_type,
-            "pop3_password": pw,
-            "pop3_host":    host,
-            "pop3_port":    port,
-            "added_at":     datetime.now(timezone.utc),
-            "added_by":     session.get("admin_username", "admin"),
-        }
+    if not pw:
+        return jsonify({"error": "password required for POP3 accounts"}), 400
+    try:
+        conn = connect_pop3(host, port, em, pw)
+        conn.quit()
+    except Exception as e:
+        return jsonify({"error": f"فشل الاتصال بالخادم: {str(e)[:120]}"}), 400
+    account_type = "pop3"
+    doc = {
+        "email":         em,
+        "account_type":  account_type,
+        "pop3_password": pw,
+        "pop3_host":     host,
+        "pop3_port":     port,
+        "added_at":      datetime.now(timezone.utc),
+        "added_by":      session.get("admin_username", "admin"),
+    }
 
     try:
         result = email_accounts_col.insert_one(doc)
         _cache.pop(em, None)
-        _cache.pop(f"__gmail__{em}", None)
         return jsonify({"ok": True, "id": str(result.inserted_id), "account_type": account_type})
     except DuplicateKeyError:
         return jsonify({"error": f"البريد '{em}' مضاف مسبقاً"}), 409
@@ -1458,8 +1551,8 @@ def admin_add_email():
 def admin_bulk_emails():
     """
     Bulk-add email accounts.
-    Format per line: email@example.com:password
-    For Outlook domains the password is optional (ignored); write email: or email:anything.
+    POP3: email@example.com:password
+    Hotmail token (from LOGIN_TO_TOKEN accounts.txt): email|password|refresh_token|client_id
     """
     data = request.json or {}
     raw  = (data.get("text") or "").strip()
@@ -1475,7 +1568,25 @@ def admin_bulk_emails():
         line = line.strip()
         if not line:
             continue
-        # Support both "email:pass" and bare "email" (for Outlook accounts)
+        if "|" in line and line.count("|") >= 2:
+            parts = [p.strip() for p in line.split("|")]
+            em = parts[0].lower()
+            refresh_token = parts[2] if len(parts) > 2 else ""
+            client_id = parts[3] if len(parts) > 3 else MS_CLIENT_ID
+            if not em or "@" not in em or not refresh_token:
+                error_list.append(f"سطر Hotmail غير صالح: {line[:60]}")
+                errors += 1
+                continue
+            try:
+                upsert_hotmail_account(em, refresh_token, client_id, session.get("admin_username", "admin"))
+                _cache.pop(em, None)
+                added += 1
+            except DuplicateKeyError:
+                skipped += 1
+            except Exception as exc:
+                error_list.append(f"{em}: {exc}")
+                errors += 1
+            continue
         if ":" in line:
             parts = line.split(":", 1)
             em = parts[0].strip().lower()
@@ -1489,34 +1600,24 @@ def admin_bulk_emails():
             errors += 1
             continue
 
-        if is_outlook_email(em):
-            account_type = "gmail_forwarded"
-            doc = {
-                "email":        em,
-                "account_type": account_type,
-                "added_at":     datetime.now(timezone.utc),
-                "added_by":     session.get("admin_username", "admin"),
-            }
-        else:
-            if not pw:
-                error_list.append(f"كلمة المرور مطلوبة: {em[:60]}")
-                errors += 1
-                continue
-            account_type = "pop3"
-            doc = {
-                "email":        em,
-                "account_type": account_type,
-                "pop3_password": pw,
-                "pop3_host":    host,
-                "pop3_port":    port,
-                "added_at":     datetime.now(timezone.utc),
-                "added_by":     session.get("admin_username", "admin"),
-            }
+        if not pw:
+            error_list.append(f"كلمة المرور مطلوبة: {em[:60]}")
+            errors += 1
+            continue
+        account_type = "pop3"
+        doc = {
+            "email":         em,
+            "account_type":  account_type,
+            "pop3_password": pw,
+            "pop3_host":     host,
+            "pop3_port":     port,
+            "added_at":      datetime.now(timezone.utc),
+            "added_by":      session.get("admin_username", "admin"),
+        }
 
         try:
             email_accounts_col.insert_one(doc)
             _cache.pop(em, None)
-            _cache.pop(f"__gmail__{em}", None)
             added += 1
         except DuplicateKeyError:
             skipped += 1
@@ -1546,7 +1647,6 @@ def admin_edit_email(acc_id):
             return jsonify({"error": "not found"}), 404
         email_accounts_col.update_one({"_id": ObjectId(acc_id)}, {"$set": update})
         _cache.pop(acc["email"], None)
-        _cache.pop(f"__gmail__{acc['email']}", None)
     except Exception:
         return jsonify({"error": "Invalid id"}), 400
     return jsonify({"ok": True})
@@ -1559,7 +1659,6 @@ def admin_delete_email(acc_id):
         acc = email_accounts_col.find_one({"_id": ObjectId(acc_id)})
         if acc:
             _cache.pop(acc["email"], None)
-            _cache.pop(f"__gmail__{acc['email']}", None)
         email_accounts_col.delete_one({"_id": ObjectId(acc_id)})
     except Exception:
         return jsonify({"error": "Invalid id"}), 400
@@ -1711,211 +1810,252 @@ def admin_clear_activity():
     return jsonify({"ok": True, "deleted_count": result.deleted_count})
 
 
-# ── Admin API: Gmail / OAuth Configuration ────────────────────────
+def _hotmail_oauth_result_html(ok, title, message, email=""):
+    color = "#22c55e" if ok else "#f25f7a"
+    icon = "✓" if ok else "!"
+    email_js = email.replace("\\", "\\\\").replace("'", "\\'")
+    return f"""<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8">
+<title>{title}</title>
+<body style="font-family:sans-serif;background:#0f1117;color:#eee;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0">
+<div style="text-align:center;max-width:440px;padding:2rem">
+  <div style="width:64px;height:64px;border-radius:50%;background:rgba(34,197,94,.15);display:flex;align-items:center;justify-content:center;margin:0 auto 1.2rem;font-size:2rem;color:{color}">{icon}</div>
+  <h2 style="color:{color};margin:0 0 .5rem">{title}</h2>
+  <p style="color:#9aa3b5;line-height:1.7">{message}</p>
+  <p><a href="/admin" style="color:#4f8ef7">العودة للوحة التحكم</a></p>
+</div>
+<script>
+try {{
+  if (window.opener) {{
+    window.opener.postMessage({{type:'hotmail_oauth', ok:{str(ok).lower()}, email:'{email_js}'}}, '*');
+    setTimeout(function(){{ window.close(); }}, 800);
+  }}
+}} catch (e) {{}}
+</script>
+</body></html>"""
 
-@app.route("/admin/api/gmail-config")
+
+def _raw_query_arg(name):
+    """Read a query param without turning '+' into space (Microsoft auth codes)."""
+    qs = (request.query_string or b"").decode("utf-8", errors="replace")
+    for part in qs.split("&"):
+        if not part or "=" not in part:
+            continue
+        key, val = part.split("=", 1)
+        if urllib.parse.unquote(key) == name:
+            return urllib.parse.unquote(val)
+    return (request.args.get(name) or "").strip()
+
+
+def _hotmail_account_from_tokens(access_token, refresh_token, admin_user="admin", id_token=None, expires_in=3600):
+    user_email = _msa_email_from_token(access_token, id_token=id_token)
+    if not user_email or "@" not in user_email:
+        return None, "تعذر قراءة عنوان البريد من Microsoft. أعد الربط ووافق على الصلاحيات."
+    acc_id, created = upsert_hotmail_account(
+        user_email,
+        refresh_token,
+        MS_CLIENT_ID,
+        admin_user,
+        access_token=access_token,
+        expires_in=expires_in,
+    )
+    return {"email": user_email, "id": acc_id, "created": created}, None
+
+
+def complete_hotmail_oauth_from_request():
+    err = _raw_query_arg("error")
+    if err:
+        desc = _raw_query_arg("error_description") or err
+        return _hotmail_oauth_result_html(False, "فشل التوثيق", desc[:300]), 400
+
+    code = _raw_query_arg("code")
+    state = _raw_query_arg("state")
+    if not code or not state:
+        return _hotmail_oauth_result_html(False, "خطأ", "لم يُستلم كود التوثيق."), 400
+
+    pending = _load_oauth_state(state)
+    if not pending:
+        return _hotmail_oauth_result_html(
+            False, "انتهت الجلسة", "أعد الضغط على «ربط حساب Hotmail» ثم حاول مرة أخرى."
+        ), 400
+
+    redirect_uri = pending.get("redirect_uri") or hotmail_redirect_uri()
+    admin_user = pending.get("admin_username", "admin")
+
+    data = _exchange_ms_auth_code(code, redirect_uri)
+    access_token = data.get("access_token")
+    refresh_token = data.get("refresh_token") or ""
+    if not access_token:
+        err_msg = data.get("error_description") or data.get("error") or str(data)[:200]
+        print(f"[HOTMAIL] exchange failed: {err_msg}")
+        return _hotmail_oauth_result_html(False, "فشل التوثيق", str(err_msg)[:400]), 400
+    if not refresh_token:
+        refresh_token = access_token
+        print("[HOTMAIL] no refresh_token in response; storing access token as fallback")
+
+    _delete_oauth_state(state)
+    info, err_msg = _hotmail_account_from_tokens(
+        access_token,
+        refresh_token,
+        admin_user,
+        id_token=data.get("id_token"),
+        expires_in=data.get("expires_in") or 3600,
+    )
+    if err_msg:
+        return _hotmail_oauth_result_html(False, "فشل التوثيق", err_msg), 400
+    verb = "تمت إضافة" if info["created"] else "تم تحديث توكن"
+    return _hotmail_oauth_result_html(
+        True,
+        "تم التوثيق بنجاح",
+        f"{verb} الحساب <b>{info['email']}</b>. يمكنك إغلاق هذه النافذة.",
+        email=info["email"],
+    )
+
+
+@app.route("/admin/api/hotmail-auth-url")
 @admin_required
-def admin_gmail_config():
-    """Return Gmail OAuth configuration status (no secrets exposed)."""
-    creds_cfg   = get_stored_credentials_config()
-    token_info  = get_stored_token_info()
-    has_creds   = bool(creds_cfg)
-    has_token   = bool(token_info)
-    token_valid = False
-    gmail_lib   = GMAIL_AVAILABLE
+def admin_hotmail_auth_url():
+    admin_user = session.get("admin_username", "admin")
 
-    if has_token and GMAIL_AVAILABLE:
+    # Deployed HTTPS hosts cannot use this public client redirect URI.
+    # Use device-code login instead (no redirect_uri).
+    if not _is_loopback_request():
+        res = requests.post(
+            MS_DEVICE_URL,
+            data={"client_id": MS_CLIENT_ID, "scope": MS_SCOPE},
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            timeout=20,
+        )
         try:
-            creds = Credentials.from_authorized_user_info(token_info, GMAIL_SCOPES)
-            if creds and creds.valid:
-                token_valid = True
-            elif creds and creds.expired and creds.refresh_token:
-                try:
-                    creds.refresh(GoogleRequest())
-                    save_stored_token_info(json.loads(creds.to_json()))
-                    token_valid = True
-                except Exception:
-                    token_valid = False
+            data = res.json()
         except Exception:
-            token_valid = False
+            return jsonify({"error": "فشل بدء تسجيل Microsoft"}), 500
+        if not data.get("device_code") or not data.get("user_code"):
+            err = data.get("error_description") or data.get("error") or "device code failed"
+            return jsonify({"error": str(err)[:200]}), 400
+        poll_id = secrets.token_urlsafe(16)
+        _save_oauth_state(poll_id, {
+            "kind": "device",
+            "device_code": data["device_code"],
+            "admin_username": admin_user,
+        })
+        return jsonify({
+            "ok": True,
+            "mode": "device",
+            "poll_id": poll_id,
+            "user_code": data["user_code"],
+            "verification_uri": data.get("verification_uri") or "https://microsoft.com/devicelogin",
+            "verification_uri_complete": data.get("verification_uri_complete") or "",
+            "interval": int(data.get("interval") or 5),
+            "expires_in": int(data.get("expires_in") or 900),
+            "message": data.get("message") or "",
+        })
 
-    creds_preview = None
-    if has_creds:
-        try:
-            section = creds_cfg.get("installed") or creds_cfg.get("web") or {}
-            creds_preview = {
-                "client_id":  section.get("client_id", ""),
-                "project_id": section.get("project_id", ""),
-            }
-        except Exception:
-            pass
-
+    redirect_uri = hotmail_redirect_uri()
+    state = secrets.token_urlsafe(24)
+    _save_oauth_state(state, {
+        "kind": "auth_code",
+        "admin_username": admin_user,
+        "redirect_uri": redirect_uri,
+    })
+    params = {
+        "client_id": MS_CLIENT_ID,
+        "response_type": "code",
+        "redirect_uri": redirect_uri,
+        "response_mode": "query",
+        "scope": MS_SCOPE,
+        "prompt": "login",
+        "state": state,
+    }
+    auth_url = MS_AUTH_URL + "?" + urllib.parse.urlencode(params)
     return jsonify({
-        "gmail_lib_installed": gmail_lib,
-        "has_credentials":     has_creds,
-        "has_token":           has_token,
-        "token_valid":         token_valid,
-        "credentials_preview": creds_preview,
-        "storage":             "mongodb",
+        "ok": True,
+        "mode": "loopback",
+        "auth_url": auth_url,
+        "redirect_uri": redirect_uri,
     })
 
 
-@app.route("/admin/api/gmail-config", methods=["PUT"])
+@app.route("/admin/api/hotmail-device-poll")
 @admin_required
-def admin_update_gmail_credentials():
-    """Save Google client credentials into MongoDB."""
-    data    = request.json or {}
-    content = (data.get("credentials_json") or "").strip()
-    if not content:
-        return jsonify({"error": "credentials_json required"}), 400
-    try:
-        parsed = json.loads(content)
-    except json.JSONDecodeError as e:
-        return jsonify({"error": f"JSON غير صالح: {e}"}), 400
-    if "installed" not in parsed and "web" not in parsed:
-        return jsonify({"error": "ملف غير صالح: يجب أن يحتوي على مفتاح 'installed' أو 'web'"}), 400
-    try:
-        save_stored_credentials_config(parsed)
-        return jsonify({"ok": True, "message": "تم حفظ الاعتمادات في MongoDB. يجب إعادة التوثيق."})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route("/admin/api/gmail-auth-url")
-@admin_required
-def admin_gmail_auth_url():
-    """Generate a Google OAuth2 authorization URL (PKCE verifier is persisted in MongoDB)."""
-    if not GMAIL_AVAILABLE:
-        return jsonify({"error": "مكتبة google-auth غير مثبّتة. شغّل: pip install google-auth google-auth-oauthlib google-api-python-client"}), 500
-    if not get_stored_credentials_config():
-        return jsonify({"error": "لم يتم حفظ اعتمادات Google بعد — الصق credentials.json واحفظه أولاً"}), 400
-    try:
-        redirect_uri = _gmail_redirect_uri()
-        flow = _build_gmail_flow(redirect_uri)
-        auth_url, state = flow.authorization_url(
-            access_type="offline",
-            include_granted_scopes="true",
-            prompt="consent",
-        )
-        # PKCE: must reuse the same code_verifier when exchanging the auth code
-        if not flow.code_verifier:
-            return jsonify({"error": "فشل إنشاء code_verifier — حدّث google-auth-oauthlib"}), 500
-        _save_oauth_pending(flow.code_verifier, state, redirect_uri)
-        return jsonify({
-            "auth_url": auth_url,
-            "redirect_uri": redirect_uri,
-            "auto": True,
-            "message": "افتح الرابط، وافق على الصلاحيات — سيتم التوثيق تلقائياً بعد العودة.",
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route("/admin/api/gmail-oauth-callback")
-def admin_gmail_oauth_redirect():
-    """Google redirects here after consent. Exchange code using saved PKCE verifier."""
-    err = request.args.get("error")
+def admin_hotmail_device_poll():
+    poll_id = (request.args.get("poll_id") or "").strip()
+    pending = _load_oauth_state(poll_id) if poll_id else None
+    if not pending or pending.get("kind") != "device":
+        return jsonify({"error": "انتهت جلسة التوثيق"}), 400
+    data = _ms_token_request({
+        "client_id": MS_CLIENT_ID,
+        "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
+        "device_code": pending.get("device_code") or "",
+    })
+    err = data.get("error")
+    if err in ("authorization_pending", "slow_down"):
+        return jsonify({"ok": False, "pending": True, "error": err})
     if err:
-        _clear_oauth_pending()
-        return (
-            "<!doctype html><html lang='ar' dir='rtl'><meta charset='utf-8'>"
-            f"<title>فشل التوثيق</title><body style='font-family:sans-serif;background:#0f1117;color:#eee;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0'>"
-            f"<div style='text-align:center;max-width:420px;padding:2rem'><h2 style='color:#f25f7a'>فشل التوثيق</h2>"
-            f"<p>{err}</p><p><a href='/admin' style='color:#4f8ef7'>العودة للوحة التحكم</a></p></div></body></html>"
-        ), 400
-
-    code = (request.args.get("code") or "").strip()
-    state = (request.args.get("state") or "").strip()
-    if not code:
-        return (
-            "<!doctype html><html lang='ar' dir='rtl'><meta charset='utf-8'>"
-            "<title>خطأ</title><body style='font-family:sans-serif;background:#0f1117;color:#eee;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0'>"
-            "<div style='text-align:center'><h2>لم يُستلم كود التوثيق</h2>"
-            "<p><a href='/admin' style='color:#4f8ef7'>العودة</a></p></div></body></html>"
-        ), 400
-
-    if not GMAIL_AVAILABLE or not get_stored_credentials_config():
-        return "Gmail OAuth not available", 500
-
-    pending = _load_oauth_pending()
-    if not pending or not pending.get("code_verifier"):
-        return (
-            "<!doctype html><html lang='ar' dir='rtl'><meta charset='utf-8'>"
-            "<title>انتهت الجلسة</title><body style='font-family:sans-serif;background:#0f1117;color:#eee;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0'>"
-            "<div style='text-align:center;max-width:420px;padding:2rem'><h2 style='color:#f25f7a'>انتهت جلسة التوثيق</h2>"
-            "<p>أعد إنشاء رابط التوثيق من لوحة التحكم ثم حاول مرة أخرى.</p>"
-            "<p><a href='/admin' style='color:#4f8ef7'>العودة للوحة التحكم</a></p></div></body></html>"
-        ), 400
-
-    if pending.get("state") and state and pending["state"] != state:
-        _clear_oauth_pending()
-        return "Invalid OAuth state", 400
-
-    try:
-        flow = _build_gmail_flow(pending["redirect_uri"])
-        flow.code_verifier = pending["code_verifier"]
-        flow.fetch_token(code=code)
-        save_stored_token_info(json.loads(flow.credentials.to_json()))
-        _cache.clear()
-        return (
-            "<!doctype html><html lang='ar' dir='rtl'><meta charset='utf-8'>"
-            "<title>تم التوثيق</title>"
-            "<meta http-equiv='refresh' content='2;url=/admin?gmail_oauth=ok'>"
-            "<body style='font-family:sans-serif;background:#0f1117;color:#eee;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0'>"
-            "<div style='text-align:center;max-width:420px;padding:2rem'>"
-            "<div style='width:64px;height:64px;border-radius:50%;background:rgba(34,197,94,.15);display:flex;align-items:center;justify-content:center;margin:0 auto 1.2rem;font-size:2rem'>✓</div>"
-            "<h2 style='color:#22c55e;margin:0 0 .5rem'>تم التوثيق بنجاح</h2>"
-            "<p style='color:#9aa3b5'>تم حفظ التوكن في MongoDB. جاري العودة…</p>"
-            "<p><a href='/admin?gmail_oauth=ok' style='color:#4f8ef7'>اضغط هنا إذا لم يتم التحويل</a></p>"
-            "</div></body></html>"
-        )
-    except Exception as e:
-        return (
-            "<!doctype html><html lang='ar' dir='rtl'><meta charset='utf-8'>"
-            "<title>فشل التوثيق</title><body style='font-family:sans-serif;background:#0f1117;color:#eee;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0'>"
-            f"<div style='text-align:center;max-width:480px;padding:2rem'><h2 style='color:#f25f7a'>فشل التوثيق</h2>"
-            f"<p style='word-break:break-word'>{str(e)[:300]}</p>"
-            "<p><a href='/admin' style='color:#4f8ef7'>العودة وإعادة المحاولة</a></p></div></body></html>"
-        ), 400
+        return jsonify({"ok": False, "pending": False, "error": data.get("error_description") or err}), 400
+    refresh_token = data.get("refresh_token") or ""
+    access_token = data.get("access_token")
+    if not access_token:
+        return jsonify({"ok": False, "error": "لم يُرجع Microsoft توكن"}), 400
+    if not refresh_token:
+        refresh_token = access_token
+    _delete_oauth_state(poll_id)
+    info, err_msg = _hotmail_account_from_tokens(
+        access_token,
+        refresh_token,
+        pending.get("admin_username", "admin"),
+        id_token=data.get("id_token"),
+        expires_in=data.get("expires_in") or 3600,
+    )
+    if err_msg:
+        return jsonify({"ok": False, "error": err_msg}), 400
+    return jsonify({"ok": True, "email": info["email"], "created": info["created"]})
 
 
-@app.route("/admin/api/gmail-auth-callback", methods=["POST"])
+@app.route("/admin/api/hotmail-oauth-callback")
+def admin_hotmail_oauth_callback():
+    return complete_hotmail_oauth_from_request()
+
+
+@app.route("/admin/api/hotmail-renew/<acc_id>", methods=["POST"])
 @admin_required
-def admin_gmail_auth_callback():
-    """Manual fallback: exchange a pasted authorization code (uses saved PKCE verifier)."""
-    if not GMAIL_AVAILABLE:
-        return jsonify({"error": "مكتبة google-auth غير مثبّتة"}), 500
-    data = request.json or {}
-    code = (data.get("code") or "").strip()
-    if not code:
-        return jsonify({"error": "auth code required"}), 400
-    if not get_stored_credentials_config():
-        return jsonify({"error": "لم يتم حفظ اعتمادات Google بعد"}), 400
-
-    pending = _load_oauth_pending()
-    if not pending or not pending.get("code_verifier"):
-        return jsonify({
-            "error": "لا توجد جلسة توثيق نشطة. اضغط «ربط حساب Google» أولاً، ثم الصق الكود من نفس الجلسة."
-        }), 400
-
+def admin_hotmail_renew_one(acc_id):
     try:
-        flow = _build_gmail_flow(pending["redirect_uri"])
-        flow.code_verifier = pending["code_verifier"]
-        flow.fetch_token(code=code)
-        save_stored_token_info(json.loads(flow.credentials.to_json()))
-        _cache.clear()
-        return jsonify({"ok": True, "message": "تم التوثيق بنجاح ✓ (محفوظ في MongoDB)"})
-    except Exception as e:
-        return jsonify({"error": f"فشل التوثيق: {str(e)[:200]}"}), 400
+        acc = email_accounts_col.find_one({"_id": ObjectId(acc_id)})
+    except Exception:
+        acc = None
+    if not acc:
+        return jsonify({"error": "الحساب غير موجود"}), 404
+    if not is_hotmail_account(acc):
+        return jsonify({"error": "هذا ليس حساب Hotmail"}), 400
+    try:
+        graph_refresh_access(acc)
+    except Exception as exc:
+        return jsonify({"error": str(exc)[:200]}), 400
+    return jsonify({"ok": True, "email": acc.get("email")})
 
 
-@app.route("/admin/api/gmail-token", methods=["DELETE"])
+@app.route("/admin/api/hotmail-renew-all", methods=["POST"])
 @admin_required
-def admin_delete_gmail_token():
-    """Delete the stored OAuth token to force re-authentication."""
-    clear_stored_token()
-    _cache.clear()
-    return jsonify({"ok": True, "message": "تم حذف التوكن من MongoDB. يجب إعادة التوثيق."})
+def admin_hotmail_renew_all():
+    accounts = list(email_accounts_col.find({
+        "$or": [{"account_type": "hotmail"}, {"refresh_token": {"$exists": True, "$ne": ""}}],
+    }))
+    ok = fail = 0
+    errors = []
+    for acc in accounts:
+        try:
+            graph_refresh_access(acc)
+            ok += 1
+        except Exception as exc:
+            fail += 1
+            errors.append(f"{acc.get('email')}: {exc}")
+    return jsonify({
+        "ok": True,
+        "renewed": ok,
+        "failed": fail,
+        "total": len(accounts),
+        "error_details": errors[:20],
+    })
 
 
 # ─── Entry Point ──────────────────────────────────────────────────

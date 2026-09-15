@@ -612,7 +612,7 @@ function showError(msg){
 
 function renderList(msgs){
   const area=document.getElementById('resultsArea');
-  if(!msgs.length){area.innerHTML='<div class="state-box"><div class="ei">📭</div><p>لا توجد رسائل تطابق هذه الفئة</p></div>';return;}
+  if(!msgs.length){area.innerHTML='<div class="state-box"><div class="ei">📭</div><p>لا توجد رسالة</p></div>';return;}
   area.innerHTML=`
     <div class="results-head"><div class="search-wrap"><div class="search-ico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><input id="searchInput" placeholder="بحث في النتائج…" autocomplete="off"/></div></div>
     <div class="msg-list" id="msgList">${renderRows(msgs)}</div>`;

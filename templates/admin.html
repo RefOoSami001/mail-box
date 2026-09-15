@@ -393,48 +393,6 @@
     .cat-item{background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.95rem 1.1rem;margin-bottom:.5rem;transition:border-color .2s,transform .15s;}
     .cat-item:hover{border-color:rgba(79,142,247,.18);transform:translateX(-1px);}
 
-    /* ═══ GMAIL STATUS CARD ═══ */
-    .gmail-status-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.65rem;margin-bottom:1.1rem;}
-    .gstat{background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.85rem 1.05rem;display:flex;align-items:center;gap:.7rem;}
-    .gstat-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-    .gstat-icon svg{width:16px;height:16px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
-    .gstat-label{font-size:.68rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);margin-bottom:.18rem;}
-    .gstat-val{font-size:.88rem;font-weight:700;}
-    .gstat-ok .gstat-icon{background:rgba(34,197,94,.12);}
-    .gstat-ok .gstat-icon svg{stroke:var(--green);}
-    .gstat-ok .gstat-val{color:var(--green);}
-    .gstat-warn .gstat-icon{background:rgba(245,158,11,.12);}
-    .gstat-warn .gstat-icon svg{stroke:var(--amber);}
-    .gstat-warn .gstat-val{color:var(--amber);}
-    .gstat-err .gstat-icon{background:rgba(242,95,122,.12);}
-    .gstat-err .gstat-icon svg{stroke:var(--danger);}
-    .gstat-err .gstat-val{color:var(--danger);}
-
-    .auth-url-box{
-      background:var(--surf2);border:1px solid rgba(79,142,247,.25);
-      border-radius:var(--radius-sm);padding:.75rem 1rem;
-      font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--accent2);
-      word-break:break-all;line-height:1.55;display:none;margin-top:.65rem;
-    }
-    .auth-url-box.show{display:block;}
-    .oauth-hint{
-      display:none;margin-top:.75rem;padding:.75rem 1rem;border-radius:var(--radius-sm);
-      background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.2);
-      font-size:.82rem;color:var(--text2);line-height:1.7;
-    }
-    .oauth-hint.show{display:block;}
-    .oauth-hint strong{color:var(--accent2);}
-    details.oauth-fallback{
-      margin-top:1rem;border:1px dashed var(--border);border-radius:var(--radius-sm);
-      padding:.65rem .85rem;background:var(--surf2);
-    }
-    details.oauth-fallback summary{
-      cursor:pointer;font-size:.8rem;font-weight:700;color:var(--text3);list-style:none;
-      display:flex;align-items:center;gap:.4rem;
-    }
-    details.oauth-fallback summary::-webkit-details-marker{display:none;}
-    details.oauth-fallback[open] summary{margin-bottom:.75rem;color:var(--text2);}
-
     @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 
     /* ═══ MOBILE ═══ */
@@ -526,13 +484,6 @@
       <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       <span>سجل النشاط</span>
     </button>
-    <!-- ═══ NEW: Gmail Config ═══ -->
-    <div class="nav-label" style="margin-top:.5rem">إعدادات</div>
-    <button class="nav-btn" data-page="gmail">
-      <svg viewBox="0 0 24 24"><path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6z"/><polyline points="22 6 12 13 2 6"/></svg>
-      <span>إعدادات Gmail</span>
-      <span id="navGmailDot" style="display:none;width:7px;height:7px;border-radius:50%;background:var(--amber);margin-right:auto;flex-shrink:0;box-shadow:0 0 5px var(--amber)"></span>
-    </button>
   </nav>
 
   <!-- Main -->
@@ -589,11 +540,10 @@
       <div class="card">
         <div class="card-title"><div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>كيف يعمل النظام</div>
         <div class="steps-list">
-          <div class="step-item"><div class="step-num">١</div><div class="step-text"><strong>أضف حسابات البريد</strong> — لحسابات POP3 أدخل بريد + كلمة مرور. لحسابات Outlook أدخل العنوان فقط (يُكتشف تلقائياً).</div></div>
-          <div class="step-item"><div class="step-num">٢</div><div class="step-text"><strong>اضبط Gmail OAuth</strong> — من "إعدادات Gmail" ارفع credentials.json ثم اضغط «ربط حساب Google» ووافق في المتصفح (يتم التوثيق تلقائياً).</div></div>
-          <div class="step-item"><div class="step-num">٣</div><div class="step-text"><strong>أنشئ فئات الفلترة</strong> — كل فئة لها اسم وأنماط تُطابق موضوع الرسالة.</div></div>
-          <div class="step-item"><div class="step-num">٤</div><div class="step-text"><strong>أنشئ حسابات العملاء</strong> وامنح كل عميل بريداً مخصصاً.</div></div>
-          <div class="step-item"><div class="step-num">٥</div><div class="step-text"><strong>العميل يسجّل دخوله</strong> → يختار البريد → يختار الفئة → يشاهد الرسائل. Outlook ينتقل تلقائياً عبر Gmail. POP3 خادم: <code>pop3.kuku.lu:995</code></div></div>
+          <div class="step-item"><div class="step-num">١</div><div class="step-text"><strong>أضف حسابات البريد</strong> — POP3: بريد + كلمة مرور + خادم. Hotmail/Outlook: اضغط «ربط حساب Hotmail» وسجّل الدخول عبر Microsoft (يُحفظ التوكن).</div></div>
+          <div class="step-item"><div class="step-num">٢</div><div class="step-text"><strong>أنشئ فئات الفلترة</strong> — كل فئة لها اسم وأنماط تُطابق موضوع الرسالة.</div></div>
+          <div class="step-item"><div class="step-num">٣</div><div class="step-text"><strong>أنشئ حسابات العملاء</strong> وامنح كل عميل بريداً مخصصاً.</div></div>
+          <div class="step-item"><div class="step-num">٤</div><div class="step-text"><strong>العميل يسجّل دخوله</strong> → يختار البريد → يختار الفئة → يشاهد الرسائل. POP3: <code>pop3.kuku.lu:995</code> — Hotmail عبر Microsoft Graph.</div></div>
         </div>
       </div>
     </div>
@@ -627,11 +577,11 @@
         <div id="etab-single">
           <div class="card-title" style="margin-bottom:.85rem"><div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>إضافة حساب بريد</div>
           <div id="singleEmailHint" style="font-size:.8rem;color:var(--text2);margin-bottom:.85rem;background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.65rem 1rem;line-height:1.7">
-            <strong style="color:var(--teal)">Outlook / Hotmail / Live:</strong> أدخل البريد فقط — كلمة المرور وبيانات الخادم غير مطلوبة (يُجلب عبر Gmail).<br/>
-            <strong style="color:var(--accent)">POP3 (غير Outlook):</strong> أدخل البريد + كلمة المرور + بيانات الخادم.
+            <strong style="color:var(--accent)">POP3:</strong> أدخل البريد + كلمة المرور + بيانات الخادم.<br/>
+            <strong style="color:var(--teal)">Hotmail / Outlook:</strong> محلياً: نافذة Microsoft ثم العودة إلى <code>http://localhost:المنفذ</code>. على الموقع المنشور: رمز جهاز من Microsoft.
           </div>
           <div class="form-row">
-            <div class="fgroup" style="min-width:200px"><div class="flabel">البريد الإلكتروني</div><input class="inp" id="newEmail" type="email" placeholder="user@outlook.com أو user@example.com" oninput="detectEmailType(this.value)"/></div>
+            <div class="fgroup" style="min-width:200px"><div class="flabel">البريد الإلكتروني</div><input class="inp" id="newEmail" type="email" placeholder="user@example.com"/></div>
             <div id="pop3Fields" class="form-row" style="flex:2;gap:.6rem;flex-wrap:wrap;align-items:flex-end;transition:opacity .2s">
               <div class="fgroup"><div class="flabel">كلمة مرور POP3</div><input class="inp" id="newEmailPw" type="text" placeholder="••••••"/></div>
               <div class="fgroup"><div class="flabel">الخادم</div><input class="inp" id="newEmailHost" type="text" value="pop3.kuku.lu"/></div>
@@ -639,22 +589,29 @@
             </div>
             <button class="btn btn-primary" id="addEmailBtn" style="margin-top:auto"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>إضافة</button>
           </div>
-          <div id="emailTypeTag" style="font-size:.74rem;margin-top:.5rem;display:none"></div>
+          <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.85rem;align-items:center">
+            <button class="btn btn-primary" id="connectHotmailBtn" type="button">
+              <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
+              ربط حساب Hotmail
+            </button>
+            <button class="btn btn-primary renew-hotmail-all-btn" type="button" style="background:transparent;color:var(--teal);border:1px solid rgba(0,201,167,.45)">تجديد كل توكنات Hotmail</button>
+          </div>
         </div>
 
         <div id="etab-bulk-email" style="display:none">
           <div class="card-title" style="margin-bottom:.85rem"><div class="card-title-icon"><svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg></div>إضافة جماعية لحسابات البريد</div>
           <div style="font-size:.82rem;color:var(--text2);margin-bottom:.8rem;line-height:1.75">
-            POP3: <code>email@example.com:password</code> &nbsp;|&nbsp; Outlook: <code>user@outlook.com</code> أو <code>user@outlook.com:</code>
+            POP3: <code>email@example.com:password</code><br/>
+            Hotmail (من accounts.txt): <code>email|password|refresh_token|client_id</code>
           </div>
           <div class="form-row" style="margin-bottom:.75rem">
-            <div class="fgroup"><div class="flabel">الخادم الافتراضي (POP3 فقط)</div><input class="inp" id="bulkEmailHost" type="text" value="pop3.kuku.lu"/></div>
+            <div class="fgroup"><div class="flabel">الخادم الافتراضي</div><input class="inp" id="bulkEmailHost" type="text" value="pop3.kuku.lu"/></div>
             <div class="fgroup" style="max-width:95px"><div class="flabel">المنفذ</div><input class="inp" id="bulkEmailPort" type="number" value="995"/></div>
           </div>
-          <textarea class="inp" id="bulkEmailText" placeholder="user1@outlook.com&#10;user2@hotmail.com&#10;user3@example.com:pop3pass" style="min-height:140px"></textarea>
+          <textarea class="inp" id="bulkEmailText" placeholder="user1@example.com:pop3pass&#10;user2@example.com:pop3pass" style="min-height:140px"></textarea>
           <div style="font-size:.73rem;color:var(--amber);margin-top:.45rem;margin-bottom:.7rem;display:flex;align-items:center;gap:.35rem">
             <svg viewBox="0 0 24 24" style="width:12px;height:12px;flex-shrink:0;fill:none;stroke:var(--amber);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            Outlook تُضاف مباشرة بدون فحص POP3. POP3 لا تُفحص أيضاً في الإضافة الجماعية.
+            الإضافة الجماعية لا تختبر اتصال POP3 مسبقاً. أسطر التوكن تُحفظ كحسابات Hotmail.
           </div>
           <button class="btn btn-primary" id="bulkEmailBtn"><svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>إضافة الجميع</button>
           <div class="bulk-result" id="bulkEmailResult"></div>
@@ -670,6 +627,7 @@
             <span id="emailCountLbl" style="font-size:.7rem;color:var(--text3);background:var(--surf2);padding:.15rem .55rem;border-radius:20px;border:1px solid var(--border)"></span>
             <span id="emailUnassignedBadge" style="display:none;font-size:.7rem;font-weight:700;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);color:var(--amber);padding:.15rem .55rem;border-radius:20px;">⚠ <span id="emailUnassignedCount">0</span> غير مخصص</span>
             <button class="btn btn-danger" id="deleteAllEmailsBtn" style="padding:.3rem .75rem;font-size:.75rem" disabled>حذف الكل</button>
+            <button class="btn btn-primary renew-hotmail-all-btn" type="button" style="padding:.3rem .75rem;font-size:.75rem;background:transparent;color:var(--teal);border:1px solid rgba(0,201,167,.45)">تجديد كل توكنات Hotmail</button>
           </div>
         </div>
         <div class="tbl-wrap">
@@ -716,114 +674,6 @@
         <div id="activityLog"><div class="empty-st">جارٍ التحميل…</div></div>
       </div>
     </div>
-
-    <!-- ══════ GMAIL CONFIG (NEW) ══════ -->
-    <div class="page" id="page-gmail">
-
-      <!-- Status overview -->
-      <div class="card">
-        <div class="card-title">
-          <div class="card-title-icon" style="background:rgba(234,67,53,.12);border-color:rgba(234,67,53,.2)">
-            <svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:#ea4335;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6z"/><polyline points="22 6 12 13 2 6"/></svg>
-          </div>
-          حالة Gmail OAuth
-          <button class="btn btn-ghost" id="refreshGmailStatusBtn" style="margin-right:auto;padding:.28rem .7rem;font-size:.75rem">
-            <svg viewBox="0 0 24 24" style="width:12px;height:12px"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-            تحديث الحالة
-          </button>
-        </div>
-
-        <div class="gmail-status-grid" id="gmailStatusGrid">
-          <div class="gstat gstat-warn"><div class="gstat-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div><div class="gstat-label">مكتبة Google</div><div class="gstat-val" id="gsLibVal">جارٍ التحقق…</div></div></div>
-          <div class="gstat gstat-warn"><div class="gstat-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div><div class="gstat-label">الاعتمادات (MongoDB)</div><div class="gstat-val" id="gsCredsVal">جارٍ التحقق…</div></div></div>
-          <div class="gstat gstat-warn"><div class="gstat-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div><div class="gstat-label">توكن OAuth (MongoDB)</div><div class="gstat-val" id="gsTokenVal">جارٍ التحقق…</div></div></div>
-        </div>
-
-        <div id="gsCredsPreview" style="display:none;background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.65rem 1rem;font-size:.8rem;color:var(--text2);font-family:'JetBrains Mono',monospace;margin-top:-.25rem"></div>
-      </div>
-
-      <!-- Step 1: Upload / Update credentials (stored in MongoDB) -->
-      <div class="card">
-        <div class="card-title">
-          <div class="step-num" style="width:22px;height:22px;font-size:.6rem">١</div>
-          حفظ اعتمادات Google في MongoDB
-        </div>
-        <div style="font-size:.82rem;color:var(--text2);margin-bottom:.85rem;line-height:1.7">
-          احصل على ملف <code>credentials.json</code> من <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:var(--accent)">Google Cloud Console</a>.
-          محلياً: نوع <strong>Desktop app</strong>. على Koyeb: نوع <strong>Web application</strong> وأضف Redirect URI:
-          <code>https://YOUR-APP.koyeb.app/admin/api/gmail-oauth-callback</code>.
-          المحتوى يُحفظ في MongoDB.
-        </div>
-        <textarea class="inp" id="gmailCredsInput" placeholder='{"installed":{"client_id":"...","client_secret":"...","redirect_uris":["http://localhost"],...}}' style="min-height:130px;font-family:\'JetBrains Mono\',monospace;font-size:.78rem"></textarea>
-        <div style="display:flex;gap:.5rem;margin-top:.75rem;flex-wrap:wrap">
-          <button class="btn btn-primary" id="saveGmailCredsBtn">
-            <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-            حفظ الاعتمادات
-          </button>
-        </div>
-        <div id="saveCredsResult" style="display:none;margin-top:.65rem;font-size:.82rem;line-height:1.7;padding:.6rem 1rem;border-radius:var(--radius-sm)"></div>
-      </div>
-
-      <!-- Step 2: One-click Google connect -->
-      <div class="card">
-        <div class="card-title">
-          <div class="step-num" style="width:22px;height:22px;font-size:.6rem">٢</div>
-          ربط حساب Google
-        </div>
-        <div style="font-size:.82rem;color:var(--text2);margin-bottom:.85rem;line-height:1.7">
-          اضغط الزر مرة واحدة — يفتح Google للموافقة، ثم يعود تلقائياً ويحفظ التوكن. لا حاجة لنسخ أي كود.
-        </div>
-        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
-          <button class="btn btn-primary" id="genAuthUrlBtn">
-            <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            ربط حساب Google
-          </button>
-          <button id="copyAuthUrlBtn" style="display:none" class="btn btn-ghost">
-            <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-            نسخ الرابط
-          </button>
-        </div>
-        <div class="oauth-hint" id="oauthHint">
-          <strong>بانتظار الموافقة…</strong> أكمل تسجيل الدخول في نافذة Google. بعد الموافقة ستُغلق العملية تلقائياً وتعود هنا.
-          أبقِ هذه الصفحة مفتوحة.
-        </div>
-        <div class="auth-url-box" id="authUrlBox"></div>
-
-        <details class="oauth-fallback" id="oauthFallback">
-          <summary>▾ لم يُفتح المتصفح أو ظهرت صفحة بكود؟ استخدم الإدخال اليدوي</summary>
-          <div style="font-size:.8rem;color:var(--text2);margin-bottom:.75rem;line-height:1.65">
-            بعد الضغط على «ربط حساب Google»، إذا ظهرت لك صفحة فيها كود، الصقه هنا (من نفس الجلسة فقط).
-          </div>
-          <div class="form-row" style="align-items:flex-end">
-            <div class="fgroup">
-              <div class="flabel">كود التوثيق</div>
-              <input class="inp" id="gmailAuthCode" type="text" placeholder="4/0AY0e-g7..." style="font-family:'JetBrains Mono',monospace"/>
-            </div>
-            <button class="btn btn-primary" id="exchangeCodeBtn" style="margin-top:auto">
-              <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-              تأكيد الكود
-            </button>
-          </div>
-          <div id="exchangeResult" style="display:none;margin-top:.65rem;font-size:.82rem;line-height:1.7;padding:.6rem 1rem;border-radius:var(--radius-sm)"></div>
-        </details>
-      </div>
-
-      <!-- Danger: revoke token -->
-      <div class="card" style="border-color:rgba(242,95,122,.15)">
-        <div class="card-title" style="color:var(--danger)">
-          <div class="card-title-icon" style="background:rgba(242,95,122,.1);border-color:rgba(242,95,122,.2)">
-            <svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:none;stroke:var(--danger);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          </div>
-          منطقة الخطر
-        </div>
-        <div style="font-size:.82rem;color:var(--text2);margin-bottom:.85rem">حذف التوكن يلغي التوثيق الحالي. ستحتاج لإعادة ربط حساب Google.</div>
-        <button class="btn btn-danger" id="revokeTokenBtn">
-          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
-          حذف التوكن وإعادة التوثيق
-        </button>
-      </div>
-
-    </div><!-- end page-gmail -->
 
   </main>
 </div>
@@ -942,8 +792,19 @@
       <div class="mrow"><label class="mlabel">الخادم</label><input class="inp" id="editEmailHost" type="text" style="width:100%"/></div>
       <div class="mrow"><label class="mlabel">المنفذ</label><input class="inp" id="editEmailPort" type="number" style="width:100%"/></div>
     </div>
-    <div id="editEmailGmailNote" style="display:none;font-size:.82rem;color:var(--teal);background:rgba(0,201,167,.07);border:1px solid rgba(0,201,167,.2);border-radius:var(--radius-sm);padding:.65rem 1rem;line-height:1.6">هذا حساب Outlook مُوجَّه عبر Gmail. لا توجد بيانات POP3 قابلة للتعديل.</div>
+    <div id="editEmailHotmailNote" style="display:none;font-size:.82rem;color:var(--teal);background:rgba(0,201,167,.07);border:1px solid rgba(0,201,167,.2);border-radius:var(--radius-sm);padding:.65rem 1rem;line-height:1.6;margin-bottom:.75rem">هذا حساب Hotmail. حدّث توكن الوصول من زر «تجديد التوكن» في الجدول، أو أعد الربط عبر Microsoft بنفس البريد.<div style="margin-top:.65rem"><button type="button" class="btn btn-primary" id="editHotmailReconnectBtn">إعادة ربط Microsoft</button></div></div>
     <div class="mactions"><button class="btn btn-ghost" id="editEmailCancel">إلغاء</button><button class="btn btn-primary" id="editEmailSave">حفظ</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="hotmailDeviceOverlay">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-title">ربط Hotmail عبر Microsoft</div>
+    <p style="font-size:.84rem;color:var(--text2);line-height:1.7;margin:0 0 .85rem">افتح صفحة Microsoft وأدخل هذا الرمز، ثم ارجع هنا.</p>
+    <div id="hotmailDeviceCode" style="font-size:1.6rem;font-weight:800;letter-spacing:.12em;text-align:center;padding:.85rem;background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:.75rem;font-family:'JetBrains Mono',monospace">—</div>
+    <a id="hotmailDeviceLink" href="https://microsoft.com/devicelogin" target="_blank" rel="noopener" class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:.65rem">فتح صفحة Microsoft</a>
+    <div id="hotmailDeviceStatus" style="font-size:.8rem;color:var(--text3);text-align:center">بانتظار التأكيد…</div>
+    <div class="mactions"><button class="btn btn-ghost" id="hotmailDeviceCancel">إلغاء</button></div>
   </div>
 </div>
 
@@ -1012,10 +873,6 @@ async function api(url,method='GET',body=null){const opts={method,headers:{'Cont
 function fmtDate(s){if(!s||s==='—')return'—';try{return new Date(s).toLocaleString('en-GB',{dateStyle:'short',timeStyle:'short'});}catch{return s;}}
 function fmtD(s){if(!s)return'<span style="color:var(--text3)">—</span>';try{return new Date(s+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}catch{return s;}}
 
-/* ── Outlook domain detection (mirrors backend) ── */
-const OUTLOOK_DOMAINS=new Set(['outlook.com','outlook.fr','outlook.de','outlook.es','outlook.it','outlook.jp','outlook.com.br','outlook.co.uk','outlook.sa','outlook.com.au','outlook.at','outlook.be','outlook.cl','hotmail.com','hotmail.co.uk','hotmail.fr','hotmail.de','hotmail.es','hotmail.it','hotmail.com.br','live.com','live.co.uk','live.fr','live.de','live.nl','msn.com']);
-function isOutlookEmail(em){const d=(em||'').split('@').pop().toLowerCase();return OUTLOOK_DOMAINS.has(d)||d.endsWith('.outlook.com');}
-
 /* ── Nav ── */
 document.querySelectorAll('.nav-btn').forEach(btn=>{
   btn.addEventListener('click',()=>{
@@ -1023,7 +880,7 @@ document.querySelectorAll('.nav-btn').forEach(btn=>{
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('page-'+btn.dataset.page).classList.add('active');
-    const loaders={clients:loadClients,emails:loadEmails,filters:loadCategories,activity:loadActivity,overview:loadStats,gmail:loadGmailConfig};
+    const loaders={clients:loadClients,emails:loadEmails,filters:loadCategories,activity:loadActivity,overview:loadStats};
     loaders[btn.dataset.page]?.();
     closeSidebar();
   });
@@ -1274,20 +1131,6 @@ document.getElementById('clientEmailsOverlay').addEventListener('click',e=>{if(e
 /* ── Email Accounts ── */
 let allEmails=[],allEmailsData=[];
 
-/* Detect email type on single-add form */
-window.detectEmailType=function(val){
-  const tag=document.getElementById('emailTypeTag');
-  const pop3=document.getElementById('pop3Fields');
-  if(!val){tag.style.display='none';pop3.style.opacity='1';pop3.style.pointerEvents='';return;}
-  const outlook=isOutlookEmail(val);
-  pop3.style.opacity=outlook?'0.35':'1';
-  pop3.style.pointerEvents=outlook?'none':'';
-  tag.style.display='block';
-  tag.innerHTML=outlook
-    ?'<span style="color:var(--teal);background:rgba(0,201,167,.08);border:1px solid rgba(0,201,167,.2);border-radius:20px;padding:.18rem .65rem;display:inline-flex;align-items:center;gap:.35rem"><svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg>Outlook — سيُجلب عبر Gmail تلقائياً، لا حاجة لكلمة مرور POP3</span>'
-    :'<span style="color:var(--accent);background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.2);border-radius:20px;padding:.18rem .65rem;display:inline-flex;align-items:center;gap:.35rem"><svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>POP3 — أدخل كلمة المرور وبيانات الخادم</span>';
-};
-
 async function loadEmails(){
   const d=await api('/admin/api/email-accounts/assignment-status');
   allEmailsData=d.accounts||[];allEmails=allEmailsData;
@@ -1305,9 +1148,9 @@ function renderEmails(accs){
   tb.innerHTML=accs.map(a=>{
     const asgn=a.assigned_to;
     const asgnCell=asgn?`<span class="badge badge-teal" title="${esc(asgn.client_username)}">${esc(asgn.client_display||asgn.client_username)}</span>`:`<span style="font-size:.72rem;color:var(--amber);font-weight:600">⚠ غير مخصص</span>`;
-    const isGmail=(a.account_type||'pop3')==='gmail_forwarded';
-    const serverCell=isGmail
-      ?'<span style="font-size:.74rem;font-weight:700;color:var(--teal);background:rgba(0,201,167,.08);border:1px solid rgba(0,201,167,.2);border-radius:10px;padding:.1rem .45rem">Gmail Forwarded</span>'
+    const isHotmail=(a.account_type||'pop3')==='hotmail';
+    const serverCell=isHotmail
+      ?'<span style="font-size:.74rem;font-weight:700;color:var(--teal);background:rgba(0,201,167,.08);border:1px solid rgba(0,201,167,.2);border-radius:10px;padding:.1rem .45rem">Hotmail OAuth</span>'
       :`<span style="font-size:.77rem;color:var(--text3);font-family:\'JetBrains Mono\',monospace">${esc(a.pop3_host)}:${esc(String(a.pop3_port))}</span>`;
     return`<tr>
       <td class="td-main">${esc(a.email)}</td>
@@ -1318,6 +1161,9 @@ function renderEmails(accs){
         <button class="row-btn edit" data-id="${esc(a._id)}" data-type="${esc(a.account_type||'pop3')}" data-host="${esc(a.pop3_host||'')}" data-port="${esc(String(a.pop3_port||995))}">
           <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>تعديل
         </button>
+        ${isHotmail?`<button class="row-btn hotmail-renew-one" data-id="${esc(a._id)}" title="تجديد توكن هذا الحساب">
+          <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>تجديد التوكن
+        </button>`:''}
         <button class="row-btn del" data-id="${esc(a._id)}">
           <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>حذف
         </button>
@@ -1328,9 +1174,10 @@ function renderEmails(accs){
     btn.addEventListener('click',()=>{
       document.getElementById('editEmailId').value=btn.dataset.id;
       document.getElementById('editEmailType').value=btn.dataset.type;
-      const isGmail=btn.dataset.type==='gmail_forwarded';
-      document.getElementById('editEmailPop3Fields').style.display=isGmail?'none':'block';
-      document.getElementById('editEmailGmailNote').style.display=isGmail?'block':'none';
+      const isHotmail=btn.dataset.type==='hotmail';
+      document.getElementById('editEmailPop3Fields').style.display=isHotmail?'none':'block';
+      document.getElementById('editEmailHotmailNote').style.display=isHotmail?'block':'none';
+      document.getElementById('editEmailSave').style.display=isHotmail?'none':'inline-flex';
       document.getElementById('editEmailPw').value='';
       document.getElementById('editEmailHost').value=btn.dataset.host;
       document.getElementById('editEmailPort').value=btn.dataset.port;
@@ -1338,6 +1185,13 @@ function renderEmails(accs){
     });
   });
   tb.querySelectorAll('.row-btn.del').forEach(btn=>{btn.addEventListener('click',async()=>{if(!confirm('حذف هذا الحساب؟'))return;const d=await api('/admin/api/email-accounts/'+btn.dataset.id,'DELETE');if(d.ok){toast('تم الحذف');loadEmails();loadStats();}else toast(d.error||'خطأ',true);});});
+  tb.querySelectorAll('.hotmail-renew-one').forEach(btn=>{btn.addEventListener('click',async()=>{
+    btn.disabled=true;
+    const d=await api('/admin/api/hotmail-renew/'+btn.dataset.id,'POST');
+    btn.disabled=false;
+    if(d.ok)toast('تم تجديد توكن '+(d.email||'')+' ✓');
+    else toast(d.error||'فشل تجديد التوكن',true);
+  });});
 }
 
 document.getElementById('emailSearch').addEventListener('input',function(){const q=this.value.toLowerCase();renderEmails(q?allEmails.filter(e=>e.email.toLowerCase().includes(q)||(e.pop3_host||'').toLowerCase().includes(q)):allEmails);});
@@ -1354,15 +1208,14 @@ document.getElementById('deleteAllEmailsBtn').addEventListener('click',async()=>
 document.getElementById('addEmailBtn').addEventListener('click',async()=>{
   const em=document.getElementById('newEmail').value.trim();
   if(!em){toast('أدخل البريد الإلكتروني',true);return;}
-  const outlook=isOutlookEmail(em);
-  const pw=outlook?'':document.getElementById('newEmailPw').value.trim();
+  const pw=document.getElementById('newEmailPw').value.trim();
   const host=document.getElementById('newEmailHost').value.trim()||'pop3.kuku.lu';
   const port=parseInt(document.getElementById('newEmailPort').value)||995;
-  if(!outlook&&!pw){toast('أدخل كلمة المرور لحساب POP3',true);return;}
-  const btn=document.getElementById('addEmailBtn');btn.disabled=true;btn.textContent=outlook?'جارٍ الإضافة…':'جارٍ التحقق…';
+  if(!pw){toast('أدخل كلمة المرور لحساب POP3',true);return;}
+  const btn=document.getElementById('addEmailBtn');btn.disabled=true;btn.textContent='جارٍ التحقق…';
   const d=await api('/admin/api/email-accounts','POST',{email:em,password:pw,host,port});
   btn.disabled=false;btn.innerHTML='<svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>إضافة';
-  if(d.ok){toast('تمت الإضافة ✓');document.getElementById('newEmail').value='';document.getElementById('newEmailPw').value='';window.detectEmailType('');loadEmails();loadStats();}else toast(d.error||'خطأ',true);
+  if(d.ok){toast('تمت الإضافة ✓');document.getElementById('newEmail').value='';document.getElementById('newEmailPw').value='';loadEmails();loadStats();}else toast(d.error||'خطأ',true);
 });
 
 document.getElementById('bulkEmailBtn').addEventListener('click',async()=>{
@@ -1379,12 +1232,75 @@ document.getElementById('bulkEmailBtn').addEventListener('click',async()=>{
 document.getElementById('editEmailCancel').onclick=()=>document.getElementById('editEmailOverlay').classList.remove('show');
 document.getElementById('editEmailOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('show');});
 document.getElementById('editEmailSave').addEventListener('click',async()=>{
-  const id=document.getElementById('editEmailId').value,type=document.getElementById('editEmailType').value;
-  if(type==='gmail_forwarded'){document.getElementById('editEmailOverlay').classList.remove('show');return;}
+  const id=document.getElementById('editEmailId').value;
+  if(document.getElementById('editEmailType').value==='hotmail'){document.getElementById('editEmailOverlay').classList.remove('show');return;}
   const u={host:document.getElementById('editEmailHost').value.trim(),port:parseInt(document.getElementById('editEmailPort').value)||995};
   const pw=document.getElementById('editEmailPw').value.trim();if(pw)u.password=pw;
   const d=await api('/admin/api/email-accounts/'+id,'PUT',u);
   if(d.ok){toast('تم التعديل ✓');document.getElementById('editEmailOverlay').classList.remove('show');loadEmails();}else toast(d.error||'خطأ',true);
+});
+
+async function startHotmailConnect(){
+  const btn=document.getElementById('connectHotmailBtn');
+  if(btn){btn.disabled=true;}
+  const d=await api('/admin/api/hotmail-auth-url');
+  if(btn){btn.disabled=false;}
+  if(!d.ok&&!d.auth_url&&d.mode!=='device'){toast(d.error||'فشل بدء ربط Microsoft',true);return;}
+  if(d.mode==='device'){
+    startHotmailDevicePoll(d);
+    return;
+  }
+  if(!d.auth_url){toast(d.error||'فشل إنشاء رابط Microsoft',true);return;}
+  const popup=window.open(d.auth_url,'hotmail_oauth','width=520,height=700,scrollbars=yes');
+  if(!popup){toast('اسمح بالنوافذ المنبثقة ثم حاول مرة أخرى',true);return;}
+  toast('أكمل تسجيل الدخول في نافذة Microsoft');
+}
+
+let _hotmailDeviceTimer=null;
+function stopHotmailDevicePoll(){
+  if(_hotmailDeviceTimer){clearInterval(_hotmailDeviceTimer);_hotmailDeviceTimer=null;}
+  document.getElementById('hotmailDeviceOverlay').classList.remove('show');
+}
+function startHotmailDevicePoll(d){
+  stopHotmailDevicePoll();
+  document.getElementById('hotmailDeviceCode').textContent=d.user_code||'—';
+  const link=document.getElementById('hotmailDeviceLink');
+  link.href=d.verification_uri_complete||d.verification_uri||'https://microsoft.com/devicelogin';
+  document.getElementById('hotmailDeviceStatus').textContent='بانتظار التأكيد في Microsoft…';
+  document.getElementById('hotmailDeviceOverlay').classList.add('show');
+  try{window.open(link.href,'_blank','noopener');}catch(e){}
+  const interval=Math.max(3,(d.interval||5))*1000;
+  _hotmailDeviceTimer=setInterval(async()=>{
+    try{
+      const st=await api('/admin/api/hotmail-device-poll?poll_id='+encodeURIComponent(d.poll_id));
+      if(st.pending)return;
+      stopHotmailDevicePoll();
+      if(st.ok){toast('تم ربط '+(st.email||'Hotmail')+' ✓');loadEmails();loadStats();}
+      else toast(st.error||'فشل التوثيق',true);
+    }catch(e){}
+  },interval);
+}
+document.getElementById('hotmailDeviceCancel').addEventListener('click',stopHotmailDevicePoll);
+document.getElementById('hotmailDeviceOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)stopHotmailDevicePoll();});
+
+document.getElementById('connectHotmailBtn').addEventListener('click',startHotmailConnect);
+const editHotmailReconnectBtn=document.getElementById('editHotmailReconnectBtn');
+if(editHotmailReconnectBtn)editHotmailReconnectBtn.addEventListener('click',()=>{document.getElementById('editEmailOverlay').classList.remove('show');startHotmailConnect();});
+async function renewAllHotmailTokens(){
+  const btns=[...document.querySelectorAll('.renew-hotmail-all-btn')];
+  btns.forEach(b=>b.disabled=true);
+  const d=await api('/admin/api/hotmail-renew-all','POST');
+  btns.forEach(b=>b.disabled=false);
+  if(d.ok){toast(`تم تجديد ${d.renewed||0} توكن`+(d.failed?` — فشل ${d.failed}`:''),!!d.failed);}
+  else toast(d.error||'خطأ',true);
+}
+document.querySelectorAll('.renew-hotmail-all-btn').forEach(btn=>btn.addEventListener('click',renewAllHotmailTokens));
+window.addEventListener('message',ev=>{
+  const data=ev.data||{};
+  if(data.type==='hotmail_oauth'&&data.ok){
+    toast('تم ربط '+(data.email||'Hotmail')+' ✓');
+    loadEmails();loadStats();
+  }
 });
 
 /* ── Filter Categories ── */
@@ -1446,158 +1362,6 @@ document.getElementById('clearActivityBtn').addEventListener('click',async()=>{
   const btn=document.getElementById('clearActivityBtn');btn.disabled=true;
   const d=await api('/admin/api/activity','DELETE');btn.disabled=false;
   if(d.ok){toast(`تم مسح ${d.deleted_count||0} سجل ✓`);loadActivity();}else toast(d.error||'خطأ',true);
-});
-
-/* ══════════════════════════════════════════════════════
-   GMAIL CONFIG (NEW)
-══════════════════════════════════════════════════════ */
-
-function setGstat(el, cls, val){
-  el.className='gstat '+cls;
-  const valEl=el.querySelector('.gstat-val');if(valEl)valEl.textContent=val;
-}
-
-async function loadGmailConfig(){
-  const grid=document.getElementById('gmailStatusGrid');
-  const cells=grid.querySelectorAll('.gstat');
-  cells.forEach(c=>c.querySelector('.gstat-val')&&(c.querySelector('.gstat-val').textContent='جارٍ التحقق…'));
-
-  const d=await api('/admin/api/gmail-config');
-
-  const libCell=cells[0],credsCell=cells[1],tokenCell=cells[2];
-
-  // Library
-  if(d.gmail_lib_installed){setGstat(libCell,'gstat gstat-ok','مثبّتة ✓');}
-  else{setGstat(libCell,'gstat gstat-err','غير مثبّتة ✗');}
-
-  // Credentials file
-  if(d.has_credentials){
-    setGstat(credsCell,'gstat gstat-ok','موجود ✓');
-    const prev=document.getElementById('gsCredsPreview');
-    if(d.credentials_preview){
-      prev.style.display='block';
-      prev.textContent=`client_id: ${d.credentials_preview.client_id}\nproject_id: ${d.credentials_preview.project_id}`;
-    }
-  } else {
-    setGstat(credsCell,'gstat gstat-err','غير موجود');
-  }
-
-  // Token
-  if(d.token_valid){
-    setGstat(tokenCell,'gstat gstat-ok','صالح ✓');
-    document.getElementById('navGmailDot').style.display='none';
-  } else if(d.has_token){
-    setGstat(tokenCell,'gstat gstat-warn','منتهي الصلاحية');
-    document.getElementById('navGmailDot').style.display='block';
-  } else {
-    setGstat(tokenCell,'gstat gstat-err','لا يوجد');
-    document.getElementById('navGmailDot').style.display='block';
-  }
-}
-
-document.getElementById('refreshGmailStatusBtn').addEventListener('click',loadGmailConfig);
-
-/* Save credentials */
-document.getElementById('saveGmailCredsBtn').addEventListener('click',async()=>{
-  const content=document.getElementById('gmailCredsInput').value.trim();
-  if(!content){toast('الصق محتوى credentials.json',true);return;}
-  const btn=document.getElementById('saveGmailCredsBtn');btn.disabled=true;btn.textContent='جارٍ الحفظ…';
-  const d=await api('/admin/api/gmail-config','PUT',{credentials_json:content});
-  btn.disabled=false;btn.innerHTML='<svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>حفظ الاعتمادات';
-  const res=document.getElementById('saveCredsResult');
-  res.style.display='block';
-  if(d.ok){
-    res.style.background='rgba(34,197,94,.08)';res.style.border='1px solid rgba(34,197,94,.25)';res.style.color='var(--green)';
-    res.textContent=d.message||'تم الحفظ ✓';
-    toast('تم حفظ الاعتمادات ✓');document.getElementById('gmailCredsInput').value='';loadGmailConfig();
-  } else {
-    res.style.background='rgba(242,95,122,.08)';res.style.border='1px solid rgba(242,95,122,.25)';res.style.color='var(--danger)';
-    res.textContent=d.error||'خطأ في الحفظ';
-    toast(d.error||'خطأ',true);
-  }
-});
-
-/* Generate auth URL — one-click Google connect */
-let _authUrl='';
-let _oauthPollTimer=null;
-document.getElementById('genAuthUrlBtn').addEventListener('click',async()=>{
-  const btn=document.getElementById('genAuthUrlBtn');btn.disabled=true;btn.textContent='جارٍ الفتح…';
-  if(_oauthPollTimer){clearInterval(_oauthPollTimer);_oauthPollTimer=null;}
-  const d=await api('/admin/api/gmail-auth-url');
-  btn.disabled=false;btn.innerHTML='<svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>ربط حساب Google';
-  if(d.auth_url){
-    _authUrl=d.auth_url;
-    const box=document.getElementById('authUrlBox');box.classList.add('show');
-    box.innerHTML=`<a href="${esc(_authUrl)}" target="_blank" rel="noopener" style="color:var(--accent);word-break:break-all">${esc(_authUrl)}</a>`;
-    document.getElementById('copyAuthUrlBtn').style.display='inline-flex';
-    document.getElementById('oauthHint').classList.add('show');
-    // Open Google consent in a new tab — callback returns here automatically
-    window.open(_authUrl,'_blank','noopener');
-    toast('افتح Google ووافق على الصلاحيات');
-    // Poll until token becomes valid
-    let tries=0;
-    _oauthPollTimer=setInterval(async()=>{
-      tries++;
-      const st=await api('/admin/api/gmail-config');
-      if(st.token_valid){
-        clearInterval(_oauthPollTimer);_oauthPollTimer=null;
-        document.getElementById('oauthHint').classList.remove('show');
-        toast('تم التوثيق بنجاح ✓');
-        loadGmailConfig();
-      } else if(tries>90){
-        clearInterval(_oauthPollTimer);_oauthPollTimer=null;
-        document.getElementById('oauthHint').classList.remove('show');
-        toast('انتهت المهلة — إن ظهرت صفحة بكود استخدم الإدخال اليدوي',true);
-        document.getElementById('oauthFallback').open=true;
-      }
-    },2000);
-  } else {
-    toast(d.error||'فشل إنشاء الرابط',true);
-  }
-});
-
-document.getElementById('copyAuthUrlBtn').addEventListener('click',()=>{
-  if(_authUrl){navigator.clipboard.writeText(_authUrl).then(()=>toast('تم النسخ ✓')).catch(()=>toast('لم يتم النسخ',true));}
-});
-
-/* Exchange code (manual fallback — requires same PKCE session) */
-document.getElementById('exchangeCodeBtn').addEventListener('click',async()=>{
-  const code=document.getElementById('gmailAuthCode').value.trim();
-  if(!code){toast('أدخل كود التوثيق',true);return;}
-  const btn=document.getElementById('exchangeCodeBtn');btn.disabled=true;btn.textContent='جارٍ التحقق…';
-  const d=await api('/admin/api/gmail-auth-callback','POST',{code});
-  btn.disabled=false;btn.innerHTML='<svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg>تأكيد الكود';
-  const res=document.getElementById('exchangeResult');res.style.display='block';
-  if(d.ok){
-    if(_oauthPollTimer){clearInterval(_oauthPollTimer);_oauthPollTimer=null;}
-    document.getElementById('oauthHint').classList.remove('show');
-    res.style.background='rgba(34,197,94,.08)';res.style.border='1px solid rgba(34,197,94,.25)';res.style.color='var(--green)';
-    res.textContent=d.message||'تم التوثيق ✓';
-    toast('تم التوثيق بنجاح ✓');document.getElementById('gmailAuthCode').value='';loadGmailConfig();
-  } else {
-    res.style.background='rgba(242,95,122,.08)';res.style.border='1px solid rgba(242,95,122,.25)';res.style.color='var(--danger)';
-    res.textContent=d.error||'فشل التوثيق';
-    toast(d.error||'فشل التوثيق',true);
-  }
-});
-
-/* After automatic OAuth redirect back to /admin?gmail_oauth=ok */
-(function(){
-  const q=new URLSearchParams(location.search);
-  if(q.get('gmail_oauth')==='ok'){
-    history.replaceState({},'',location.pathname);
-    const gmailBtn=document.querySelector('.nav-btn[data-page="gmail"]');
-    if(gmailBtn)gmailBtn.click();
-    toast('تم التوثيق بنجاح ✓');
-    loadGmailConfig();
-  }
-})();
-
-/* Revoke token */
-document.getElementById('revokeTokenBtn').addEventListener('click',async()=>{
-  if(!confirm('حذف التوكن؟ ستحتاج لإعادة التوثيق.'))return;
-  const d=await api('/admin/api/gmail-token','DELETE');
-  if(d.ok){toast('تم حذف التوكن');loadGmailConfig();}else toast(d.error||'خطأ',true);
 });
 
 })();
