@@ -179,17 +179,7 @@
     .back-btn{display:none;align-items:center;gap:.4rem;font-size:.82rem;font-weight:600;color:var(--accent);background:none;border:none;cursor:pointer;padding:0;margin-bottom:1rem;font-family:'Alexandria',sans-serif;}
     .back-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
 
-    .code-banner{display:none;align-items:center;gap:.75rem;background:linear-gradient(135deg,rgba(34,197,94,.12),rgba(0,201,167,.08));border:1px solid rgba(34,197,94,.3);border-radius:var(--radius);padding:1rem 1.1rem;margin-bottom:1rem;animation:fadeUp .22s var(--ease) both;}
-    .code-banner.show{display:flex;}
     @keyframes fadeUp{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
-    .cb-icon{width:38px;height:38px;border-radius:10px;background:rgba(34,197,94,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-    .cb-icon svg{width:18px;height:18px;fill:none;stroke:var(--green);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
-    .cb-body{flex:1;min-width:0;}
-    .cb-label{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--green);margin-bottom:.2rem;}
-    .cb-code{font-size:1.55rem;font-weight:800;letter-spacing:.18em;color:var(--text);font-variant-numeric:tabular-nums;}
-    .cb-copy{display:flex;align-items:center;gap:.4rem;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:.45rem .8rem;cursor:pointer;color:var(--green);font-family:'Alexandria',sans-serif;font-size:.78rem;font-weight:700;white-space:nowrap;flex-shrink:0;transition:background .18s;}
-    .cb-copy:hover{background:rgba(34,197,94,.26);}
-    .cb-copy svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
 
     .hdr-card{background:var(--surf);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem 1.4rem 1.1rem;margin-bottom:1rem;animation:fadeUp .22s var(--ease) both;}
     .hdr-subj{font-size:1.12rem;font-weight:700;letter-spacing:-.02em;line-height:1.4;margin-bottom:.8rem;}
@@ -658,11 +648,6 @@ async function openMessage(uid){
 
   viewer.innerHTML=`<div class="viewer-inner">
     <button class="back-btn" id="backBtn"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>الرسائل</button>
-    <div class="code-banner" id="codeBanner">
-      <div class="cb-icon"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M12 12h.01"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg></div>
-      <div class="cb-body"><div class="cb-label">🔐 رمز تحقق</div><div class="cb-code" id="cbCode"></div></div>
-      <button class="cb-copy" id="cbCopy"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>نسخ</button>
-    </div>
     <div class="hdr-card">
       <div class="hdr-subj">${esc(meta.subject)}</div>
       <div class="hdr-row">
@@ -696,16 +681,6 @@ async function openMessage(uid){
 
     const isHtml=body.body_type==='html';
     const rawBody=body.body||'';
-
-    let codeText=null;
-    if(isHtml){const tmp=document.createElement('div');tmp.innerHTML=rawBody;codeText=detectCode(tmp.textContent||tmp.innerText||'');}
-    else{codeText=detectCode(rawBody);}
-    if(codeText){
-      const banner=document.getElementById('codeBanner');
-      if(banner){banner.classList.add('show');document.getElementById('cbCode').textContent=codeText;
-        document.getElementById('cbCopy').addEventListener('click',()=>{navigator.clipboard?.writeText(codeText).then(()=>toast('تم النسخ ✓')).catch(()=>{});});
-      }
-    }
 
     if(isHtml){
       const tog=document.getElementById('viewTog');if(tog)tog.style.display='flex';
