@@ -74,7 +74,8 @@ _oauth_pending_mem: dict = {}
 FETCH_LIMIT = 250
 
 # Outlook Mobile public client — same as LOGIN_TO_TOKEN / READ_EMAILS / RENEW_TOKEN
-MS_CLIENT_ID = os.environ.get("MS_CLIENT_ID", "9e5f94bc-e8a4-4e73-b8be-63364c29d753")
+MS_OUTLOOK_PUBLIC_CLIENT = "9e5f94bc-e8a4-4e73-b8be-63364c29d753"
+MS_CLIENT_ID = os.environ.get("MS_CLIENT_ID", MS_OUTLOOK_PUBLIC_CLIENT)
 MS_TOKEN_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
 MS_AUTH_URL  = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
 MS_DEVICE_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/devicecode"
@@ -346,11 +347,7 @@ def _is_loopback_request():
 
 
 def hotmail_redirect_uri():
-    """
-    Microsoft callback with no extra path (handled on GET /).
-    Local: http://localhost:<port>
-    Deployed: https://host  (same popup login as local)
-    """
+    """Local public Outlook client: http://localhost:<port> only. Custom Azure apps can use HTTPS."""
     override = (os.environ.get("MS_REDIRECT_URI") or "").strip()
     if override:
         return override.rstrip("/")
@@ -366,6 +363,13 @@ def hotmail_redirect_uri():
         if (proto == "https" and host_port == "443") or (proto == "http" and host_port == "80"):
             host = host_name
     return f"{proto}://{host}"
+
+
+def _hotmail_uses_auth_code_popup():
+    """Outlook Mobile public client only allows localhost redirects — not https://farouk.koyeb.app."""
+    if _is_loopback_request():
+        return True
+    return (MS_CLIENT_ID or "").lower() != MS_OUTLOOK_PUBLIC_CLIENT
 
 
 def _save_oauth_state(state, doc):
@@ -1929,6 +1933,40 @@ def complete_hotmail_oauth_from_request():
 @admin_required
 def admin_hotmail_auth_url():
     admin_user = session.get("admin_username", "admin")
+
+    # This Outlook Mobile client_id cannot redirect to HTTPS hosts.
+    # On Koyeb, use device-code and open Microsoft in a popup instead.
+    if not _hotmail_uses_auth_code_popup():
+        res = requests.post(
+            MS_DEVICE_URL,
+            data={"client_id": MS_CLIENT_ID, "scope": MS_SCOPE},
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            timeout=20,
+        )
+        try:
+            data = res.json()
+        except Exception:
+            return jsonify({"error": "فشل بدء تسجيل Microsoft"}), 500
+        if not data.get("device_code") or not data.get("user_code"):
+            err = data.get("error_description") or data.get("error") or "device code failed"
+            return jsonify({"error": str(err)[:200]}), 400
+        poll_id = secrets.token_urlsafe(16)
+        _save_oauth_state(poll_id, {
+            "kind": "device",
+            "device_code": data["device_code"],
+            "admin_username": admin_user,
+        })
+        return jsonify({
+            "ok": True,
+            "mode": "device",
+            "poll_id": poll_id,
+            "user_code": data["user_code"],
+            "verification_uri": data.get("verification_uri") or "https://microsoft.com/devicelogin",
+            "verification_uri_complete": data.get("verification_uri_complete") or "",
+            "interval": int(data.get("interval") or 5),
+            "expires_in": int(data.get("expires_in") or 900),
+        })
+
     redirect_uri = hotmail_redirect_uri()
     state = secrets.token_urlsafe(24)
     _save_oauth_state(state, {
