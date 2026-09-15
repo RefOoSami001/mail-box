@@ -347,11 +347,25 @@ def _is_loopback_request():
 
 def hotmail_redirect_uri():
     """
-    Outlook Mobile public client only accepts http://localhost:<port> with no path
-    (same as LOGIN_TO_TOKEN). Paths like /admin/api/... are rejected.
+    Microsoft callback with no extra path (handled on GET /).
+    Local: http://localhost:<port>
+    Deployed: https://host  (same popup login as local)
     """
-    _, port = _request_host_port()
-    return f"http://localhost:{port}"
+    override = (os.environ.get("MS_REDIRECT_URI") or "").strip()
+    if override:
+        return override.rstrip("/")
+    hostname, port = _request_host_port()
+    if hostname in ("127.0.0.1", "localhost"):
+        return f"http://localhost:{port}"
+    proto = (request.headers.get("X-Forwarded-Proto") or request.scheme or "https").split(",")[0].strip().lower()
+    if proto != "http":
+        proto = "https"
+    host = (request.headers.get("X-Forwarded-Host") or request.host or hostname).split(",")[0].strip()
+    if ":" in host and host.rsplit(":", 1)[-1].isdigit():
+        host_name, host_port = host.rsplit(":", 1)
+        if (proto == "https" and host_port == "443") or (proto == "http" and host_port == "80"):
+            host = host_name
+    return f"{proto}://{host}"
 
 
 def _save_oauth_state(state, doc):
@@ -1915,41 +1929,6 @@ def complete_hotmail_oauth_from_request():
 @admin_required
 def admin_hotmail_auth_url():
     admin_user = session.get("admin_username", "admin")
-
-    # Deployed HTTPS hosts cannot use this public client redirect URI.
-    # Use device-code login instead (no redirect_uri).
-    if not _is_loopback_request():
-        res = requests.post(
-            MS_DEVICE_URL,
-            data={"client_id": MS_CLIENT_ID, "scope": MS_SCOPE},
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
-            timeout=20,
-        )
-        try:
-            data = res.json()
-        except Exception:
-            return jsonify({"error": "فشل بدء تسجيل Microsoft"}), 500
-        if not data.get("device_code") or not data.get("user_code"):
-            err = data.get("error_description") or data.get("error") or "device code failed"
-            return jsonify({"error": str(err)[:200]}), 400
-        poll_id = secrets.token_urlsafe(16)
-        _save_oauth_state(poll_id, {
-            "kind": "device",
-            "device_code": data["device_code"],
-            "admin_username": admin_user,
-        })
-        return jsonify({
-            "ok": True,
-            "mode": "device",
-            "poll_id": poll_id,
-            "user_code": data["user_code"],
-            "verification_uri": data.get("verification_uri") or "https://microsoft.com/devicelogin",
-            "verification_uri_complete": data.get("verification_uri_complete") or "",
-            "interval": int(data.get("interval") or 5),
-            "expires_in": int(data.get("expires_in") or 900),
-            "message": data.get("message") or "",
-        })
-
     redirect_uri = hotmail_redirect_uri()
     state = secrets.token_urlsafe(24)
     _save_oauth_state(state, {
