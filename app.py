@@ -74,17 +74,14 @@ _oauth_pending_mem: dict = {}
 FETCH_LIMIT = 250
 
 # Outlook Mobile public client — same as LOGIN_TO_TOKEN / READ_EMAILS / RENEW_TOKEN
-MS_OUTLOOK_PUBLIC_CLIENT = "9e5f94bc-e8a4-4e73-b8be-63364c29d753"
-MS_CLIENT_ID = os.environ.get("MS_CLIENT_ID", MS_OUTLOOK_PUBLIC_CLIENT)
+MS_CLIENT_ID = os.environ.get("MS_CLIENT_ID", "9e5f94bc-e8a4-4e73-b8be-63364c29d753")
 MS_TOKEN_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
 MS_AUTH_URL  = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
 MS_DEVICE_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/devicecode"
 MS_GRAPH_ME  = "https://graph.microsoft.com/v1.0/me"
 MS_GRAPH_INBOX = "https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages"
 MS_GRAPH_MSG = "https://graph.microsoft.com/v1.0/me/messages"
-MS_SCOPE     = "openid profile email offline_access User.Read https://graph.microsoft.com/Mail.Read"
-# Refresh-token exchange only — expires_in=3600 applies to access_token, not this token.
-MS_REFRESH_SCOPE = "https://graph.microsoft.com/mail.read offline_access"
+MS_SCOPE     = "https://graph.microsoft.com/mail.read offline_access"
 
 # ─── Helpers ──────────────────────────────────────────────────────
 
@@ -352,28 +349,12 @@ def _is_loopback_request():
 
 
 def hotmail_redirect_uri():
-    """Public Outlook client only allows http://localhost:<port> — never https://farouk.koyeb.app."""
-    hostname, port = _request_host_port()
-    if hostname in ("127.0.0.1", "localhost"):
-        return f"http://localhost:{port}"
-    override = (os.environ.get("MS_REDIRECT_URI") or "").strip().rstrip("/")
-    if override.startswith("http://localhost"):
-        return override
-    if (MS_CLIENT_ID or "").lower() != MS_OUTLOOK_PUBLIC_CLIENT:
-        if override:
-            return override
-        proto = (request.headers.get("X-Forwarded-Proto") or request.scheme or "https").split(",")[0].strip().lower()
-        if proto != "http":
-            proto = "https"
-        host = (request.headers.get("X-Forwarded-Host") or request.host or hostname).split(",")[0].strip()
-        return f"{proto}://{host}"
+    """Outlook Mobile public client: http://localhost:<port> only (no path)."""
+    override = (os.environ.get("MS_REDIRECT_URI") or "").strip()
+    if override:
+        return override.rstrip("/")
+    _, port = _request_host_port()
     return f"http://localhost:{port}"
-
-
-def _hotmail_uses_auth_code_popup():
-    if not _is_loopback_request():
-        return (MS_CLIENT_ID or "").lower() != MS_OUTLOOK_PUBLIC_CLIENT
-    return True
 
 
 def _save_oauth_state(state, doc):
@@ -525,62 +506,63 @@ def _ms_token_request(payload):
         data = {"error": "invalid_response", "error_description": (res.text or "")[:200]}
     if not data.get("access_token"):
         print(f"[HOTMAIL] token HTTP {res.status_code}: {str(data)[:300]}")
+    else:
+        rt = data.get("refresh_token") or ""
+        print(
+            f"[HOTMAIL] token HTTP {res.status_code} expires_in={data.get('expires_in')} "
+            f"has_refresh={_looks_like_ms_refresh_token(rt)} rt_len={len(rt)}"
+        )
     return data
 
 
 def _looks_like_ms_refresh_token(token):
-    """MSA refresh tokens are long opaque strings (often M.C…), not 1-hour JWTs/EwB access tokens."""
-    text = (token or "").strip()
-    if len(text) < 40:
+    """90-day MSA refresh tokens are not JWTs and are not EwB… access tokens."""
+    t = (token or "").strip()
+    if len(t) < 40:
         return False
-    if text.count(".") == 2:
+    if t.startswith("Ew"):
         return False
-    if text.startswith("eyJ") or text.startswith("EwB") or text.startswith("EwA"):
+    if t.count(".") == 2 and t.startswith("ey"):
         return False
     return True
 
 
-def _stored_refresh_token(acc):
-    token = (acc or {}).get("refresh_token") or ""
-    if not _looks_like_ms_refresh_token(token):
-        return ""
-    return token
-
-
 def graph_refresh_access(acc):
     """
-    Exchange the stored 90-day refresh_token for a fresh 1-hour access_token.
-    Persist any rotated refresh_token so the rolling 90-day window stays alive.
+    Exchange the stored 90-day refresh_token for a 1-hour access_token.
+    Persist the rotated refresh_token (rolling 90-day window) like RENEW_TOKEN.
     """
-    refresh_token = _stored_refresh_token(acc)
+    refresh_token = (acc or {}).get("refresh_token") or ""
     if not refresh_token:
-        raise RuntimeError("لا يوجد refresh token صالح (90 يوماً) لهذا البريد. أعد ربط الحساب من لوحة الإدارة.")
+        raise RuntimeError("لا يوجد توكن Hotmail لهذا البريد. أعد ربط الحساب من لوحة الإدارة.")
+    if not _looks_like_ms_refresh_token(refresh_token):
+        raise RuntimeError("المحفوظ توكن وصول لساعة وليس توكن 90 يوماً. أعد ربط الحساب من لوحة الإدارة.")
     client_id = acc.get("ms_client_id") or MS_CLIENT_ID
-    last = {}
-    for scope in (MS_REFRESH_SCOPE, MS_SCOPE):
-        data = _ms_token_request({
-            "client_id": client_id,
-            "grant_type": "refresh_token",
-            "refresh_token": refresh_token,
-            "scope": scope,
-        })
-        last = data
-        if data.get("access_token"):
-            _persist_hotmail_tokens(acc, data, client_id)
-            return data["access_token"]
-    err = last.get("error_description") or last.get("error") or "token refresh failed"
-    raise RuntimeError(f"فشل استخدام refresh token: {str(err).split(chr(10))[0][:160]}")
+    data = _ms_token_request({
+        "client_id": client_id,
+        "grant_type": "refresh_token",
+        "refresh_token": refresh_token,
+        "scope": MS_SCOPE,
+    })
+    if "access_token" not in data:
+        err = data.get("error_description") or data.get("error") or "token refresh failed"
+        raise RuntimeError(f"فشل تجديد توكن Hotmail: {str(err).split(chr(10))[0][:160]}")
+    _persist_hotmail_tokens(acc, data, client_id)
+    return data["access_token"]
 
 
 def _persist_hotmail_tokens(acc, data, client_id=None):
     access_token = data.get("access_token") or ""
-    incoming_refresh = data.get("refresh_token") or ""
-    existing_refresh = _stored_refresh_token(acc) or (acc or {}).get("refresh_token") or ""
-    new_refresh = incoming_refresh if _looks_like_ms_refresh_token(incoming_refresh) else existing_refresh
+    incoming_refresh = (data.get("refresh_token") or "").strip()
+    if _looks_like_ms_refresh_token(incoming_refresh):
+        new_refresh = incoming_refresh
+    else:
+        new_refresh = acc.get("refresh_token") or ""
+        if incoming_refresh:
+            print("[HOTMAIL] ignored non-refresh token in Microsoft response; keeping stored 90-day token")
     now = datetime.now(timezone.utc)
     expires_in = int(data.get("expires_in") or 3600)
     fields = {
-        "refresh_token": new_refresh,
         "token_updated_at": now,
         "access_expires_at": now + timedelta(seconds=max(expires_in - 60, 60)),
         "account_type": "hotmail",
@@ -588,9 +570,10 @@ def _persist_hotmail_tokens(acc, data, client_id=None):
     }
     if access_token:
         fields["access_token"] = access_token
-    acc["refresh_token"] = new_refresh
-    if access_token:
         acc["access_token"] = access_token
+    if _looks_like_ms_refresh_token(new_refresh):
+        fields["refresh_token"] = new_refresh
+        acc["refresh_token"] = new_refresh
     query = {"_id": acc["_id"]} if acc.get("_id") else {"email": (acc.get("email") or "").lower()}
     if not (query.get("_id") or query.get("email")):
         return
@@ -600,9 +583,11 @@ def _persist_hotmail_tokens(acc, data, client_id=None):
         print(f"[HOTMAIL] failed to persist tokens: {exc}")
 
 
-def graph_live_access(acc):
-    """Always mint a fresh access_token from the 90-day refresh_token before Graph calls."""
-    return graph_refresh_access(acc)
+def graph_stored_access(acc):
+    token = (acc or {}).get("access_token") or ""
+    if not token:
+        raise RuntimeError("لا يوجد توكن وصول محفوظ. اطلب من المشرف تجديد توكن Hotmail.")
+    return token
 
 
 def _graph_request(method, url, access_token, **kwargs):
@@ -670,13 +655,13 @@ def _graph_list_messages(access_token, limit):
         if res.status_code == 200:
             return res.json().get("value") or []
         if res.status_code in (401, 403):
-            raise RuntimeError("رفض Microsoft الوصول. أعد ربط الحساب أو جدّد الـ refresh token من لوحة الإدارة.")
+            raise RuntimeError("انتهت صلاحية توكن Hotmail. اطلب من المشرف تجديد التوكن.")
         last_error = f"HTTP {res.status_code} {res.text[:120]}"
     raise RuntimeError(f"فشل جلب بريد Hotmail: {last_error}")
 
 
 def fetch_hotmail_messages(email_addr, acc, limit=15):
-    access_token = graph_live_access(acc)
+    access_token = graph_stored_access(acc)
     raw_msgs = _graph_list_messages(access_token, limit)
     new_summaries = []
     for m in raw_msgs:
@@ -693,7 +678,7 @@ def fetch_hotmail_messages(email_addr, acc, limit=15):
 
 
 def fetch_hotmail_message_body(email_addr, uid, acc):
-    access_token = graph_live_access(acc)
+    access_token = graph_stored_access(acc)
     encoded = urllib.parse.quote(uid, safe="")
     res = _graph_request(
         "GET",
@@ -702,7 +687,7 @@ def fetch_hotmail_message_body(email_addr, uid, acc):
         params={"$select": "id,subject,from,receivedDateTime,bodyPreview,body,isRead"},
     )
     if res.status_code in (401, 403):
-        raise RuntimeError("رفض Microsoft الوصول. أعد ربط الحساب من لوحة الإدارة.")
+        raise RuntimeError("انتهت صلاحية توكن Hotmail. اطلب من المشرف تجديد التوكن.")
     if res.status_code != 200:
         raise RuntimeError(f"تعذّر جلب الرسالة من Hotmail: HTTP {res.status_code}")
     summary, body_entry = _graph_message_to_summary(res.json())
@@ -712,8 +697,9 @@ def fetch_hotmail_message_body(email_addr, uid, acc):
 
 def upsert_hotmail_account(email_addr, refresh_token, client_id, added_by="admin", access_token="", expires_in=3600):
     email_addr = (email_addr or "").strip().lower()
+    refresh_token = (refresh_token or "").strip()
     if not _looks_like_ms_refresh_token(refresh_token):
-        raise RuntimeError("يجب حفظ refresh_token (90 يوماً) وليس access_token (ساعة واحدة).")
+        raise RuntimeError("توكن Hotmail غير صالح: المطلوب refresh_token لمدة 90 يوماً وليس access_token لساعة.")
     now = datetime.now(timezone.utc)
     existing = email_accounts_col.find_one({"email": email_addr})
     fields = {
@@ -723,7 +709,7 @@ def upsert_hotmail_account(email_addr, refresh_token, client_id, added_by="admin
         "ms_client_id": client_id or MS_CLIENT_ID,
         "token_updated_at": now,
     }
-    if access_token:
+    if access_token and not _looks_like_ms_refresh_token(access_token):
         fields["access_token"] = access_token
         fields["access_expires_at"] = now + timedelta(seconds=max(int(expires_in or 3600) - 60, 60))
     if existing:
@@ -1618,8 +1604,8 @@ def admin_bulk_emails():
             em = parts[0].lower()
             refresh_token = parts[2] if len(parts) > 2 else ""
             client_id = parts[3] if len(parts) > 3 else MS_CLIENT_ID
-            if not em or "@" not in em or not _looks_like_ms_refresh_token(refresh_token):
-                error_list.append(f"سطر Hotmail يحتاج refresh_token لـ 90 يوماً وليس access token: {line[:60]}")
+            if not em or "@" not in em or not refresh_token:
+                error_list.append(f"سطر Hotmail غير صالح: {line[:60]}")
                 errors += 1
                 continue
             try:
@@ -1892,11 +1878,11 @@ def _raw_query_arg(name):
 
 
 def _hotmail_account_from_tokens(access_token, refresh_token, admin_user="admin", id_token=None, expires_in=3600):
-    if not _looks_like_ms_refresh_token(refresh_token):
-        return None, "لم يُحفظ إلا access token لساعة واحدة. أعد الربط للحصول على refresh token لمدة 90 يوماً."
     user_email = _msa_email_from_token(access_token, id_token=id_token)
     if not user_email or "@" not in user_email:
         return None, "تعذر قراءة عنوان البريد من Microsoft. أعد الربط ووافق على الصلاحيات."
+    if not _looks_like_ms_refresh_token(refresh_token):
+        return None, "Microsoft لم يُرجع توكن الـ 90 يوماً. أعد الربط."
     try:
         acc_id, created = upsert_hotmail_account(
             user_email,
@@ -1933,18 +1919,19 @@ def complete_hotmail_oauth_from_request():
 
     data = _exchange_ms_auth_code(code, redirect_uri)
     access_token = data.get("access_token")
-    refresh_token = data.get("refresh_token") or ""
+    refresh_token = (data.get("refresh_token") or "").strip()
     if not access_token:
         err_msg = data.get("error_description") or data.get("error") or str(data)[:200]
         print(f"[HOTMAIL] exchange failed: {err_msg}")
         return _hotmail_oauth_result_html(False, "فشل التوثيق", str(err_msg)[:400]), 400
     if not _looks_like_ms_refresh_token(refresh_token):
-        print("[HOTMAIL] token response missing refresh_token; refusing to store 1-hour access_token")
+        print(f"[HOTMAIL] missing 90-day refresh_token keys={list(data.keys())} rt_prefix={(refresh_token[:6] if refresh_token else '')}")
         return _hotmail_oauth_result_html(
             False,
             "فشل التوثيق",
-            "لم يُرجع Microsoft توكن التجديد (90 يوماً). أعد الربط ووافق على offline_access.",
+            "Microsoft لم يُرجع توكن الـ 90 يوماً (refresh_token). أعد الربط ووافق على الصلاحيات.",
         ), 400
+    print(f"[HOTMAIL] saved 90-day refresh_token prefix={refresh_token[:8]}… len={len(refresh_token)}")
 
     _delete_oauth_state(state)
     info, err_msg = _hotmail_account_from_tokens(
@@ -1965,59 +1952,50 @@ def complete_hotmail_oauth_from_request():
     )
 
 
-def _start_hotmail_device_login(admin_user):
-    last_err = "device code failed"
-    for scope in (MS_REFRESH_SCOPE, MS_SCOPE):
-        try:
-            res = requests.post(
-                MS_DEVICE_URL,
-                data={"client_id": MS_CLIENT_ID, "scope": scope},
-                headers={"Content-Type": "application/x-www-form-urlencoded"},
-                timeout=20,
-            )
-            try:
-                data = res.json()
-            except Exception:
-                data = {"error_description": (res.text or "")[:200]}
-        except Exception as exc:
-            last_err = str(exc)
-            print(f"[HOTMAIL] device request failed: {exc}")
-            continue
-        if data.get("device_code") and data.get("user_code"):
-            poll_id = secrets.token_urlsafe(16)
-            _save_oauth_state(poll_id, {
-                "kind": "device",
-                "device_code": data["device_code"],
-                "admin_username": admin_user,
-            })
-            ms_url = (
-                data.get("verification_uri_complete")
-                or data.get("verification_uri")
-                or "https://microsoft.com/devicelogin"
-            )
-            print(f"[HOTMAIL] device login started poll_id={poll_id}")
-            return jsonify({
-                "ok": True,
-                "mode": "device",
-                "poll_id": poll_id,
-                "user_code": data["user_code"],
-                "auth_url": ms_url,
-                "verification_uri": data.get("verification_uri") or "https://microsoft.com/devicelogin",
-                "verification_uri_complete": data.get("verification_uri_complete") or "",
-                "interval": int(data.get("interval") or 5),
-                "expires_in": int(data.get("expires_in") or 900),
-            })
-        last_err = data.get("error_description") or data.get("error") or f"HTTP {res.status_code}"
-        print(f"[HOTMAIL] device code rejected scope={scope!r} err={str(last_err)[:240]}")
-    return jsonify({"ok": False, "error": str(last_err)[:240]}), 400
-
-
 @app.route("/admin/api/hotmail-auth-url")
 @admin_required
 def admin_hotmail_auth_url():
     admin_user = session.get("admin_username", "admin")
-    if not _hotmail_uses_auth_code_popup():
-        return _start_hotmail_device_login(admin_user)
+
+    if not _is_loopback_request():
+        last_err = "device code failed"
+        for scope in (MS_SCOPE, "https://graph.microsoft.com/mail.read offline_access"):
+            try:
+                res = requests.post(
+                    MS_DEVICE_URL,
+                    data={"client_id": MS_CLIENT_ID, "scope": scope},
+                    headers={"Content-Type": "application/x-www-form-urlencoded"},
+                    timeout=20,
+                )
+                data = res.json()
+            except Exception as exc:
+                last_err = str(exc)
+                continue
+            if data.get("device_code") and data.get("user_code"):
+                poll_id = secrets.token_urlsafe(16)
+                _save_oauth_state(poll_id, {
+                    "kind": "device",
+                    "device_code": data["device_code"],
+                    "admin_username": admin_user,
+                })
+                ms_url = (
+                    data.get("verification_uri_complete")
+                    or data.get("verification_uri")
+                    or "https://microsoft.com/devicelogin"
+                )
+                return jsonify({
+                    "ok": True,
+                    "mode": "device",
+                    "poll_id": poll_id,
+                    "user_code": data["user_code"],
+                    "auth_url": ms_url,
+                    "verification_uri": data.get("verification_uri") or "https://microsoft.com/devicelogin",
+                    "verification_uri_complete": data.get("verification_uri_complete") or "",
+                    "interval": int(data.get("interval") or 5),
+                    "expires_in": int(data.get("expires_in") or 900),
+                })
+            last_err = data.get("error_description") or data.get("error") or last_err
+        return jsonify({"ok": False, "error": str(last_err)[:240]}), 400
 
     redirect_uri = hotmail_redirect_uri()
     state = secrets.token_urlsafe(24)
@@ -2061,12 +2039,12 @@ def admin_hotmail_device_poll():
         return jsonify({"ok": False, "pending": True, "error": err})
     if err:
         return jsonify({"ok": False, "pending": False, "error": data.get("error_description") or err}), 400
-    refresh_token = data.get("refresh_token") or ""
+    refresh_token = (data.get("refresh_token") or "").strip()
     access_token = data.get("access_token")
     if not access_token:
         return jsonify({"ok": False, "error": "لم يُرجع Microsoft توكن"}), 400
     if not _looks_like_ms_refresh_token(refresh_token):
-        return jsonify({"ok": False, "error": "لم يُرجع Microsoft توكن التجديد (90 يوماً). أعد المحاولة."}), 400
+        return jsonify({"ok": False, "error": "Microsoft لم يُرجع توكن الـ 90 يوماً. أعد المحاولة."}), 400
     _delete_oauth_state(poll_id)
     info, err_msg = _hotmail_account_from_tokens(
         access_token,

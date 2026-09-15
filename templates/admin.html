@@ -799,6 +799,16 @@
   </div>
 </div>
 
+<div class="overlay" id="hotmailDeviceOverlay">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-title">ربط Hotmail عبر Microsoft</div>
+    <p style="font-size:.84rem;color:var(--text2);line-height:1.7;margin:0 0 .85rem">أكمل تسجيل الدخول في نافذة Microsoft. إذا طُلب رمز أدخله هنا:</p>
+    <div id="hotmailDeviceCode" style="font-size:1.45rem;font-weight:800;letter-spacing:.12em;text-align:center;padding:.85rem;background:var(--surf2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:.75rem;font-family:'JetBrains Mono',monospace">—</div>
+    <div id="hotmailDeviceStatus" style="font-size:.8rem;color:var(--text3);text-align:center">بانتظار التأكيد في Microsoft…</div>
+    <div class="mactions"><button class="btn btn-ghost" id="hotmailDeviceCancel">إلغاء</button></div>
+  </div>
+</div>
+
 <!-- Edit Category Modal -->
 <div class="overlay" id="editCatOverlay">
   <div class="modal">
@@ -1236,11 +1246,49 @@ async function startHotmailConnect(){
   if(btn){btn.disabled=true;}
   const d=await api('/admin/api/hotmail-auth-url');
   if(btn){btn.disabled=false;}
-  if(!d.ok||!d.auth_url){toast(d.error||'فشل إنشاء رابط Microsoft',true);return;}
+  if(!d.ok){toast(d.error||'فشل بدء ربط Microsoft',true);return;}
+  if(d.mode==='device'||d.poll_id||d.user_code){
+    startHotmailDevicePoll(d);
+    return;
+  }
+  if(!d.auth_url){toast(d.error||'فشل إنشاء رابط Microsoft',true);return;}
   const popup=window.open(d.auth_url,'hotmail_oauth','width=520,height=700,scrollbars=yes');
   if(!popup){toast('اسمح بالنوافذ المنبثقة ثم حاول مرة أخرى',true);return;}
   toast('أكمل تسجيل الدخول في نافذة Microsoft');
 }
+
+let _hotmailDeviceTimer=null;
+function stopHotmailDevicePoll(){
+  if(_hotmailDeviceTimer){clearInterval(_hotmailDeviceTimer);_hotmailDeviceTimer=null;}
+  const ov=document.getElementById('hotmailDeviceOverlay');
+  if(ov)ov.classList.remove('show');
+}
+function startHotmailDevicePoll(d){
+  stopHotmailDevicePoll();
+  const codeEl=document.getElementById('hotmailDeviceCode');
+  const ov=document.getElementById('hotmailDeviceOverlay');
+  if(codeEl)codeEl.textContent=d.user_code||'—';
+  const st=document.getElementById('hotmailDeviceStatus');
+  if(st)st.textContent='بانتظار التأكيد في Microsoft…';
+  if(ov)ov.classList.add('show');
+  const msUrl=d.verification_uri_complete||d.verification_uri||d.auth_url||'https://microsoft.com/devicelogin';
+  const popup=window.open(msUrl,'hotmail_oauth','width=520,height=700,scrollbars=yes');
+  if(!popup){toast('اسمح بالنوافذ المنبثقة ثم حاول مرة أخرى',true);return;}
+  toast('أكمل تسجيل الدخول في نافذة Microsoft');
+  const interval=Math.max(3,(d.interval||5))*1000;
+  _hotmailDeviceTimer=setInterval(async()=>{
+    try{
+      const res=await api('/admin/api/hotmail-device-poll?poll_id='+encodeURIComponent(d.poll_id));
+      if(res.pending)return;
+      stopHotmailDevicePoll();
+      try{popup.close();}catch(e){}
+      if(res.ok){toast('تم ربط '+(res.email||'Hotmail')+' ✓');loadEmails();loadStats();}
+      else toast(res.error||'فشل التوثيق',true);
+    }catch(e){}
+  },interval);
+}
+document.getElementById('hotmailDeviceCancel').addEventListener('click',stopHotmailDevicePoll);
+document.getElementById('hotmailDeviceOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)stopHotmailDevicePoll();});
 
 document.getElementById('connectHotmailBtn').addEventListener('click',startHotmailConnect);
 const editHotmailReconnectBtn=document.getElementById('editHotmailReconnectBtn');
