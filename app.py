@@ -74,7 +74,8 @@ _oauth_pending_mem: dict = {}
 FETCH_LIMIT = 250
 
 # Outlook Mobile public client — same as LOGIN_TO_TOKEN / READ_EMAILS / RENEW_TOKEN
-MS_CLIENT_ID = os.environ.get("MS_CLIENT_ID", "9e5f94bc-e8a4-4e73-b8be-63364c29d753")
+MS_OUTLOOK_PUBLIC_CLIENT = "9e5f94bc-e8a4-4e73-b8be-63364c29d753"
+MS_CLIENT_ID = os.environ.get("MS_CLIENT_ID", MS_OUTLOOK_PUBLIC_CLIENT)
 MS_TOKEN_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
 MS_AUTH_URL  = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
 MS_DEVICE_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/devicecode"
@@ -343,31 +344,36 @@ def _request_host_port():
 
 
 def _is_loopback_request():
+    proto = (request.headers.get("X-Forwarded-Proto") or request.scheme or "").split(",")[0].strip().lower()
+    if proto == "https":
+        return False
     hostname, _ = _request_host_port()
     return hostname in ("127.0.0.1", "localhost")
 
 
 def hotmail_redirect_uri():
-    """
-    Microsoft callback with no extra path (handled on GET /).
-    Local: http://localhost:<port>
-    Deployed: https://host  (same popup login as local)
-    """
-    override = (os.environ.get("MS_REDIRECT_URI") or "").strip()
-    if override:
-        return override.rstrip("/")
+    """Public Outlook client only allows http://localhost:<port> — never https://farouk.koyeb.app."""
     hostname, port = _request_host_port()
     if hostname in ("127.0.0.1", "localhost"):
         return f"http://localhost:{port}"
-    proto = (request.headers.get("X-Forwarded-Proto") or request.scheme or "https").split(",")[0].strip().lower()
-    if proto != "http":
-        proto = "https"
-    host = (request.headers.get("X-Forwarded-Host") or request.host or hostname).split(",")[0].strip()
-    if ":" in host and host.rsplit(":", 1)[-1].isdigit():
-        host_name, host_port = host.rsplit(":", 1)
-        if (proto == "https" and host_port == "443") or (proto == "http" and host_port == "80"):
-            host = host_name
-    return f"{proto}://{host}"
+    override = (os.environ.get("MS_REDIRECT_URI") or "").strip().rstrip("/")
+    if override.startswith("http://localhost"):
+        return override
+    if (MS_CLIENT_ID or "").lower() != MS_OUTLOOK_PUBLIC_CLIENT:
+        if override:
+            return override
+        proto = (request.headers.get("X-Forwarded-Proto") or request.scheme or "https").split(",")[0].strip().lower()
+        if proto != "http":
+            proto = "https"
+        host = (request.headers.get("X-Forwarded-Host") or request.host or hostname).split(",")[0].strip()
+        return f"{proto}://{host}"
+    return f"http://localhost:{port}"
+
+
+def _hotmail_uses_auth_code_popup():
+    if not _is_loopback_request():
+        return (MS_CLIENT_ID or "").lower() != MS_OUTLOOK_PUBLIC_CLIENT
+    return True
 
 
 def _save_oauth_state(state, doc):
@@ -1959,10 +1965,60 @@ def complete_hotmail_oauth_from_request():
     )
 
 
+def _start_hotmail_device_login(admin_user):
+    last_err = "device code failed"
+    for scope in (MS_REFRESH_SCOPE, MS_SCOPE):
+        try:
+            res = requests.post(
+                MS_DEVICE_URL,
+                data={"client_id": MS_CLIENT_ID, "scope": scope},
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+                timeout=20,
+            )
+            try:
+                data = res.json()
+            except Exception:
+                data = {"error_description": (res.text or "")[:200]}
+        except Exception as exc:
+            last_err = str(exc)
+            print(f"[HOTMAIL] device request failed: {exc}")
+            continue
+        if data.get("device_code") and data.get("user_code"):
+            poll_id = secrets.token_urlsafe(16)
+            _save_oauth_state(poll_id, {
+                "kind": "device",
+                "device_code": data["device_code"],
+                "admin_username": admin_user,
+            })
+            ms_url = (
+                data.get("verification_uri_complete")
+                or data.get("verification_uri")
+                or "https://microsoft.com/devicelogin"
+            )
+            print(f"[HOTMAIL] device login started poll_id={poll_id}")
+            return jsonify({
+                "ok": True,
+                "mode": "device",
+                "poll_id": poll_id,
+                "user_code": data["user_code"],
+                "auth_url": ms_url,
+                "verification_uri": data.get("verification_uri") or "https://microsoft.com/devicelogin",
+                "verification_uri_complete": data.get("verification_uri_complete") or "",
+                "interval": int(data.get("interval") or 5),
+                "expires_in": int(data.get("expires_in") or 900),
+            })
+        last_err = data.get("error_description") or data.get("error") or f"HTTP {res.status_code}"
+        print(f"[HOTMAIL] device code rejected scope={scope!r} err={str(last_err)[:240]}")
+    return jsonify({"ok": False, "error": str(last_err)[:240]}), 400
+
+
 @app.route("/admin/api/hotmail-auth-url")
 @admin_required
 def admin_hotmail_auth_url():
     admin_user = session.get("admin_username", "admin")
+    if not _hotmail_uses_auth_code_popup():
+        return _start_hotmail_device_login(admin_user)
+
     redirect_uri = hotmail_redirect_uri()
     state = secrets.token_urlsafe(24)
     _save_oauth_state(state, {
