@@ -612,13 +612,6 @@ def _persist_hotmail_tokens(acc, data, client_id=None):
         print(f"[HOTMAIL] failed to persist tokens: {exc}")
 
 
-def graph_stored_access(acc):
-    token = (acc or {}).get("access_token") or ""
-    if not token:
-        raise RuntimeError("لا يوجد توكن وصول محفوظ. اطلب من المشرف تجديد توكن Hotmail.")
-    return token
-
-
 def _graph_request(method, url, access_token, **kwargs):
     headers = kwargs.pop("headers", {})
     headers["Authorization"] = f"Bearer {access_token}"
@@ -677,6 +670,7 @@ def _graph_list_messages(access_token, limit):
     attempts = [
         (MS_GRAPH_INBOX, {"$top": top, "$orderby": "receivedDateTime desc", "$select": select}),
         (MS_GRAPH_INBOX, {"$top": top, "$select": select}),
+        (MS_GRAPH_MSG, {"$top": top, "$orderby": "receivedDateTime desc", "$select": select}),
     ]
     last_error = "unknown"
     for url, params in attempts:
@@ -684,13 +678,15 @@ def _graph_list_messages(access_token, limit):
         if res.status_code == 200:
             return res.json().get("value") or []
         if res.status_code in (401, 403):
-            raise RuntimeError("انتهت صلاحية توكن Hotmail. اطلب من المشرف تجديد التوكن.")
+            last_error = f"HTTP {res.status_code} {res.text[:120]}"
+            continue
         last_error = f"HTTP {res.status_code} {res.text[:120]}"
     raise RuntimeError(f"فشل جلب بريد Hotmail: {last_error}")
 
 
 def fetch_hotmail_messages(email_addr, acc, limit=15):
-    access_token = graph_stored_access(acc)
+    # Same as READ_EMAILS: 90-day refresh_token → access_token → Graph inbox
+    access_token = graph_refresh_access(acc)
     raw_msgs = _graph_list_messages(access_token, limit)
     new_summaries = []
     for m in raw_msgs:
@@ -707,7 +703,7 @@ def fetch_hotmail_messages(email_addr, acc, limit=15):
 
 
 def fetch_hotmail_message_body(email_addr, uid, acc):
-    access_token = graph_stored_access(acc)
+    access_token = graph_refresh_access(acc)
     encoded = urllib.parse.quote(uid, safe="")
     res = _graph_request(
         "GET",
@@ -716,7 +712,7 @@ def fetch_hotmail_message_body(email_addr, uid, acc):
         params={"$select": "id,subject,from,receivedDateTime,bodyPreview,body,isRead"},
     )
     if res.status_code in (401, 403):
-        raise RuntimeError("انتهت صلاحية توكن Hotmail. اطلب من المشرف تجديد التوكن.")
+        raise RuntimeError("فشل الوصول لبريد Hotmail. أعد ربط الحساب أو جدّد التوكن من لوحة الإدارة.")
     if res.status_code != 200:
         raise RuntimeError(f"تعذّر جلب الرسالة من Hotmail: HTTP {res.status_code}")
     summary, body_entry = _graph_message_to_summary(res.json())
