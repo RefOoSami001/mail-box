@@ -6,6 +6,7 @@ import unicodedata
 import calendar
 import functools
 import secrets
+import threading
 import time
 import json
 import base64
@@ -21,6 +22,19 @@ from bson import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.middleware.proxy_fix import ProxyFix
 from datetime import datetime, timedelta, timezone
+
+try:
+    from google.oauth2.credentials import Credentials
+    from google.auth.transport.requests import Request as GoogleRequest
+    from google.auth.exceptions import RefreshError as GoogleRefreshError
+    from googleapiclient.discovery import build as google_build
+    GMAIL_AVAILABLE = True
+except ImportError:
+    GMAIL_AVAILABLE = False
+    Credentials = None  # type: ignore
+    GoogleRequest = None  # type: ignore
+    GoogleRefreshError = Exception  # type: ignore
+    google_build = None  # type: ignore
 
 # ─── App ──────────────────────────────────────────────────────────
 app = Flask(__name__)
@@ -72,6 +86,18 @@ except Exception:
 _cache: dict = {}
 _oauth_pending_mem: dict = {}
 FETCH_LIMIT = 250
+
+_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+GMAIL_SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
+GMAIL_CREDENTIALS_PATH = os.environ.get(
+    "GOOGLE_CREDENTIALS_FILE", os.path.join(_BASE_DIR, "cred.json")
+)
+GMAIL_TOKEN_PATH = os.environ.get(
+    "GOOGLE_TOKEN_FILE", os.path.join(_BASE_DIR, "token.json")
+)
+GMAIL_DOMAINS = {"gmail.com", "googlemail.com"}
+GMAIL_REFRESH_SKEW = timedelta(seconds=120)
+_gmail_creds_lock = threading.Lock()
 
 # Outlook Mobile public client — same as LOGIN_TO_TOKEN / READ_EMAILS / RENEW_TOKEN
 MS_CLIENT_ID = os.environ.get("MS_CLIENT_ID", "9e5f94bc-e8a4-4e73-b8be-63364c29d753")
@@ -328,6 +354,21 @@ def is_hotmail_account(acc):
     if not acc:
         return False
     return acc.get("account_type") == "hotmail" or bool(acc.get("refresh_token"))
+
+
+def is_gmail_email(email_addr):
+    domain = email_addr.rsplit("@", 1)[-1].lower() if "@" in (email_addr or "") else ""
+    return domain in GMAIL_DOMAINS
+
+
+def is_gmail_forwarded_account(acc, email_addr=""):
+    if acc and acc.get("account_type") == "gmail_forwarded":
+        return True
+    return is_gmail_email(email_addr or (acc or {}).get("email", ""))
+
+
+def _gmail_cache_key(email_addr):
+    return f"__gmail__{(email_addr or '').lower()}"
 
 
 def _request_host_port():
@@ -804,13 +845,234 @@ def fetch_email_messages(email_addr, pop3_password, pop3_host, pop3_port, limit=
     return merged_summaries
 
 
+def _gmail_client_secrets():
+    if not os.path.exists(GMAIL_CREDENTIALS_PATH):
+        return {}
+    try:
+        with open(GMAIL_CREDENTIALS_PATH, encoding="utf-8") as f:
+            parsed = json.load(f)
+        if not isinstance(parsed, dict):
+            return {}
+        return parsed.get("installed") or parsed.get("web") or parsed
+    except Exception:
+        return {}
+
+
+def _load_gmail_token_info():
+    if not os.path.exists(GMAIL_TOKEN_PATH):
+        return None
+    try:
+        with open(GMAIL_TOKEN_PATH, encoding="utf-8") as f:
+            parsed = json.load(f)
+        if isinstance(parsed, dict) and parsed.get("refresh_token"):
+            return parsed
+    except Exception as exc:
+        print(f"[GMAIL] failed to load token.json: {exc}")
+    return None
+
+
+def _save_gmail_token_info(token_info):
+    try:
+        with open(GMAIL_TOKEN_PATH, "w", encoding="utf-8") as f:
+            json.dump(token_info, f)
+    except Exception as exc:
+        print(f"[GMAIL] failed to save token.json: {exc}")
+
+
+def _token_with_client_secrets(token_info):
+    """Merge hub OAuth client id/secret from cred.json onto token.json."""
+    info = dict(token_info or {})
+    secrets_cfg = _gmail_client_secrets()
+    if secrets_cfg.get("client_id"):
+        info["client_id"] = secrets_cfg["client_id"]
+    if secrets_cfg.get("client_secret"):
+        info["client_secret"] = secrets_cfg["client_secret"]
+    info["token_uri"] = (
+        secrets_cfg.get("token_uri")
+        or info.get("token_uri")
+        or "https://oauth2.googleapis.com/token"
+    )
+    return info
+
+
+def _gmail_should_refresh(creds):
+    if not creds or not creds.refresh_token:
+        return False
+    if getattr(creds, "expired", False) or not getattr(creds, "valid", False):
+        return True
+    expiry = getattr(creds, "expiry", None)
+    if expiry is None:
+        return False
+    if expiry.tzinfo is None:
+        expiry = expiry.replace(tzinfo=timezone.utc)
+    return expiry <= datetime.now(timezone.utc) + GMAIL_REFRESH_SKEW
+
+
+def _parse_gmail_expiry(raw):
+    if not raw:
+        return None
+    if isinstance(raw, datetime):
+        dt = raw
+    else:
+        text = str(raw).strip()
+        if text.endswith("Z"):
+            text = text[:-1] + "+00:00"
+        try:
+            dt = datetime.fromisoformat(text)
+        except Exception:
+            return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
+def gmail_token_status():
+    creds = get_gmail_credentials()
+    token_info = _load_gmail_token_info()
+    secrets_cfg = _gmail_client_secrets()
+    now = datetime.now(timezone.utc)
+    expiry = getattr(creds, "expiry", None) if creds else None
+    expiry = _parse_gmail_expiry(expiry) or _parse_gmail_expiry((token_info or {}).get("expiry"))
+    seconds = int((expiry - now).total_seconds()) if expiry else None
+    return {
+        "gmail_lib_installed": GMAIL_AVAILABLE,
+        "has_credentials": bool(secrets_cfg.get("client_id")),
+        "has_token": bool(token_info),
+        "has_refresh_token": bool((token_info or {}).get("refresh_token")),
+        "token_valid": bool(creds and creds.valid),
+        "access_expired": bool(seconds is not None and seconds <= 0),
+        "access_expires_at": expiry.isoformat() if expiry else None,
+        "seconds_to_expiry": seconds,
+        "hub_account": (token_info or {}).get("account") or "",
+        "storage": "token.json",
+        "auto_refresh": True,
+    }
+
+
+def get_gmail_credentials():
+    """
+    Return valid hub Gmail credentials.
+    Access tokens (~1h) are refreshed automatically with refresh_token + cred.json.
+    Never opens a browser; if Google revoked the refresh token, admin must re-auth once.
+    """
+    if not GMAIL_AVAILABLE:
+        return None
+    with _gmail_creds_lock:
+        token_info = _load_gmail_token_info()
+        if not token_info:
+            return None
+        token_info = _token_with_client_secrets(token_info)
+        if not token_info.get("client_id") or not token_info.get("client_secret"):
+            print("[GMAIL] cred.json is missing client_id/client_secret; cannot refresh")
+            return None
+        try:
+            creds = Credentials.from_authorized_user_info(token_info, GMAIL_SCOPES)
+        except Exception as exc:
+            print(f"[GMAIL] invalid token.json: {exc}")
+            return None
+        if _gmail_should_refresh(creds):
+            try:
+                print("[GMAIL] access token expired or expiring soon; refreshing")
+                creds.refresh(GoogleRequest())
+                _save_gmail_token_info(json.loads(creds.to_json()))
+                print("[GMAIL] token refreshed successfully")
+            except GoogleRefreshError as exc:
+                print(f"[GMAIL] refresh_token rejected: {exc}")
+                return None
+            except Exception as exc:
+                print(f"[GMAIL] token refresh failed: {exc}")
+                return None
+        if creds and creds.valid:
+            return creds
+        return None
+
+
+def fetch_gmail_forwarded_messages(target_email: str, limit: int = FETCH_LIMIT) -> list:
+    """
+    Fetch mail addressed to a forwarded Gmail using the shared hub inbox.
+    Search To / Delivered-To / Cc / Bcc for the original address.
+    """
+    cache_key = _gmail_cache_key(target_email)
+    existing = _cache.get(cache_key, {"summaries": [], "bodies": {}})
+    known_uids = {m["uid"] for m in existing["summaries"]}
+    known_bodies = existing.get("bodies", {})
+
+    creds = get_gmail_credentials()
+    if not creds:
+        raise RuntimeError(
+            "تعذر الوصول لصندوق Gmail المركزي. "
+            "التطبيق يجدّد التوكن تلقائياً عبر refresh_token و cred.json. "
+            "إذا ظهر هذا الخطأ فغالباً Google ألغى الـ refresh_token "
+            "(وضع Testing ينتهي عادة بعد 7 أيام) ويجب إعادة التوثيق مرة واحدة."
+        )
+
+    service = google_build("gmail", "v1", credentials=creds, cache_discovery=False)
+    gmail_q = (
+        f"(to:{target_email} OR deliveredto:{target_email} "
+        f"OR cc:{target_email} OR bcc:{target_email})"
+    )
+    response = service.users().messages().list(
+        userId="me",
+        q=gmail_q,
+        maxResults=limit,
+    ).execute()
+
+    new_summaries = []
+    new_bodies = {}
+
+    for meta in response.get("messages", []):
+        if len(new_summaries) >= limit:
+            break
+        msg_id = meta["id"]
+        if msg_id in known_uids and msg_id in known_bodies:
+            continue
+        try:
+            msg_data = service.users().messages().get(
+                userId="me", id=msg_id, format="raw"
+            ).execute()
+            raw_bytes = base64.urlsafe_b64decode(msg_data["raw"] + "==")
+            msg = email_lib.message_from_bytes(raw_bytes)
+            summary, body_entry = _build_summary(msg, msg_id)
+            new_summaries.append(summary)
+            new_bodies[msg_id] = body_entry
+            _cache_put_body(cache_key, msg_id, summary, body_entry, target_email)
+        except Exception as exc:
+            print(f"[GMAIL] failed to fetch message {msg_id}: {exc}")
+            continue
+
+    merged_summaries = new_summaries + [m for m in existing["summaries"] if m["uid"] not in new_bodies]
+    merged_bodies = {**existing["bodies"], **new_bodies}
+    _cache[cache_key] = {"summaries": merged_summaries, "bodies": merged_bodies}
+    return merged_summaries
+
+
+def fetch_gmail_message_body(email_addr: str, uid: str) -> dict:
+    creds = get_gmail_credentials()
+    if not creds:
+        raise RuntimeError(
+            "تعذر الوصول لصندوق Gmail المركزي. جدّد التوثيق إذا فشل التجديد التلقائي."
+        )
+    service = google_build("gmail", "v1", credentials=creds, cache_discovery=False)
+    try:
+        msg_data = service.users().messages().get(
+            userId="me", id=uid, format="raw"
+        ).execute()
+    except Exception as exc:
+        raise RuntimeError(f"تعذّر جلب الرسالة من Gmail: {str(exc)[:120]}") from exc
+    raw_bytes = base64.urlsafe_b64decode(msg_data["raw"] + "==")
+    msg = email_lib.message_from_bytes(raw_bytes)
+    summary, body_entry = _build_summary(msg, uid)
+    _cache_put_body(_gmail_cache_key(email_addr), uid, summary, body_entry, email_addr)
+    return body_entry
+
+
 def _cache_put_body(cache_key: str, uid: str, summary: dict, body_entry: dict, email_addr: str = ""):
     """Store a single message body in process cache + MongoDB (shared across workers)."""
     entry = _cache.setdefault(cache_key, {"summaries": [], "bodies": {}})
     entry["bodies"][uid] = body_entry
     if not any(m.get("uid") == uid for m in entry["summaries"]):
         entry["summaries"].insert(0, summary)
-    email_key = (email_addr or cache_key).lower()
+    email_key = (email_addr or cache_key.replace("__gmail__", "")).lower()
     if email_key and uid:
         try:
             message_bodies_col.update_one(
@@ -846,7 +1108,7 @@ def _get_cached_body(uid: str, email_addr: str = ""):
             body_entry = {"body": doc.get("body", ""), "body_type": doc.get("body_type", "plain")}
             # hydrate local cache for this worker
             email_key = doc.get("email") or email_addr
-            cache_key = email_key
+            cache_key = _gmail_cache_key(email_key) if is_gmail_email(email_key) else email_key
             if cache_key:
                 entry = _cache.setdefault(cache_key, {"summaries": [], "bodies": {}})
                 entry["bodies"][uid] = body_entry
@@ -858,15 +1120,18 @@ def _get_cached_body(uid: str, email_addr: str = ""):
 
 def fetch_single_message_body(email_addr: str, uid: str, acc: dict) -> dict:
     """
-    Load one message body from Hotmail Graph or POP3 when it is missing
+    Load one message body from Gmail, Hotmail Graph, or POP3 when it is missing
     from this worker's in-memory cache.
     """
-    cache_key = email_addr
     uid = (uid or "").strip()
+
+    if is_gmail_forwarded_account(acc, email_addr):
+        return fetch_gmail_message_body(email_addr, uid)
 
     if is_hotmail_account(acc):
         return fetch_hotmail_message_body(email_addr, uid, acc)
 
+    cache_key = email_addr
     if not acc.get("pop3_password"):
         raise RuntimeError("لا توجد كلمة مرور POP3 لهذا البريد")
 
@@ -1085,11 +1350,14 @@ def api_fetch():
     cutoff_minutes = int(os.environ.get("EMAIL_CUTOFF_MINUTES", 20))
     cutoff = datetime.now(timezone.utc) - timedelta(minutes=cutoff_minutes)
 
-    cache_key = email_addr
+    use_gmail = is_gmail_forwarded_account(acc, email_addr)
+    cache_key = _gmail_cache_key(email_addr) if use_gmail else email_addr
     warning   = None
 
     try:
-        if is_hotmail_account(acc):
+        if use_gmail:
+            summaries = fetch_gmail_forwarded_messages(email_addr)
+        elif is_hotmail_account(acc):
             summaries = fetch_hotmail_messages(email_addr, acc)
         else:
             if not acc.get("pop3_password"):
@@ -1128,6 +1396,11 @@ def api_fetch():
                 _cache.get(cache_key, {}).get("bodies", {}).get(uid)
                 or _get_cached_body(uid, email_addr)
             )
+            if not body_entry and use_gmail:
+                try:
+                    body_entry = fetch_gmail_message_body(email_addr, uid)
+                except Exception as exc:
+                    print(f"[GMAIL] body fetch skipped: {exc}")
             if not body_entry and is_hotmail_account(acc):
                 try:
                     body_entry = fetch_hotmail_message_body(email_addr, uid, acc)
@@ -1156,7 +1429,7 @@ def api_fetch():
 @client_required
 def api_message(uid):
     """
-    Return message body. Prefer RAM → MongoDB → live Hotmail/POP3 fetch.
+    Return message body. Prefer RAM → MongoDB → live Gmail/Hotmail/POP3 fetch.
     """
     uid = (uid or "").strip()
 
@@ -1548,13 +1821,20 @@ def admin_email_assignment_status():
     for a in accounts:
         em = a["email"]
         acct_type = a.get("account_type", "pop3")
+        if acct_type == "hotmail" or a.get("refresh_token"):
+            display_host, display_port = "hotmail", 0
+        elif acct_type == "gmail_forwarded" or is_gmail_email(em):
+            display_host, display_port = "gmail-forwarded", 0
+        else:
+            display_host = a.get("pop3_host", DEFAULT_HOST)
+            display_port = a.get("pop3_port", DEFAULT_PORT)
         meta = _hotmail_token_meta(a) if acct_type == "hotmail" or a.get("refresh_token") else {}
         result.append({
             "_id":          str(a["_id"]),
             "email":        em,
             "account_type": acct_type,
-            "pop3_host":    a.get("pop3_host", DEFAULT_HOST) if acct_type != "hotmail" else "hotmail",
-            "pop3_port":    a.get("pop3_port", DEFAULT_PORT) if acct_type != "hotmail" else 0,
+            "pop3_host":    display_host,
+            "pop3_port":    display_port,
             "added_at":     dt_iso(a.get("added_at")) if a.get("added_at") else "",
             "assigned_to":  assignment_map.get(em),
             **meta,
@@ -1579,27 +1859,38 @@ def admin_add_email():
 
     if not em:
         return jsonify({"error": "email required"}), 400
-    if not pw:
-        return jsonify({"error": "password required for POP3 accounts"}), 400
-    try:
-        conn = connect_pop3(host, port, em, pw)
-        conn.quit()
-    except Exception as e:
-        return jsonify({"error": f"فشل الاتصال بالخادم: {str(e)[:120]}"}), 400
-    account_type = "pop3"
-    doc = {
-        "email":         em,
-        "account_type":  account_type,
-        "pop3_password": pw,
-        "pop3_host":     host,
-        "pop3_port":     port,
-        "added_at":      datetime.now(timezone.utc),
-        "added_by":      session.get("admin_username", "admin"),
-    }
+
+    if is_gmail_email(em):
+        account_type = "gmail_forwarded"
+        doc = {
+            "email":        em,
+            "account_type": account_type,
+            "added_at":     datetime.now(timezone.utc),
+            "added_by":     session.get("admin_username", "admin"),
+        }
+    else:
+        if not pw:
+            return jsonify({"error": "password required for POP3 accounts"}), 400
+        try:
+            conn = connect_pop3(host, port, em, pw)
+            conn.quit()
+        except Exception as e:
+            return jsonify({"error": f"فشل الاتصال بالخادم: {str(e)[:120]}"}), 400
+        account_type = "pop3"
+        doc = {
+            "email":         em,
+            "account_type":  account_type,
+            "pop3_password": pw,
+            "pop3_host":     host,
+            "pop3_port":     port,
+            "added_at":      datetime.now(timezone.utc),
+            "added_by":      session.get("admin_username", "admin"),
+        }
 
     try:
         result = email_accounts_col.insert_one(doc)
         _cache.pop(em, None)
+        _cache.pop(_gmail_cache_key(em), None)
         return jsonify({"ok": True, "id": str(result.inserted_id), "account_type": account_type})
     except DuplicateKeyError:
         return jsonify({"error": f"البريد '{em}' مضاف مسبقاً"}), 409
@@ -1611,6 +1902,7 @@ def admin_bulk_emails():
     """
     Bulk-add email accounts.
     POP3: email@example.com:password
+    Gmail (forwarded to hub inbox): user@gmail.com  or  user@gmail.com:
     Hotmail token (from LOGIN_TO_TOKEN accounts.txt): email|password|refresh_token|client_id
     """
     data = request.json or {}
@@ -1659,24 +1951,34 @@ def admin_bulk_emails():
             errors += 1
             continue
 
-        if not pw:
-            error_list.append(f"كلمة المرور مطلوبة: {em[:60]}")
-            errors += 1
-            continue
-        account_type = "pop3"
-        doc = {
-            "email":         em,
-            "account_type":  account_type,
-            "pop3_password": pw,
-            "pop3_host":     host,
-            "pop3_port":     port,
-            "added_at":      datetime.now(timezone.utc),
-            "added_by":      session.get("admin_username", "admin"),
-        }
+        if is_gmail_email(em):
+            account_type = "gmail_forwarded"
+            doc = {
+                "email":        em,
+                "account_type": account_type,
+                "added_at":     datetime.now(timezone.utc),
+                "added_by":     session.get("admin_username", "admin"),
+            }
+        else:
+            if not pw:
+                error_list.append(f"كلمة المرور مطلوبة: {em[:60]}")
+                errors += 1
+                continue
+            account_type = "pop3"
+            doc = {
+                "email":         em,
+                "account_type":  account_type,
+                "pop3_password": pw,
+                "pop3_host":     host,
+                "pop3_port":     port,
+                "added_at":      datetime.now(timezone.utc),
+                "added_by":      session.get("admin_username", "admin"),
+            }
 
         try:
             email_accounts_col.insert_one(doc)
             _cache.pop(em, None)
+            _cache.pop(_gmail_cache_key(em), None)
             added += 1
         except DuplicateKeyError:
             skipped += 1
@@ -1706,6 +2008,7 @@ def admin_edit_email(acc_id):
             return jsonify({"error": "not found"}), 404
         email_accounts_col.update_one({"_id": ObjectId(acc_id)}, {"$set": update})
         _cache.pop(acc["email"], None)
+        _cache.pop(_gmail_cache_key(acc["email"]), None)
     except Exception:
         return jsonify({"error": "Invalid id"}), 400
     return jsonify({"ok": True})
@@ -1718,6 +2021,7 @@ def admin_delete_email(acc_id):
         acc = email_accounts_col.find_one({"_id": ObjectId(acc_id)})
         if acc:
             _cache.pop(acc["email"], None)
+            _cache.pop(_gmail_cache_key(acc["email"]), None)
         email_accounts_col.delete_one({"_id": ObjectId(acc_id)})
     except Exception:
         return jsonify({"error": "Invalid id"}), 400
@@ -2131,6 +2435,62 @@ def admin_hotmail_renew_all():
         "total": len(accounts),
         "error_details": errors[:20],
     })
+
+
+@app.route("/admin/api/gmail-config")
+@admin_required
+def admin_gmail_config():
+    """Gmail hub token status. Never returns secrets."""
+    return jsonify(gmail_token_status())
+
+
+@app.route("/admin/api/gmail-refresh", methods=["POST"])
+@admin_required
+def admin_gmail_refresh():
+    """Force-refresh the short-lived Gmail access token using the stored refresh_token."""
+    if not GMAIL_AVAILABLE:
+        return jsonify({"error": "مكتبة google-auth غير مثبتة"}), 500
+    token_info = _load_gmail_token_info()
+    if not token_info or not token_info.get("refresh_token"):
+        return jsonify({"error": "لا يوجد refresh_token. الصق token.json جديد من لوحة الإدارة."}), 400
+    creds = get_gmail_credentials()
+    if not creds or not creds.refresh_token:
+        return jsonify({"error": "تعذر تحميل توكن Gmail. الصق token.json جديد."}), 400
+    try:
+        creds.refresh(GoogleRequest())
+        _save_gmail_token_info(json.loads(creds.to_json()))
+    except Exception as exc:
+        return jsonify({"error": f"فشل تجديد التوكن: {str(exc)[:180]}"}), 400
+    return jsonify({"ok": True, **gmail_token_status()})
+
+
+@app.route("/admin/api/gmail-token", methods=["PUT"])
+@admin_required
+def admin_update_gmail_token():
+    """Replace token.json with pasted Google OAuth token JSON (must include refresh_token)."""
+    data = request.json or {}
+    content = (data.get("token_json") or "").strip()
+    if not content:
+        return jsonify({"error": "token_json required"}), 400
+    try:
+        parsed = json.loads(content)
+    except json.JSONDecodeError as exc:
+        return jsonify({"error": f"JSON غير صالح: {exc}"}), 400
+    if not isinstance(parsed, dict) or not parsed.get("refresh_token"):
+        return jsonify({"error": "الملف يجب أن يحتوي على refresh_token"}), 400
+    if parsed.get("token") is None and parsed.get("access_token"):
+        parsed["token"] = parsed["access_token"]
+    secrets = _gmail_client_secrets()
+    if secrets.get("client_id") and not parsed.get("client_id"):
+        parsed["client_id"] = secrets["client_id"]
+    if secrets.get("client_secret") and not parsed.get("client_secret"):
+        parsed["client_secret"] = secrets["client_secret"]
+    _save_gmail_token_info(parsed)
+    creds = get_gmail_credentials()
+    if not creds:
+        return jsonify({"error": "تم الحفظ لكن التوكن غير صالح. تحقق من الملف أو جدّد التوثيق."}), 400
+    _cache.clear()
+    return jsonify({"ok": True, **gmail_token_status()})
 
 
 # ─── Entry Point ──────────────────────────────────────────────────
