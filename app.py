@@ -70,6 +70,7 @@ filter_categories_col = db["filter_categories"]
 login_activity_col    = db["login_activity"]
 message_bodies_col    = db["message_bodies"]
 oauth_states_col      = db["oauth_states"]
+app_settings_col      = db["app_settings"]
 
 client_accounts_col.create_index("username", unique=True)
 email_accounts_col.create_index("email", unique=True)
@@ -97,6 +98,7 @@ GMAIL_TOKEN_PATH = os.environ.get(
 )
 GMAIL_DOMAINS = {"gmail.com", "googlemail.com"}
 GMAIL_REFRESH_SKEW = timedelta(seconds=120)
+GMAIL_SETTINGS_ID = "gmail_oauth"
 _gmail_creds_lock = threading.Lock()
 
 # Outlook Mobile public client — same as LOGIN_TO_TOKEN / READ_EMAILS / RENEW_TOKEN
@@ -845,67 +847,36 @@ def fetch_email_messages(email_addr, pop3_password, pop3_host, pop3_port, limit=
     return merged_summaries
 
 
-def _gmail_client_secrets():
-    if not os.path.exists(GMAIL_CREDENTIALS_PATH):
-        return {}
+def _gmail_settings_doc():
     try:
-        with open(GMAIL_CREDENTIALS_PATH, encoding="utf-8") as f:
-            parsed = json.load(f)
-        if not isinstance(parsed, dict):
-            return {}
-        return parsed.get("installed") or parsed.get("web") or parsed
-    except Exception:
+        return app_settings_col.find_one({"_id": GMAIL_SETTINGS_ID}) or {}
+    except Exception as exc:
+        print(f"[GMAIL] mongo settings load failed: {exc}")
         return {}
 
 
-def _load_gmail_token_info():
-    if not os.path.exists(GMAIL_TOKEN_PATH):
+def _parse_json_env(name):
+    raw = (os.environ.get(name) or "").strip()
+    if not raw:
         return None
     try:
-        with open(GMAIL_TOKEN_PATH, encoding="utf-8") as f:
-            parsed = json.load(f)
-        if isinstance(parsed, dict) and parsed.get("refresh_token"):
-            return parsed
+        parsed = json.loads(raw)
+        return parsed if isinstance(parsed, dict) else None
     except Exception as exc:
-        print(f"[GMAIL] failed to load token.json: {exc}")
-    return None
+        print(f"[GMAIL] invalid {name}: {exc}")
+        return None
 
 
-def _save_gmail_token_info(token_info):
+def _read_json_file(path):
+    if not path or not os.path.exists(path):
+        return None
     try:
-        with open(GMAIL_TOKEN_PATH, "w", encoding="utf-8") as f:
-            json.dump(token_info, f)
+        with open(path, encoding="utf-8") as f:
+            parsed = json.load(f)
+        return parsed if isinstance(parsed, dict) else None
     except Exception as exc:
-        print(f"[GMAIL] failed to save token.json: {exc}")
-
-
-def _token_with_client_secrets(token_info):
-    """Merge hub OAuth client id/secret from cred.json onto token.json."""
-    info = dict(token_info or {})
-    secrets_cfg = _gmail_client_secrets()
-    if secrets_cfg.get("client_id"):
-        info["client_id"] = secrets_cfg["client_id"]
-    if secrets_cfg.get("client_secret"):
-        info["client_secret"] = secrets_cfg["client_secret"]
-    info["token_uri"] = (
-        secrets_cfg.get("token_uri")
-        or info.get("token_uri")
-        or "https://oauth2.googleapis.com/token"
-    )
-    return info
-
-
-def _gmail_should_refresh(creds):
-    if not creds or not creds.refresh_token:
-        return False
-    if getattr(creds, "expired", False) or not getattr(creds, "valid", False):
-        return True
-    expiry = getattr(creds, "expiry", None)
-    if expiry is None:
-        return False
-    if expiry.tzinfo is None:
-        expiry = expiry.replace(tzinfo=timezone.utc)
-    return expiry <= datetime.now(timezone.utc) + GMAIL_REFRESH_SKEW
+        print(f"[GMAIL] failed to read {path}: {exc}")
+        return None
 
 
 def _parse_gmail_expiry(raw):
@@ -926,8 +897,141 @@ def _parse_gmail_expiry(raw):
     return dt.astimezone(timezone.utc)
 
 
+def _section_client_secrets(parsed):
+    if not isinstance(parsed, dict):
+        return {}
+    return parsed.get("installed") or parsed.get("web") or parsed
+
+
+def _gmail_client_secrets():
+    """Prefer local cred.json so a desktop token is not mixed with an old Mongo web client."""
+    file_cfg = _read_json_file(GMAIL_CREDENTIALS_PATH)
+    env_cfg = _parse_json_env("GOOGLE_CREDENTIALS_JSON")
+    mongo_cfg = _gmail_settings_doc().get("credentials")
+    for parsed in (file_cfg, env_cfg, mongo_cfg):
+        secrets_cfg = _section_client_secrets(parsed)
+        if secrets_cfg.get("client_id") and secrets_cfg.get("client_secret"):
+            return secrets_cfg
+    return {}
+
+
+def _token_expiry_sort_key(token_info):
+    expiry = _parse_gmail_expiry((token_info or {}).get("expiry"))
+    if not expiry:
+        return datetime.min.replace(tzinfo=timezone.utc)
+    return expiry
+
+
+def _load_gmail_token_info():
+    """Use the newest token among Mongo / env / token.json so a local re-auth is not ignored."""
+    candidates = []
+    mongo_tok = _gmail_settings_doc().get("token")
+    env_tok = _parse_json_env("GMAIL_TOKEN_JSON")
+    file_tok = _read_json_file(GMAIL_TOKEN_PATH)
+    for source, tok in (("mongo", mongo_tok), ("env", env_tok), ("file", file_tok)):
+        if isinstance(tok, dict) and tok.get("refresh_token"):
+            candidates.append(( _token_expiry_sort_key(tok), source, tok))
+    if not candidates:
+        return None
+    candidates.sort(key=lambda item: item[0], reverse=True)
+    _source, tok = candidates[0][1], candidates[0][2]
+    print(f"[GMAIL] using token from {_source}")
+    return tok
+
+
+def _save_gmail_token_info(token_info):
+    try:
+        app_settings_col.update_one(
+            {"_id": GMAIL_SETTINGS_ID},
+            {
+                "$set": {
+                    "token": token_info,
+                    "updated_at": datetime.now(timezone.utc),
+                }
+            },
+            upsert=True,
+        )
+    except Exception as exc:
+        print(f"[GMAIL] failed to save token to MongoDB: {exc}")
+    try:
+        with open(GMAIL_TOKEN_PATH, "w", encoding="utf-8") as f:
+            json.dump(token_info, f)
+    except Exception as exc:
+        print(f"[GMAIL] token.json not writable (normal on some hosts): {exc}")
+
+
+def _migrate_local_gmail_files_to_mongo():
+    """Copy local/env Gmail secrets into MongoDB so deploys keep working without files."""
+    try:
+        doc = _gmail_settings_doc()
+        updates = {}
+        parsed_creds = _parse_json_env("GOOGLE_CREDENTIALS_JSON") or _read_json_file(GMAIL_CREDENTIALS_PATH)
+        if isinstance(parsed_creds, dict) and ("installed" in parsed_creds or "web" in parsed_creds or parsed_creds.get("client_id")):
+            if not doc.get("credentials"):
+                updates["credentials"] = parsed_creds
+        parsed_tok = _parse_json_env("GMAIL_TOKEN_JSON") or _read_json_file(GMAIL_TOKEN_PATH)
+        mongo_tok = doc.get("token") if isinstance(doc.get("token"), dict) else {}
+        if isinstance(parsed_tok, dict) and parsed_tok.get("refresh_token"):
+            file_newer = _token_expiry_sort_key(parsed_tok) > _token_expiry_sort_key(mongo_tok)
+            if parsed_tok.get("refresh_token") != mongo_tok.get("refresh_token") or file_newer:
+                updates["token"] = parsed_tok
+        file_creds = _parse_json_env("GOOGLE_CREDENTIALS_JSON") or _read_json_file(GMAIL_CREDENTIALS_PATH)
+        mongo_cid = _section_client_secrets(doc.get("credentials")).get("client_id")
+        file_cid = _section_client_secrets(file_creds).get("client_id")
+        if file_cid and file_cid != mongo_cid:
+            updates["credentials"] = file_creds
+        if updates:
+            updates["updated_at"] = datetime.now(timezone.utc)
+            updates["migrated_from_files"] = True
+            app_settings_col.update_one(
+                {"_id": GMAIL_SETTINGS_ID},
+                {"$set": updates},
+                upsert=True,
+            )
+            print("[GMAIL] migrated hub credentials into MongoDB")
+    except Exception as exc:
+        print(f"[GMAIL] migrate to MongoDB skipped: {exc}")
+
+
+_migrate_local_gmail_files_to_mongo()
+
+
+def _token_with_client_secrets(token_info):
+    """Fill missing client id/secret from cred.json. Never replace the token's own client."""
+    info = dict(token_info or {})
+    secrets_cfg = _gmail_client_secrets()
+    if secrets_cfg.get("client_id") and not info.get("client_id"):
+        info["client_id"] = secrets_cfg["client_id"]
+    if secrets_cfg.get("client_secret") and not info.get("client_secret"):
+        info["client_secret"] = secrets_cfg["client_secret"]
+    if not info.get("token_uri"):
+        info["token_uri"] = (
+            secrets_cfg.get("token_uri") or "https://oauth2.googleapis.com/token"
+        )
+    return info
+
+
+def _gmail_should_refresh(creds):
+    if not creds or not creds.refresh_token:
+        return False
+    if getattr(creds, "expired", False) or not getattr(creds, "valid", False):
+        return True
+    expiry = getattr(creds, "expiry", None)
+    if expiry is None:
+        return False
+    if expiry.tzinfo is None:
+        expiry = expiry.replace(tzinfo=timezone.utc)
+    return expiry <= datetime.now(timezone.utc) + GMAIL_REFRESH_SKEW
+
+
 def gmail_token_status():
-    creds = get_gmail_credentials()
+    error = None
+    creds = None
+    try:
+        creds = get_gmail_credentials()
+    except Exception as exc:
+        error = str(exc)
+        print("[GMAIL] status failed:", str(exc).encode("ascii", "replace").decode("ascii"))
     token_info = _load_gmail_token_info()
     secrets_cfg = _gmail_client_secrets()
     now = datetime.now(timezone.utc)
@@ -944,47 +1048,62 @@ def gmail_token_status():
         "access_expires_at": expiry.isoformat() if expiry else None,
         "seconds_to_expiry": seconds,
         "hub_account": (token_info or {}).get("account") or "",
-        "storage": "token.json",
+        "storage": "mongodb",
         "auto_refresh": True,
+        "error": error,
     }
 
 
 def get_gmail_credentials():
     """
     Return valid hub Gmail credentials.
-    Access tokens (~1h) are refreshed automatically with refresh_token + cred.json.
-    Never opens a browser; if Google revoked the refresh token, admin must re-auth once.
+    Access tokens (~1h) are refreshed automatically with refresh_token + client secret.
+    Token is stored in MongoDB so Koyeb/gunicorn workers keep it after deploy.
     """
     if not GMAIL_AVAILABLE:
-        return None
+        raise RuntimeError(
+            "مكتبة Gmail غير مثبتة على السيرفر. أضف google-auth و google-api-python-client إلى requirements.txt"
+        )
     with _gmail_creds_lock:
         token_info = _load_gmail_token_info()
         if not token_info:
-            return None
+            raise RuntimeError(
+                "توكن Gmail غير موجود على السيرفر. أضف token.json و cred.json للمشروع ثم أعد النشر، "
+                "أو ضع GMAIL_TOKEN_JSON و GOOGLE_CREDENTIALS_JSON في متغيرات البيئة."
+            )
         token_info = _token_with_client_secrets(token_info)
         if not token_info.get("client_id") or not token_info.get("client_secret"):
-            print("[GMAIL] cred.json is missing client_id/client_secret; cannot refresh")
-            return None
+            raise RuntimeError(
+                "cred.json غير موجود أو ناقص على السيرفر. أعد نشر الملف أو ضع GOOGLE_CREDENTIALS_JSON."
+            )
         try:
             creds = Credentials.from_authorized_user_info(token_info, GMAIL_SCOPES)
         except Exception as exc:
-            print(f"[GMAIL] invalid token.json: {exc}")
-            return None
+            raise RuntimeError(f"token.json غير صالح: {str(exc)[:120]}") from exc
         if _gmail_should_refresh(creds):
             try:
                 print("[GMAIL] access token expired or expiring soon; refreshing")
                 creds.refresh(GoogleRequest())
                 _save_gmail_token_info(json.loads(creds.to_json()))
                 print("[GMAIL] token refreshed successfully")
-            except GoogleRefreshError as exc:
-                print(f"[GMAIL] refresh_token rejected: {exc}")
-                return None
-            except Exception as exc:
-                print(f"[GMAIL] token refresh failed: {exc}")
-                return None
+            except GoogleRefreshError as refresh_err:
+                if creds and creds.valid:
+                    print("[GMAIL] refresh failed; using current access token until it expires")
+                    return creds
+                detail = str(refresh_err)[:160]
+                raise RuntimeError(
+                    "رفض Google تجديد التوكن (invalid_grant). "
+                    "شغّل python test.py محلياً لإنشاء token.json جديد ثم أعد تشغيل/نشر التطبيق. "
+                    f"التفاصيل: {detail}"
+                ) from refresh_err
+            except Exception as refresh_err:
+                if creds and creds.valid:
+                    print("[GMAIL] refresh failed; using current access token until it expires")
+                    return creds
+                raise RuntimeError(f"فشل تجديد توكن Gmail: {str(refresh_err)[:160]}") from refresh_err
         if creds and creds.valid:
             return creds
-        return None
+        raise RuntimeError("توكن Gmail غير صالح بعد التحميل.")
 
 
 def fetch_gmail_forwarded_messages(target_email: str, limit: int = FETCH_LIMIT) -> list:
@@ -998,14 +1117,6 @@ def fetch_gmail_forwarded_messages(target_email: str, limit: int = FETCH_LIMIT) 
     known_bodies = existing.get("bodies", {})
 
     creds = get_gmail_credentials()
-    if not creds:
-        raise RuntimeError(
-            "تعذر الوصول لصندوق Gmail المركزي. "
-            "التطبيق يجدّد التوكن تلقائياً عبر refresh_token و cred.json. "
-            "إذا ظهر هذا الخطأ فغالباً Google ألغى الـ refresh_token "
-            "(وضع Testing ينتهي عادة بعد 7 أيام) ويجب إعادة التوثيق مرة واحدة."
-        )
-
     service = google_build("gmail", "v1", credentials=creds, cache_discovery=False)
     gmail_q = (
         f"(to:{target_email} OR deliveredto:{target_email} "
@@ -1048,10 +1159,6 @@ def fetch_gmail_forwarded_messages(target_email: str, limit: int = FETCH_LIMIT) 
 
 def fetch_gmail_message_body(email_addr: str, uid: str) -> dict:
     creds = get_gmail_credentials()
-    if not creds:
-        raise RuntimeError(
-            "تعذر الوصول لصندوق Gmail المركزي. جدّد التوثيق إذا فشل التجديد التلقائي."
-        )
     service = google_build("gmail", "v1", credentials=creds, cache_discovery=False)
     try:
         msg_data = service.users().messages().get(
@@ -2453,10 +2560,8 @@ def admin_gmail_refresh():
     token_info = _load_gmail_token_info()
     if not token_info or not token_info.get("refresh_token"):
         return jsonify({"error": "لا يوجد refresh_token. الصق token.json جديد من لوحة الإدارة."}), 400
-    creds = get_gmail_credentials()
-    if not creds or not creds.refresh_token:
-        return jsonify({"error": "تعذر تحميل توكن Gmail. الصق token.json جديد."}), 400
     try:
+        creds = get_gmail_credentials()
         creds.refresh(GoogleRequest())
         _save_gmail_token_info(json.loads(creds.to_json()))
     except Exception as exc:
@@ -2486,9 +2591,10 @@ def admin_update_gmail_token():
     if secrets.get("client_secret") and not parsed.get("client_secret"):
         parsed["client_secret"] = secrets["client_secret"]
     _save_gmail_token_info(parsed)
-    creds = get_gmail_credentials()
-    if not creds:
-        return jsonify({"error": "تم الحفظ لكن التوكن غير صالح. تحقق من الملف أو جدّد التوثيق."}), 400
+    try:
+        get_gmail_credentials()
+    except Exception as exc:
+        return jsonify({"error": f"تم الحفظ لكن التوكن غير صالح: {str(exc)[:160]}"}), 400
     _cache.clear()
     return jsonify({"ok": True, **gmail_token_status()})
 
