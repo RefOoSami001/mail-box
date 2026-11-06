@@ -1170,14 +1170,14 @@ function renderGmailStatus(d){
   box.innerHTML=
     (d.hub_account?`الحساب المركزي: <strong>${esc(d.hub_account)}</strong><br/>`:'')+
     remainText+'<br/>'+
+    (d.error?`<span style="color:var(--danger)">${esc(d.error)}</span><br/>`:'')+
     (d.has_refresh_token
-      ?'التجديد تلقائي: عند انتهاء توكن الوصول (~ساعة) يُطلب توكن جديد باستخدام <code>refresh_token</code> و <code>cred.json</code> دون تسجيل دخول.'
-      :'لا يوجد refresh_token في token.json — لا يمكن التجديد التلقائي حتى تتم إعادة التوثيق مرة واحدة.');
+      ?'التجديد تلقائي عبر MongoDB: عند انتهاء توكن الوصول (~ساعة) يُطلب توكن جديد باستخدام refresh_token و cred.json دون تسجيل دخول.'
+      :'لا يوجد refresh_token. تأكد أن token.json و cred.json في المشروع ثم شغّل التطبيق محلياً مرة واحدة قبل النشر.');
 }
 async function loadGmailStatus(){
   const d=await api('/admin/api/gmail-config');
-  if(d.error){const box=document.getElementById('gmailHubStatus');if(box)box.textContent=d.error;return;}
-  renderGmailStatus(d);
+  renderGmailStatus(d.error && !d.has_token && !d.has_refresh_token ? {error:d.error,has_refresh_token:false} : d);
 }
 
 async function loadEmails(){
